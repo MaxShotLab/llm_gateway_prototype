@@ -1,7 +1,9 @@
 # Maxshot UI Specification
 
-Extracted from `https://app.maxshot.ai/` on June 12, 2026 and applied to the
-local gateway prototype.
+Reference styling was extracted from `https://app.maxshot.ai/` on June 12, 2026.
+This implementation baseline was verified against the frontend on June 15, 2026.
+When this document and the source differ, the current frontend is authoritative
+until both are intentionally updated together.
 
 ## Foundations
 
@@ -22,72 +24,88 @@ local gateway prototype.
 
 ## Typography
 
-- Family: Onest variable, with system sans-serif fallbacks.
-- Page title: 30-40px, weight 600, tight negative tracking.
-- Section title: 20-24px, weight 600.
-- Primary navigation/action: 14-16px, weight 600-700.
-- Body: 14px, weight 400.
-- Supporting labels: 11-12px, uppercase where used for section context.
-- Code and API values: monospace, 12-13px.
+- Family: Onest variable with system sans-serif fallbacks.
+- Chat hero: 32-42px, weight 600.
+- Product page title: 25-32px desktop and 27px mobile, weight 600.
+- Primary section title: 16-22px; card titles: 14-19px.
+- Sidebar navigation: 14px, weight 600.
+- Product-page actions and inputs: 11px.
+- Body, metadata, and supporting labels: 9-12px.
+- Tables: 11px body and 9px headers.
+- Code and API values: monospace, typically 10-11px.
 
-The local source font is stored at:
+The local font is stored at
 `frontend/public/maxshot-assets/onest-variable.ttf`.
 
 ## Shape And Borders
 
-- Primary buttons: 4-7px radius.
-- Cards and dashboard panels: 8-12px radius.
-- Inputs and composers: 8-12px radius.
+- Primary and secondary buttons: 4-7px radius.
+- Product panels and cards: 10px radius.
+- Chat composer and large chat surfaces: 12px radius.
+- Inputs: 7-10px radius.
 - Active navigation: solid lime surface with black foreground.
-- Standard panels: charcoal background with a one-pixel white-alpha border.
-- Selected cards: lime-alpha border, optionally with a subtle lime-tinted fill.
-- Shadows are minimal; separation comes from borders and tonal surfaces.
+- Standard surfaces: charcoal background with a one-pixel white-alpha border.
+- Selected cards: lime-alpha border with an optional subtle lime fill.
+- Shadows are minimal; borders and surface tones provide separation.
 
 ## Components
 
-### Primary Action
+### Global Shell
 
-- Background: `#AAF430`
-- Foreground: `#000000`
-- Weight: 700
-- Height: approximately 40-48px
+- Expanded sidebar: 255px; collapsed sidebar: 64px.
+- Sidebar navigation item: 44px high.
+- Desktop top bar: 88px high with 40px model, account, and login controls.
+- Desktop logo: 122x30px.
 
-### Secondary Action
+### Product Actions
 
-- Background: `rgba(170, 244, 48, 0.08)`
-- Border: `1px solid rgba(170, 244, 48, 0.30)`
-- Foreground: `#AAF430`
+- Standard product-page action: 36px high, 11px label.
+- Compact product-page action: 34px high.
+- Primary action: lime background, black foreground, weight 700.
+- Secondary action: lime-alpha background and border, lime foreground.
 
-### Dashboard Panel
+### Product Panels
 
-- Background: `#131313`
-- Border: `1px solid rgba(255, 255, 255, 0.15)`
-- Radius: 12px
-- Internal spacing: 20-24px desktop, 16-18px mobile
+- Background: `#131313`.
+- Border: `1px solid rgba(255, 255, 255, 0.15)`.
+- Radius: 10px.
+- Padding: 18px desktop and 15px mobile.
+- Adjacent major sections: 12px vertical separation.
+- Typical grid gap: 8-12px.
 
-### Navigation
+### Feature Builders
 
-- Inactive: transparent, white/gray foreground.
-- Hover: white-alpha fill.
-- Active: lime background with black text and icon.
-- Desktop logo dimensions: 122x30px.
+- Drawer width: no more than 600px.
+- Drawer heading: 20px.
+- Form controls: 36px high with 11px labels and values.
+- Capability controls: 39px high.
 
 ## Layout
 
-- Desktop content maximum: approximately 1040px.
-- Desktop outer content padding: 28-40px.
-- Dense grids use 12-16px gaps.
-- Desktop top controls are 40px high.
-- Mobile breakpoint: below approximately 900px.
-- Mobile content padding: 16px.
-- Mobile type and cards retain desktop density rather than becoming oversized.
-- Tables become horizontally scrollable when columns cannot fit.
+- Product content width: `min(1180px, calc(100% - 48px))`.
+- Product content padding: 32px top and 56px bottom.
+- Product page heading gap: 20px; bottom margin: 22px.
+- Product grids use 8-12px gaps unless a component requires more separation.
+- Tables scroll horizontally rather than compressing columns below readability.
+- At 900px and below, chat history becomes a drawer and the shell compacts.
+- At 720px and below, product content uses 14px side margins, 24px top
+  padding, 15px panel padding, and stacked responsive layouts as required.
+- At 620px and below, the global header and narrow chat controls compact.
 
-## Local Assets
+## Content Rules
+
+- Product pages lead with one clear title; subtitles and eyebrow labels are
+  omitted unless they add decision-critical context.
+- Cards do not repeat information already visible in headings, labels, or
+  controls.
+- Preserve privacy, billing, expiry, retention, and destructive-action
+  explanations where they affect a user decision.
+- Mock data must be visibly plausible without adding explanatory marketing copy.
+
+## Local References
 
 - `frontend/public/maxshot-assets/logo.svg`
 - `frontend/public/maxshot-assets/menu.svg`
 - `frontend/public/maxshot-assets/onest-variable.ttf`
-
-The source stylesheet is preserved for reference at:
-`reference/maxshot-app/source.css`.
+- `reference/maxshot-app/source.css`
+- `frontend/src/styles.css`
