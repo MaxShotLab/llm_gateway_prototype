@@ -1,0 +1,8 @@
+frontend/node_modules/
+frontend/dist/
+frontend/.npm-cache/
+frontend/.npmrc
+frontend/AGENTS.md
+
+.DS_Store
+*.log

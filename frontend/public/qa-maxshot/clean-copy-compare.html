@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maxshot Clean UI QA</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 18px; color: #fff; background: #080808; font: 13px Arial, sans-serif; }
+      h1 { margin: 0 0 12px; font-size: 17px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+      figure { margin: 0; padding: 7px; background: #151515; border: 1px solid #303030; }
+      figcaption { padding: 2px 2px 8px; color: #999; }
+      img { display: block; width: 100%; height: auto; }
+      .mobile { grid-template-columns: 390px 390px; justify-content: center; margin-top: 18px; }
+    </style>
+  </head>
+  <body>
+    <h1>Desktop visual-system comparison</h1>
+    <div class="grid">
+      <figure><figcaption>Maxshot source</figcaption><img src="./source-desktop.jpg" alt="Maxshot source" /></figure>
+      <figure><figcaption>Clean API UI</figcaption><img src="./clean-api.png" alt="Clean API UI" /></figure>
+    </div>
+    <div class="grid mobile">
+      <figure><figcaption>Maxshot source mobile</figcaption><img src="./source-mobile.jpg" alt="Maxshot source mobile" /></figure>
+      <figure><figcaption>Clean funding mobile</figcaption><img src="./clean-funding-mobile.png" alt="Clean funding mobile" /></figure>
+    </div>
+  </body>
+</html>

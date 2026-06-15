@@ -1,0 +1,97 @@
+export const paymentMethods = [
+  {
+    id: "card",
+    name: "Credit or debit card",
+    detail: "Visa, Mastercard, Amex",
+    feeRate: 0.029,
+    fixedFee: 0.3,
+    settlement: "Instant",
+  },
+  {
+    id: "alipay",
+    name: "Alipay",
+    detail: "Pay in CNY through Alipay",
+    feeRate: 0.025,
+    fixedFee: 0,
+    exchangeRate: "1 USD = 7.24 CNY",
+    settlement: "Instant",
+  },
+  {
+    id: "usdc",
+    name: "USDC",
+    detail: "Base or Ethereum",
+    feeRate: 0,
+    fixedFee: 0,
+    networkFee: 0.08,
+    exchangeRate: "1 USDC = 1.00 USD",
+    settlement: "1-5 minutes",
+  },
+  {
+    id: "crypto",
+    name: "Other crypto",
+    detail: "ETH, BTC and supported assets",
+    feeRate: 0.01,
+    fixedFee: 0,
+    networkFee: 0.42,
+    exchangeRate: "Rate locked for 15 minutes",
+    settlement: "Network dependent",
+  },
+];
+
+export const starterFundingTransactions = [
+  {
+    id: "fund-1048",
+    date: "Jun 8, 2026, 10:42",
+    method: "Credit card •••• 4242",
+    paid: "$50.00",
+    fees: "$1.75",
+    credits: "50,000,000",
+    status: "Completed",
+    receipt: "RCPT-1048",
+  },
+  {
+    id: "fund-1031",
+    date: "May 27, 2026, 18:16",
+    method: "USDC · Base",
+    paid: "25.00 USDC",
+    fees: "$0.08",
+    credits: "25,000,000",
+    status: "Completed",
+    receipt: "RCPT-1031",
+  },
+  {
+    id: "fund-1009",
+    date: "May 4, 2026, 09:03",
+    method: "Alipay",
+    paid: "¥72.40",
+    fees: "$0.25",
+    credits: "10,000,000",
+    status: "Completed",
+    receipt: "RCPT-1009",
+  },
+];
+
+export const subscriptionPlans = [
+  {
+    name: "Free",
+    description: "Explore the gateway with basic product limits.",
+    price: 0,
+    credits: 0,
+    features: ["Standard model access", "1 API key", "Basic memory"],
+  },
+  {
+    name: "Pro",
+    description: "For regular multi-model chat and production prototypes.",
+    price: 19,
+    credits: 20_000_000,
+    features: ["20M monthly credits", "Premium model access", "10 API keys", "Long-term memory"],
+    popular: true,
+  },
+  {
+    name: "Scale",
+    description: "For high-volume individual API and agent workloads.",
+    price: 79,
+    credits: 100_000_000,
+    features: ["100M monthly credits", "Highest product limits", "Unlimited API keys", "Priority support"],
+  },
+];

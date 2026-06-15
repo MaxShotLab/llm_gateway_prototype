@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual QA Comparison</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #171717; color: white; font: 14px Arial, sans-serif; }
+      section { padding: 18px; }
+      h1 { margin: 0 0 14px; font-size: 18px; }
+      .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+      figure { margin: 0; background: #252525; padding: 8px; }
+      figcaption { padding: 3px 2px 9px; color: #ccc; }
+      img { display: block; width: 100%; height: auto; }
+      .mobile figure { max-width: 430px; }
+      .mobile { justify-content: center; grid-template-columns: repeat(2, 390px); }
+    </style>
+  </head>
+  <body>
+    <section>
+      <h1>Desktop, 1280 × 720</h1>
+      <div class="compare">
+        <figure><figcaption>Source</figcaption><img src="./source-desktop.jpg" alt="B.AI source desktop" /></figure>
+        <figure><figcaption>Implementation</figcaption><img src="./implementation-desktop.jpg" alt="Maxshot implementation desktop" /></figure>
+      </div>
+    </section>
+    <section>
+      <h1>Mobile, 390 × 844</h1>
+      <div class="compare mobile">
+        <figure><figcaption>Source</figcaption><img src="./source-mobile.jpg" alt="B.AI source mobile" /></figure>
+        <figure><figcaption>Implementation</figcaption><img src="./implementation-mobile.jpg" alt="Maxshot implementation mobile" /></figure>
+      </div>
+    </section>
+  </body>
+</html>
