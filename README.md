@@ -84,7 +84,6 @@ Vite's default preview port, normally
 - Free, paid, referral, and usable credit balances.
 - Card, Alipay, USDC, and other cryptocurrency funding methods.
 - Mock checkout, transactions, receipts, and monthly spending limits.
-- Monthly subscription plans and plan changes.
 - Memory creation and deletion.
 
 All changes are held in React state and reset after a page reload unless they
@@ -93,11 +92,16 @@ come from starter data.
 ## Source Structure
 
 ```text
+index.html                  Committed GitHub Pages app shell for root publishing
+assets/                     Committed Pages build assets
+maxshot-assets/             Logo, menu icon, and Onest font for root Pages
+docs/api.html               Static API quick-start page
+qa-maxshot/                 Visual comparison pages and captures for root Pages
 frontend/
   public/
-    assets/                 Navigation icons
-    maxshot-assets/         Logo, menu icon, and Onest font
-    qa-maxshot/             Visual comparison pages and captures
+    assets/                 Source static icons copied by Vite builds
+    maxshot-assets/         Source logo, menu icon, and Onest font
+    qa-maxshot/             Source visual comparison pages and captures
   src/
     data/
       apiData.js            API keys and request-log fixtures
@@ -107,7 +111,6 @@ frontend/
       ApiPage.jsx           API-key and request-log workflow
       ChatPage.jsx          Chat history, composer, privacy, and streaming
       FundingPage.jsx       Credits, payment methods, and transactions
-      SubscriptionPage.jsx  Plans, renewal, and credit expiry
     App.jsx                 Shell, navigation, login, and remaining pages
     main.jsx                React entry point
     styles.css              Global Maxshot design system and responsive CSS
@@ -163,14 +166,12 @@ The component demonstrates key creation, one-time secret display, selection,
 monthly limits, request filtering, failover details, copying, and revocation.
 It does not create usable credentials or send gateway requests.
 
-### Funding And Subscription
+### Credits
 
-`FundingPage` and `SubscriptionPage` use fixtures from
-`frontend/src/data/billingData.js`.
+`FundingPage` uses fixtures from `frontend/src/data/billingData.js`.
 
 Funding calculations are client-side demonstrations. Confirming a payment only
-inserts a mock completed transaction. Subscription changes only update local
-component state.
+inserts a mock completed transaction.
 
 ### Prompts, Agents, Skills, Usage, And Memory
 

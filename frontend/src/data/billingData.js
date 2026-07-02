@@ -70,28 +70,3 @@ export const starterFundingTransactions = [
     receipt: "RCPT-1009",
   },
 ];
-
-export const subscriptionPlans = [
-  {
-    name: "Free",
-    description: "Explore the gateway with basic product limits.",
-    price: 0,
-    credits: 0,
-    features: ["Standard model access", "1 API key", "Basic memory"],
-  },
-  {
-    name: "Pro",
-    description: "For regular multi-model chat and production prototypes.",
-    price: 19,
-    credits: 20_000_000,
-    features: ["20M monthly credits", "Premium model access", "10 API keys", "Long-term memory"],
-    popular: true,
-  },
-  {
-    name: "Scale",
-    description: "For high-volume individual API and agent workloads.",
-    price: 79,
-    credits: 100_000_000,
-    features: ["100M monthly credits", "Highest product limits", "Unlimited API keys", "Priority support"],
-  },
-];
