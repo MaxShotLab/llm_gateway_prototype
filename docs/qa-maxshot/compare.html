@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maxshot UI QA</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; color: #fff; background: #0a0a0a; font: 14px Arial, sans-serif; }
+      section { padding: 20px; }
+      h1 { margin: 0 0 14px; font-size: 18px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+      figure { margin: 0; padding: 8px; background: #181818; }
+      figcaption { padding: 3px 2px 9px; color: #aaa; }
+      img { display: block; width: 100%; height: auto; }
+      .mobile { grid-template-columns: repeat(2, 390px); justify-content: center; }
+    </style>
+  </head>
+  <body>
+    <section>
+      <h1>Desktop visual system</h1>
+      <div class="grid">
+        <figure><figcaption>app.maxshot.ai source</figcaption><img src="./source-desktop.jpg" alt="Maxshot source desktop" /></figure>
+        <figure><figcaption>Gateway implementation</figcaption><img src="./implementation-desktop.jpg" alt="Gateway implementation desktop" /></figure>
+      </div>
+    </section>
+    <section>
+      <h1>Mobile visual system</h1>
+      <div class="grid mobile">
+        <figure><figcaption>app.maxshot.ai source</figcaption><img src="./source-mobile.jpg" alt="Maxshot source mobile" /></figure>
+        <figure><figcaption>Gateway implementation</figcaption><img src="./implementation-mobile.jpg" alt="Gateway implementation mobile" /></figure>
+      </div>
+    </section>
+  </body>
+</html>
