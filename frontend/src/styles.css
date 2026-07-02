@@ -6540,6 +6540,14 @@ body {
   backdrop-filter: blur(20px);
 }
 
+.theme-light .chat-title strong {
+  color: #1f2937;
+}
+
+.theme-light .chat-title span {
+  color: #667085;
+}
+
 .theme-light .nav-item {
   color: #4b5565;
   border-radius: 18px;
@@ -6613,9 +6621,9 @@ body {
   border-radius: 18px;
 }
 
-.theme-light .empty-conversation-title {
+.theme-light .chat-empty .empty-conversation-title {
   display: block;
-  color: #243246;
+  color: #1f2937;
 }
 
 .theme-light .chat-empty h1 {
