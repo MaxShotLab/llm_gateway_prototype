@@ -60,28 +60,34 @@ export function FundingPage() {
     <main className="content-page funding-page">
       <div className="page-heading">
         <div>
-          <h1>Fund account</h1>
+          <h1>Top-up</h1>
         </div>
       </div>
 
       <section className="credit-balance-grid">
         <BalanceCard
           icon={<Wallet size={20} />}
-          label="Purchased credits"
+          label="Paid credits"
           value="48,200,000"
-          note="No expiry"
+          note="From confirmed top-ups"
         />
         <BalanceCard
           icon={<Coins size={20} />}
-          label="Subscription credits"
+          label="Free credits"
           value="6,800,000"
-          note="Expire Jun 30, 2026"
+          note="Consumed before paid credits"
         />
         <BalanceCard
           icon={<CurrencyCircleDollar size={20} />}
-          label="Total estimated value"
-          value="$55.00"
-          note="55M credits"
+          label="Referral rewards"
+          value="500,000"
+          note="Promotional credits"
+        />
+        <BalanceCard
+          icon={<CurrencyCircleDollar size={20} />}
+          label="Usable balance"
+          value="$55.50"
+          note="55.5M credits"
         />
       </section>
 
@@ -89,7 +95,7 @@ export function FundingPage() {
         <section className="panel purchase-panel">
           <div className="panel-heading">
             <div>
-              <h2>Purchase credits</h2>
+              <h2>Top up credits</h2>
             </div>
           </div>
           <div className="amount-grid">

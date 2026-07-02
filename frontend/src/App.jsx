@@ -3,11 +3,14 @@ import {
   ArrowRight,
   Brain,
   CaretDown,
+  ChatsCircle,
   Check,
   Code,
   DotsThree,
   FilePlus,
+  Gauge,
   Globe,
+  Key,
   Lightning,
   MagnifyingGlass,
   MagicWand,
@@ -16,32 +19,31 @@ import {
   Plus,
   PuzzlePiece,
   Robot,
+  Moon,
   Sparkle,
+  Sun,
   Trash,
   UploadSimple,
   UserCircle,
+  Wallet,
   Wrench,
   X,
 } from "@phosphor-icons/react";
 import { ChatPage } from "./pages/ChatPage";
 import { ApiPage } from "./pages/ApiPage";
 import { FundingPage } from "./pages/FundingPage";
-import { SubscriptionPage } from "./pages/SubscriptionPage";
 
-const navItems = [
-  { id: "chat", label: "New Chat", icon: "/assets/chat-light-new.svg" },
-  { id: "prompts", label: "Prompts", Icon: MagicWand },
+const phaseOneNavItems = [
+  { id: "chat", label: "Chat", Icon: ChatsCircle },
+  { id: "usage", label: "Dashboard", Icon: Gauge },
+  { id: "api", label: "API", Icon: Key },
+  { id: "topup", label: "Credits", Icon: Wallet },
+  { id: "settings", label: "Profile", Icon: UserCircle },
+];
+
+const phaseTwoNavItems = [
   { id: "agents", label: "Agents", Icon: Robot },
-  { id: "skills", label: "Skills", Icon: PuzzlePiece },
-  { id: "usage", label: "Usage", icon: "/assets/ai-light-new.svg" },
-  { id: "api", label: "API", icon: "/assets/api-light-new.svg" },
-  { id: "topup", label: "Fund account", icon: "/assets/purchase-light-new.svg" },
-  {
-    id: "subscription",
-    label: "Subscription",
-    icon: "/assets/subscription-light-new.svg",
-  },
-  { id: "memory", label: "Memory", icon: "/assets/memory-light-new.svg" },
+  { id: "toolkits", label: "Toolkits", Icon: PuzzlePiece },
 ];
 
 const mockUsage = [
@@ -193,9 +195,11 @@ const starterSkills = [
 
 function AppShell({ active, onNavigate, user, onLogin, children }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [theme, setTheme] = useState("light");
+  const isLight = theme === "light";
 
   return (
-    <div className={`app-shell ${collapsed ? "is-collapsed" : ""}`}>
+    <div className={`app-shell theme-${theme} ${collapsed ? "is-collapsed" : ""}`}>
       <aside className="sidebar">
         <button className="brand-button" onClick={() => onNavigate("chat")}>
           <img className="desktop-logo" src="/maxshot-assets/logo.svg" alt="Maxshot" />
@@ -203,18 +207,9 @@ function AppShell({ active, onNavigate, user, onLogin, children }) {
         </button>
 
         <nav className="main-nav" aria-label="Main navigation">
-          {navItems.map((item) => (
-            <button
-              className={`nav-item ${active === item.id ? "active" : ""}`}
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              title={collapsed ? item.label : undefined}
-              aria-label={item.label}
-            >
-              {item.Icon ? <item.Icon size={19} /> : <img src={item.icon} alt="" />}
-              <span>{item.label}</span>
-            </button>
-          ))}
+          <NavGroup items={phaseOneNavItems} active={active} collapsed={collapsed} onNavigate={onNavigate} />
+          <div className="nav-section-label">Experimental <span>(Coming Soon)</span></div>
+          <NavGroup items={phaseTwoNavItems} active={active} collapsed={collapsed} onNavigate={onNavigate} />
         </nav>
 
         <button
@@ -243,20 +238,59 @@ function AppShell({ active, onNavigate, user, onLogin, children }) {
           )}
 
           {user ? (
-            <button className="account-button">
-              <UserCircle size={18} />
-              <span>{user}</span>
-            </button>
+            <div className="topbar-account">
+              <a className="credit-pill" href="#" onClick={(event) => { event.preventDefault(); onNavigate("topup"); }}>
+                55,500,000 credits
+                <small>≈ $55.50</small>
+              </a>
+              <button className="account-button" onClick={() => onNavigate("settings")}>
+                <UserCircle size={18} />
+                <span>{user}</span>
+              </button>
+              <ThemeToggle isLight={isLight} onToggle={() => setTheme(isLight ? "dark" : "light")} />
+            </div>
           ) : (
-            <button className="login-button" onClick={onLogin}>
-              Log in
-            </button>
+            <div className="topbar-account">
+              <ThemeToggle isLight={isLight} onToggle={() => setTheme(isLight ? "dark" : "light")} />
+              <button className="login-button" onClick={onLogin}>
+                Log in
+              </button>
+            </div>
           )}
         </header>
         {children}
       </section>
     </div>
   );
+}
+
+function ThemeToggle({ isLight, onToggle }) {
+  return (
+    <button
+      className="theme-toggle"
+      onClick={onToggle}
+      aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"}
+      title={isLight ? "Dark theme" : "Light theme"}
+    >
+      {isLight ? <Moon size={16} /> : <Sun size={16} />}
+      <span>{isLight ? "Dark" : "Light"}</span>
+    </button>
+  );
+}
+
+function NavGroup({ items, active, collapsed, onNavigate }) {
+  return items.map((item) => (
+    <button
+      className={`nav-item ${active === item.id ? "active" : ""}`}
+      key={item.id}
+      onClick={() => onNavigate(item.id)}
+      title={collapsed ? item.label : undefined}
+      aria-label={item.label}
+    >
+      <item.Icon size={19} weight={active === item.id ? "duotone" : "regular"} />
+      <span>{item.label}</span>
+    </button>
+  ));
 }
 
 function LoginModal({ onClose, onSuccess }) {
@@ -348,10 +382,10 @@ function UsagePage() {
       />
 
       <section className="metric-grid">
-        <MetricCard label="Purchased credits" value="48,200,000" note="Do not expire" />
-        <MetricCard label="Subscription credits" value="6,800,000" note="Expire Jun 30" />
-        <MetricCard label="Credits used" value="218,490" note="-8.4% vs May" />
-        <MetricCard label="Estimated balance" value="$55.00" note="55,000,000 credits" />
+        <MetricCard label="Paid credits" value="48,200,000" note="Top-up balance" />
+        <MetricCard label="Free credits" value="6,800,000" note="Consumed first" />
+        <MetricCard label="Referral rewards" value="500,000" note="Promotional credits" />
+        <MetricCard label="Usable balance" value="$55.50" note="55,500,000 credits" />
       </section>
 
       <section className="panel usage-chart-panel">
@@ -423,6 +457,50 @@ function UsagePage() {
   );
 }
 
+function SettingsPage({ user }) {
+  return (
+    <main className="content-page settings-page">
+      <PageHeader title="Settings" />
+      <section className="panel settings-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Profile</h2>
+            <p>Email login and account display settings.</p>
+          </div>
+        </div>
+        <div className="settings-grid">
+          <label>
+            Display name
+            <input defaultValue={user ? user.split("@")[0] : "Maxshot user"} />
+          </label>
+          <label>
+            Email
+            <input type="email" defaultValue={user || "you@company.com"} />
+          </label>
+        </div>
+      </section>
+      <section className="panel settings-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Spend controls</h2>
+            <p>Account-level limits block new billable requests when reached.</p>
+          </div>
+        </div>
+        <div className="settings-grid">
+          <label>
+            Daily limit
+            <input defaultValue="$25" />
+          </label>
+          <label>
+            Monthly limit
+            <input defaultValue="$150" />
+          </label>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function MetricCard({ label, value, note }) {
   return (
     <article className="metric-card">
@@ -466,11 +544,12 @@ function FeatureModal({ title, description, onClose, children, footer }) {
   );
 }
 
-function PromptsPage({ onUsePrompt }) {
+function PromptsPage({ onUsePrompt, embedded = false }) {
   const [prompts, setPrompts] = useState(starterPrompts);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [editing, setEditing] = useState(null);
+  const Shell = embedded ? "section" : "main";
 
   const filtered = prompts.filter((prompt) => {
     const matchesQuery = `${prompt.title} ${prompt.description}`
@@ -499,15 +578,27 @@ function PromptsPage({ onUsePrompt }) {
   };
 
   return (
-    <main className="content-page feature-page">
-      <PageHeader
-        title="Prompts"
-        action={
+    <Shell className={embedded ? "toolkit-panel feature-page" : "content-page feature-page"}>
+      {!embedded ? (
+        <PageHeader
+          title="Prompts"
+          action={
+            <button className="primary-button compact" onClick={() => setEditing({})}>
+              <Plus size={17} /> New prompt
+            </button>
+          }
+        />
+      ) : (
+        <div className="toolkit-panel-heading">
+          <div>
+            <h2>Prompts</h2>
+            <p>Reusable instructions for common chat and API workflows.</p>
+          </div>
           <button className="primary-button compact" onClick={() => setEditing({})}>
             <Plus size={17} /> New prompt
           </button>
-        }
-      />
+        </div>
+      )}
       <div className="feature-toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search prompts" />
         <div className="filter-tabs">
@@ -576,7 +667,7 @@ function PromptsPage({ onUsePrompt }) {
           </form>
         </FeatureModal>
       )}
-    </main>
+    </Shell>
   );
 }
 
@@ -739,10 +830,11 @@ function AgentsPage() {
   );
 }
 
-function SkillsPage() {
+function SkillsPage({ embedded = false }) {
   const [skills, setSkills] = useState(starterSkills);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState(null);
+  const Shell = embedded ? "section" : "main";
 
   const saveSkill = (event) => {
     event.preventDefault();
@@ -770,16 +862,29 @@ function SkillsPage() {
   );
 
   return (
-    <main className="content-page feature-page">
-      <PageHeader
-        title="Skills"
-        action={
+    <Shell className={embedded ? "toolkit-panel feature-page" : "content-page feature-page"}>
+      {!embedded ? (
+        <PageHeader
+          title="Skills"
+          action={
+            <div className="header-actions">
+              <button className="secondary-button"><UploadSimple size={16} /> Import</button>
+              <button className="primary-button compact" onClick={() => setEditing({})}><Plus size={17} /> New skill</button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="toolkit-panel-heading">
+          <div>
+            <h2>Skills</h2>
+            <p>Model-invoked capabilities and tool access rules.</p>
+          </div>
           <div className="header-actions">
             <button className="secondary-button"><UploadSimple size={16} /> Import</button>
             <button className="primary-button compact" onClick={() => setEditing({})}><Plus size={17} /> New skill</button>
           </div>
-        }
-      />
+        </div>
+      )}
       <div className="feature-toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search skills" />
         <div className="catalog-summary"><strong>{skills.filter((skill) => skill.active).length}</strong> active</div>
@@ -843,15 +948,16 @@ function SkillsPage() {
           </form>
         </FeatureModal>
       )}
-    </main>
+    </Shell>
   );
 }
 
-function MemoryPage() {
+function MemoryPage({ embedded = false }) {
   const [enabled, setEnabled] = useState(true);
   const [memories, setMemories] = useState(starterMemories);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
+  const Shell = embedded ? "section" : "main";
 
   const addMemory = (event) => {
     event.preventDefault();
@@ -870,15 +976,27 @@ function MemoryPage() {
   };
 
   return (
-    <main className="content-page">
-      <PageHeader
-        title="Memory"
-        action={
+    <Shell className={embedded ? "toolkit-panel memory-page" : "content-page"}>
+      {!embedded ? (
+        <PageHeader
+          title="Memory"
+          action={
+            <button className="primary-button compact" onClick={() => setAdding(true)}>
+              <Plus size={17} /> Add memory
+            </button>
+          }
+        />
+      ) : (
+        <div className="toolkit-panel-heading">
+          <div>
+            <h2>Memory</h2>
+            <p>Saved context that can personalize future conversations.</p>
+          </div>
           <button className="primary-button compact" onClick={() => setAdding(true)}>
             <Plus size={17} /> Add memory
           </button>
-        }
-      />
+        </div>
+      )}
       <section className="memory-hero">
         <div className="memory-hero-icon">
           <Sparkle size={27} />
@@ -955,6 +1073,40 @@ function MemoryPage() {
           <strong>Import memories</strong>
         </button>
       </section>
+    </Shell>
+  );
+}
+
+function ToolkitsPage({ onUsePrompt }) {
+  const [activeTab, setActiveTab] = useState("skills");
+  const tabs = [
+    { id: "skills", label: "Skills", Icon: PuzzlePiece },
+    { id: "prompts", label: "Prompts", Icon: MagicWand },
+    { id: "memory", label: "Memory", Icon: Brain },
+  ];
+
+  return (
+    <main className="content-page toolkits-page">
+      <PageHeader
+        title="Toolkits"
+        subtitle="Experimental workspace for reusable skills, prompts, and memory controls."
+      />
+      <div className="toolkit-tabs" role="tablist" aria-label="Toolkit sections">
+        {tabs.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            className={activeTab === id ? "active" : ""}
+            onClick={() => setActiveTab(id)}
+            role="tab"
+            aria-selected={activeTab === id}
+          >
+            <Icon size={17} /> {label}
+          </button>
+        ))}
+      </div>
+      {activeTab === "skills" && <SkillsPage embedded />}
+      {activeTab === "prompts" && <PromptsPage embedded onUsePrompt={onUsePrompt} />}
+      {activeTab === "memory" && <MemoryPage embedded />}
     </main>
   );
 }
@@ -966,9 +1118,10 @@ export function App() {
   const [chatSeed, setChatSeed] = useState("");
 
   const page = useMemo(() => {
-    if (active === "prompts") {
+    if (active === "agents") return <AgentsPage />;
+    if (active === "toolkits") {
       return (
-        <PromptsPage
+        <ToolkitsPage
           onUsePrompt={(prompt) => {
             setChatSeed(prompt);
             setActive("chat");
@@ -976,20 +1129,17 @@ export function App() {
         />
       );
     }
-    if (active === "agents") return <AgentsPage />;
-    if (active === "skills") return <SkillsPage />;
     if (active === "usage") return <UsagePage />;
     if (active === "api") return <ApiPage />;
     if (active === "topup") return <FundingPage />;
-    if (active === "subscription") return <SubscriptionPage />;
-    if (active === "memory") return <MemoryPage />;
+    if (active === "settings") return <SettingsPage user={user} />;
     return (
       <ChatPage
         seedPrompt={chatSeed}
         onSeedConsumed={() => setChatSeed("")}
       />
     );
-  }, [active, chatSeed]);
+  }, [active, chatSeed, user]);
 
   return (
     <>

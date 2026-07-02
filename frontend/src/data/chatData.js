@@ -59,7 +59,7 @@ export const starterConversations = [
       {
         role: "assistant",
         content:
-          "The prototype validates Maxshot's core product structure: multi-model chat, API access, prepaid usage, subscriptions, prompts, agents, skills, and memory. The next focus is production-grade chat persistence, request transparency, and billing controls.",
+          "The prototype validates Maxshot's Phase 1 structure: configured multi-model chat, API access, top-up, free and paid credits, usage totals, referral rewards, and spending controls. Phase 2 surfaces such as prompts, agents, skills, and memory remain separated from the launch scope.",
       },
     ],
   },

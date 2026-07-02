@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
+  Brain,
   CaretDown,
   ChatsCircle,
   Check,
@@ -667,7 +668,7 @@ function ChatComposer({
             aria-label="Toggle memory"
             title={memoryLocked ? "Memory disabled by privacy mode" : "Memory"}
           >
-            <img src="/assets/memory-disabled.svg" alt="" />
+            <Brain size={20} />
           </button>
           {searchEnabled && <span className="composer-status"><Globe size={13} /> Search on</span>}
           {memoryLocked && <span className="composer-status"><LockKey size={13} /> Memory off</span>}

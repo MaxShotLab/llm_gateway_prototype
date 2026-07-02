@@ -96,7 +96,7 @@ export function ApiPage() {
         <div>
           <span className="api-chip">OpenAI compatible</span>
           <h2>One endpoint. Every model.</h2>
-          <a className="api-doc-link" href="https://docs.b.ai/llmservice/introduction/" target="_blank" rel="noreferrer">
+          <a className="api-doc-link" href={`${import.meta.env.BASE_URL}docs/api.html`} target="_blank" rel="noreferrer">
             Documentation <ArrowRight size={15} />
           </a>
         </div>
