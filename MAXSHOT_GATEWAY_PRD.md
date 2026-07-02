@@ -222,6 +222,7 @@ Acceptance:
 - Text, Markdown, code, error, and interrupted-response rendering.
 - Persistent history with reopen, rename, and title search.
 - Model identity retained per conversation.
+- File upload with capability-aware model support.
 - Temporary chat that is not saved to persistent history.
 - Web search or reasoning controls shown only when supported by the selected
   model or route.
@@ -282,6 +283,8 @@ Acceptance:
 - Failed payments do not change the balance.
 - Adding a payment method does not change the credit ledger model.
 - Free and paid credit ledger entries remain distinguishable after top-up.
+- Top-up credits are spend-only inside Maxshot; balance withdrawals, cash-out,
+  refunds, and redemption back to fiat or crypto are not supported.
 
 ### P0.7 Gateway
 
@@ -303,8 +306,7 @@ Acceptance:
 - Reward the referrer when a referred user completes a confirmed top-up.
 - Default reward rate is 10% of the referred user's confirmed top-up amount.
 - Reward rate and maximum reward cap are configurable.
-- Default maximum reward cap is 50% of the referred user's confirmed top-up
-  amount.
+- Default maximum reward cap is $50 from each referred user.
 - Show referral link, referred top-ups, earned rewards, and reward status.
 - Grant rewards only after the referred top-up is confirmed.
 - Withhold rewards for failed top-ups and revoke or withhold rewards for
@@ -322,7 +324,6 @@ Acceptance:
 
 ### P1.1 Advanced Chat And Privacy
 
-- File and image attachments.
 - Search citations and advanced search UX.
 - Conversation memory controls.
 - Provider-eligible zero-retention mode.
@@ -465,6 +466,8 @@ chat interaction layer; Maxshot owns the rest of the application.
 
 | Date | Version | Changes |
 |---|---|---|
-| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards with default 10% reward rate and configurable cap up to a default 50%. |
+| 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
+| 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |
+| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards. |
 | 2026-07-02 | Phase 1 usage-based revision | Removed subscriptions from Phase 1, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, temporary chat, capability-aware search/reasoning, API key creation-time secret copy, and updated navigation/migration scope. |
 | 2026-06-15 | Initial PRD | Defined original product delivery requirements, ownership boundaries, Phase 1/Phase 2 scope, subscriptions, credits, and prototype migration plan. |

@@ -5,16 +5,17 @@ Last verified against the frontend on June 15, 2026.
 ## Reference And Evidence
 
 - Source visual truth:
-  - `reference/maxshot-app/source-desktop.jpg`
-  - `reference/maxshot-app/source-mobile.jpg`
-  - `reference/maxshot-app/source.css`
+  - [reference/maxshot-app/source-desktop.jpg](./reference/maxshot-app/source-desktop.jpg)
+  - [reference/maxshot-app/source-mobile.jpg](./reference/maxshot-app/source-mobile.jpg)
+  - [reference/maxshot-app/source.css](./reference/maxshot-app/source.css)
 - Current post-density captures:
-  - `reference/maxshot-app/implementation/api-clean.png`
-  - `reference/maxshot-app/implementation/funding-clean-mobile.png`
+  - [reference/maxshot-app/implementation/api-clean.png](./reference/maxshot-app/implementation/api-clean.png)
+  - [reference/maxshot-app/implementation/funding-clean-mobile.png](./reference/maxshot-app/implementation/funding-clean-mobile.png)
 - Current comparison surface:
-  - `http://127.0.0.1:5173/qa-maxshot/clean-copy-compare.html`
+  - [clean-copy comparison](http://127.0.0.1:5173/qa-maxshot/clean-copy-compare.html)
 - Historical regression captures remain in
-  `reference/maxshot-app/implementation/` and `frontend/public/qa-maxshot/`.
+  [reference/maxshot-app/implementation/](./reference/maxshot-app/implementation/) and
+  [frontend/public/qa-maxshot/](./frontend/public/qa-maxshot/).
   They predate the latest density and copy pass and are not current pixel
   references.
 - Verification viewports: 1280x720 desktop and 390x844 mobile.
@@ -28,7 +29,7 @@ internal consistency rather than identical page composition.
 - No actionable P0, P1, or P2 visual mismatches remain.
 - The frontend consistently uses the black canvas, Onest type, lime primary
   actions, charcoal surfaces, white-alpha borders, compact radii, and dense
-  layout recorded in `MAXSHOT_UI_SPECS.md`.
+  layout recorded in [MAXSHOT_UI_SPECS.md](./MAXSHOT_UI_SPECS.md).
 - Desktop navigation, cards, tables, code blocks, selected states, billing
   controls, and account actions follow the extracted hierarchy.
 - Mobile uses the source menu asset and retains compact controls while adapting
@@ -67,7 +68,7 @@ implemented in the current frontend.
 - Spacing: passed. Product pages use an 1180px maximum content width, 18px
   desktop panel padding, 15px mobile panel padding, 8-12px grid gaps, and
   34-36px controls.
-- Color: passed. Active tokens match `MAXSHOT_UI_SPECS.md`.
+- Color: passed. Active tokens match [MAXSHOT_UI_SPECS.md](./MAXSHOT_UI_SPECS.md).
 - Assets: passed. The Maxshot logo and menu assets are local; generic interface
   actions use Phosphor icons or existing navigation SVGs.
 - Content density: passed. Redundant subtitles, panel explanations, repeated

@@ -161,6 +161,9 @@ export function FundingPage() {
           <small className="secure-note">
             <ShieldCheck size={15} /> Mock checkout · {method.settlement}
           </small>
+          <small className="spend-only-note">
+            Credits are for Maxshot usage only. Balance withdrawals are not supported.
+          </small>
         </aside>
       </div>
 

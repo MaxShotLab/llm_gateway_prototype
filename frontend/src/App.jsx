@@ -6,6 +6,7 @@ import {
   ChatsCircle,
   Check,
   Code,
+  Copy,
   DotsThree,
   FilePlus,
   Gauge,
@@ -20,6 +21,7 @@ import {
   PuzzlePiece,
   Robot,
   Moon,
+  ShareNetwork,
   Sparkle,
   Sun,
   Trash,
@@ -38,6 +40,7 @@ const phaseOneNavItems = [
   { id: "usage", label: "Dashboard", Icon: Gauge },
   { id: "api", label: "API", Icon: Key },
   { id: "topup", label: "Credits", Icon: Wallet },
+  { id: "referral", label: "Referral", Icon: ShareNetwork },
   { id: "settings", label: "Profile", Icon: UserCircle },
 ];
 
@@ -52,6 +55,31 @@ const mockUsage = [
   ["Jun 10, 17:44", "Claude Sonnet 4.6", "Chat", "4,221", "9,885"],
   ["Jun 10, 14:06", "Gemini 3.1 Pro", "API", "2,814", "4,023"],
   ["Jun 09, 20:51", "DeepSeek V4 Flash", "Chat", "1,102", "1,398"],
+];
+
+const referralConfig = {
+  rewardRate: 10,
+  maxRewardUsd: 50,
+  link: "https://gateway.maxshot.ai/r/max-dchef",
+};
+
+const referralTopUps = [
+  {
+    id: "ref-1042",
+    user: "alex@builder.dev",
+    joined: "Jun 12, 2026",
+    topUp: "$100.00",
+    reward: "$10.00",
+    status: "Confirmed",
+  },
+  {
+    id: "ref-1037",
+    user: "mia@studio.ai",
+    joined: "Jun 10, 2026",
+    topUp: "$250.00",
+    reward: "$25.00",
+    status: "Confirmed",
+  },
 ];
 
 const starterMemories = [
@@ -225,17 +253,7 @@ function AppShell({ active, onNavigate, user, onLogin, children }) {
 
       <section className="workspace">
         <header className="topbar">
-          {active !== "chat" ? (
-            <button className="model-button">
-              <span className="model-mark">
-                <Lightning size={14} weight="fill" />
-              </span>
-              <span>MiniMax-M3</span>
-              <CaretDown size={14} />
-            </button>
-          ) : (
-            <span />
-          )}
+          <span />
 
           {user ? (
             <div className="topbar-account">
@@ -367,6 +385,98 @@ function PageHeader({ eyebrow, title, description, action }) {
       {action}
     </div>
   );
+}
+
+function ReferralPage() {
+  const [copied, setCopied] = useState(false);
+  const confirmedTopUp = referralTopUps.reduce(
+    (sum, item) => sum + parseCurrency(item.topUp),
+    0,
+  );
+  const earnedRewards = referralTopUps.reduce(
+    (sum, item) => sum + parseCurrency(item.reward),
+    0,
+  );
+
+  const copyReferralLink = () => {
+    navigator.clipboard?.writeText(referralConfig.link);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  return (
+    <main className="content-page referral-page">
+      <PageHeader
+        title="Referral & Rewards"
+      />
+
+      <section className="referral-hero panel">
+        <div>
+          <h2>Invite users. Earn on confirmed top-ups.</h2>
+          <p>10% reward, capped at $50 from each referee.</p>
+        </div>
+        <div className="referral-link-box">
+          <code>{referralConfig.link}</code>
+          <button className="secondary-button compact" onClick={copyReferralLink}>
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+            {copied ? "Copied" : "Copy link"}
+          </button>
+        </div>
+      </section>
+
+      <section className="metric-grid referral-metrics">
+        <MetricCard label="Reward rate" value={`${referralConfig.rewardRate}%`} note="Of confirmed referee top-up" />
+        <MetricCard label="Reward cap" value={`$${referralConfig.maxRewardUsd}`} note="Per referred user" />
+        <MetricCard label="Earned rewards" value={formatCurrency(earnedRewards)} note="Confirmed promotional credits" />
+        <MetricCard label="Confirmed top-up" value={formatCurrency(confirmedTopUp)} note="Measured referee volume" />
+      </section>
+
+      <section className="panel referral-table-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Referred top-ups</h2>
+            <p>{referralTopUps.length} confirmed rewards.</p>
+          </div>
+        </div>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Referee</th>
+                <th>Joined</th>
+                <th>Top-up</th>
+                <th>Reward</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {referralTopUps.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.user}</td>
+                  <td>{item.joined}</td>
+                  <td>{item.topUp}</td>
+                  <td>{item.reward}</td>
+                  <td>
+                    <span className="status-pill success">
+                      <i /> {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function parseCurrency(value) {
+  return Number(String(value).replace(/[^0-9.-]+/g, "")) || 0;
+}
+
+function formatCurrency(value) {
+  return `$${value.toFixed(2)}`;
 }
 
 function UsagePage() {
@@ -1132,6 +1242,7 @@ export function App() {
     if (active === "usage") return <UsagePage />;
     if (active === "api") return <ApiPage />;
     if (active === "topup") return <FundingPage />;
+    if (active === "referral") return <ReferralPage />;
     if (active === "settings") return <SettingsPage user={user} />;
     return (
       <ChatPage

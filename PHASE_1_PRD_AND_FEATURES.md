@@ -48,7 +48,7 @@ Phase 1 must optimize for six complete paths:
 
 | Area | Must do in Phase 1 |
 |---|---|
-| Chat | Configured flagship/free model list, streaming chat, stop/retry/regenerate, history, search, model price/capability display, temporary chat, web search/reasoning toggles when supported |
+| Chat | Configured flagship/free model list, streaming chat, stop/retry/regenerate, history, search, file upload, model price/capability display, temporary chat, web search/reasoning toggles when supported |
 | Usage | Configurable registered-user free credits, paid credits after top-up, token histories, per-request costs, current-period totals, CSV export, chat/API split |
 | Limits | Account limits, API-key limits, low-balance warning, hard block on exhausted balance/limit |
 | Top-up | At least two configured top-up methods, including one fiat path, receipts, status |
@@ -68,6 +68,7 @@ Must-do features:
 - Configurable default model list with flagship models and a few free models.
 - Model selector with provider, price, context, and capability metadata.
 - Selected model and estimated cost visible before use.
+- File upload with capability-aware model support.
 - Web search toggle when the selected model or route supports it.
 - Deep thinking/reasoning toggle when the selected model supports it.
 - Temporary chat not saved to persistent history.
@@ -131,6 +132,9 @@ The conversion must be explicit:
 Pay $10, 10 USDC, or 10 AIT, subject to configured rates and fees -> receive estimated credits
 ```
 
+Top-up credits are spend-only inside Maxshot. Phase 1 does not support balance
+withdrawals, cash-out, refunds, or redemption back to fiat or crypto.
+
 ## 8. Account And Security
 
 Must-do features:
@@ -149,8 +153,7 @@ Must-do features:
 - Reward the referrer when a referred user completes a confirmed top-up.
 - Default reward rate is 10% of the referred user's confirmed top-up amount.
 - Reward rate and maximum reward cap are configurable.
-- Default maximum reward cap is 50% of the referred user's confirmed top-up
-  amount.
+- Default maximum reward cap is $50 from each referred user.
 - Show referral link, referred top-ups, earned rewards, and reward status.
 - Grant rewards only after the referred top-up is confirmed.
 - Withhold rewards for failed top-ups and revoke or withhold rewards for
@@ -194,8 +197,8 @@ Phase 1 is acceptable when a test user can complete these paths end to end:
 
 1. Create an account with email login.
 2. Top up through at least two configured methods, including one fiat method.
-3. Send chat messages, including a temporary chat and a capability-aware model
-   feature such as search or reasoning.
+3. Send chat messages, including file upload, a temporary chat, and a
+   capability-aware model feature such as search or reasoning.
 4. See token usage, request cost, and updated balance after chat usage.
 5. Create multiple API keys, set limits, call the OpenAI-compatible API, and
    revoke a key.
@@ -220,6 +223,8 @@ Phase 1 is acceptable when a test user can complete these paths end to end:
 
 | Date | Version | Changes |
 |---|---|---|
-| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards with default 10% reward rate and configurable cap up to a default 50%. |
+| 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
+| 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |
+| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards. |
 | 2026-07-02 | Tightened must-do revision | Reduced Phase 1 to must-do chat/API/top-up/usage/account surfaces, removed subscriptions/2FA/memory/prompts/agents/system prompts from launch scope, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, and creation-time-only API key secret copy. |
 | 2026-07-02 | Initial Phase 1 draft | Added standalone Phase 1 PRD and feature surface document for team discussion. |

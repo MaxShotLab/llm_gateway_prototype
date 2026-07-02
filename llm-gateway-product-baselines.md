@@ -159,10 +159,13 @@ Account deletion is not supported.
 - Show exchange rates, network fees, payment fees, and final credit amount
   before confirmation.
 - Show funding status, transaction history, and receipts.
+- Support Phase 1 chat file upload when the selected model supports files.
 
 One credit is an internal usage-accounting unit. Credits are not redeemable,
 reserve-backed, transferable, or represented as cryptocurrency. Payments
 purchase credits and do not create a stored fiat or cryptocurrency balance.
+Top-up credits are spend-only inside Maxshot; balance withdrawals, cash-out,
+refunds, and redemption back to fiat or crypto are not supported.
 
 Monthly subscriptions are not part of Phase 1.
 
@@ -182,8 +185,7 @@ Monthly subscriptions are not part of Phase 1.
 - Reward the referrer when a referred user completes a confirmed top-up.
 - Use a configurable reward rate and maximum cap.
 - Default reward rate is 10% of the referred user's confirmed top-up amount.
-- Default maximum reward cap is 50% of the referred user's confirmed top-up
-  amount.
+- Default maximum reward cap is $50 from each referred user.
 - Show referral link, referred top-ups, earned rewards, and reward status.
 - Grant rewards only after the referred top-up is confirmed.
 - Withhold rewards for failed top-ups and revoke or withhold rewards for
@@ -200,7 +202,6 @@ gateway visibility without changing the Phase 1 credit model.
 
 ### 5.1 Advanced Chat And Privacy
 
-- File and image attachments.
 - Search citations and advanced search UX.
 - Per-conversation memory controls.
 - Per-conversation zero-retention mode.
@@ -340,6 +341,8 @@ Required alignment work:
 
 | Date | Version | Changes |
 |---|---|---|
-| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards with default 10% reward rate and configurable cap up to a default 50%. |
+| 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
+| 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |
+| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards. |
 | 2026-07-02 | Phase 1 usage-based revision | Removed subscriptions from Phase 1, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, temporary chat, capability-aware search/reasoning, and updated navigation. |
 | 2026-06-15 | Initial baseline | Defined original Phase 1/Phase 2 product baseline, assistant-ui/New API framework, subscriptions, credits, and advanced feature phases. |

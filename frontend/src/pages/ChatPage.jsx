@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowClockwise,
   ArrowRight,
   Brain,
   CaretDown,
@@ -8,11 +9,11 @@ import {
   ClockCounterClockwise,
   FileText,
   Globe,
-  ImageSquare,
   LinkSimple,
   LockKey,
   MagnifyingGlass,
   Paperclip,
+  PencilSimple,
   Plus,
   ShieldCheck,
   SidebarSimple,
@@ -23,7 +24,7 @@ import {
 } from "@phosphor-icons/react";
 import {
   chatModels,
-  mockAttachments,
+  mockUploadFiles,
   starterConversations,
 } from "../data/chatData";
 
@@ -40,6 +41,21 @@ function createConversation(model) {
   };
 }
 
+function modelCapabilityText(model) {
+  const capabilities = [];
+  if (model.webSearch) capabilities.push("Search");
+  if (model.reasoning) capabilities.push("Thinking");
+  if (model.files) capabilities.push("Files");
+  return capabilities.length ? capabilities.join(" · ") : "Chat only";
+}
+
+function addMockFile(currentFiles, setFiles) {
+  const nextFile = mockUploadFiles.find(
+    (file) => !currentFiles.some((current) => current.id === file.id),
+  );
+  if (nextFile) setFiles((current) => [...current, nextFile]);
+}
+
 export function ChatPage({ seedPrompt, onSeedConsumed }) {
   const [conversations, setConversations] = useState(starterConversations);
   const [transientConversation, setTransientConversation] = useState(null);
@@ -52,11 +68,11 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
   const [model, setModel] = useState(chatModels[0].name);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [searchEnabled, setSearchEnabled] = useState(false);
-  const [memoryEnabled, setMemoryEnabled] = useState(true);
+  const [reasoningEnabled, setReasoningEnabled] = useState(false);
   const [temporary, setTemporary] = useState(false);
   const [zeroRetention, setZeroRetention] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [attachments, setAttachments] = useState([]);
+  const [files, setFiles] = useState([]);
   const [streaming, setStreaming] = useState(false);
   const [streamedText, setStreamedText] = useState("");
   const streamTimer = useRef(null);
@@ -105,7 +121,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     setActiveId(null);
     setTransientConversation(null);
     setValue("");
-    setAttachments([]);
+    setFiles([]);
     setStreamedText("");
     setStreaming(false);
     if (window.matchMedia("(max-width: 900px)").matches) setHistoryOpen(false);
@@ -118,8 +134,8 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     setModel(conversation.model);
     setTemporary(false);
     setZeroRetention(false);
-    setMemoryEnabled(true);
-    setAttachments([]);
+    setReasoningEnabled(false);
+    setFiles([]);
     if (window.matchMedia("(max-width: 900px)").matches) setHistoryOpen(false);
   };
 
@@ -127,18 +143,14 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     if (zeroRetention) {
       setZeroRetention(false);
       setTemporary(false);
-      setMemoryEnabled(true);
       return;
     }
 
     const next = !temporary;
     setTemporary(next);
     if (next) {
-      setMemoryEnabled(false);
       setActiveId(null);
       setTransientConversation(null);
-    } else if (!zeroRetention) {
-      setMemoryEnabled(true);
     }
   };
 
@@ -148,7 +160,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     setZeroRetention(next);
     if (next) {
       setTemporary(true);
-      setMemoryEnabled(false);
       setActiveId(null);
       setTransientConversation(null);
     }
@@ -158,17 +169,12 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     setModel(nextModel.name);
     setModelMenuOpen(false);
     if (!nextModel.webSearch) setSearchEnabled(false);
+    if (!nextModel.reasoning) setReasoningEnabled(false);
+    if (!nextModel.files) setFiles([]);
     if (!nextModel.zeroRetention && zeroRetention) {
       setZeroRetention(false);
       setTemporary(true);
     }
-  };
-
-  const addAttachment = () => {
-    const next = mockAttachments.find(
-      (item) => !attachments.some((attachment) => attachment.id === item.id),
-    );
-    if (next) setAttachments((current) => [...current, next]);
   };
 
   const finishStream = (conversationId, assistantMessage, persist) => {
@@ -203,13 +209,41 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     streamTimer.current = null;
   };
 
-  const send = () => {
-    if (!value.trim() || streaming) return;
-    const prompt = value.trim();
+  const buildAssistantMessage = () => ({
+    role: "assistant",
+    content: responseText,
+    citations: searchEnabled
+      ? [
+          {
+            title: "Gateway routing baseline",
+            source: "Maxshot product baseline",
+            url: "#gateway-routing",
+          },
+          {
+            title: "Provider privacy controls",
+            source: "Provider configuration",
+            url: "#privacy-controls",
+          },
+        ]
+      : [],
+    usage: {
+      inputTokens: 1842,
+      outputTokens: 624,
+      cachedTokens: 0,
+      cost: selectedModel.estimatedCost,
+      model: selectedModel.name,
+    },
+    reasoning: reasoningEnabled,
+    search: searchEnabled,
+  });
+
+  const send = ({ promptOverride, appendUser = true } = {}) => {
+    if ((!promptOverride && !value.trim()) || streaming) return;
+    const prompt = promptOverride || value.trim();
     const userMessage = {
       role: "user",
       content: prompt,
-      attachments,
+      files,
     };
     const shouldPersist = !temporary;
     let conversationId = activeId;
@@ -219,7 +253,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
       conversationId = nextConversation.id;
       nextConversation.title =
         prompt.length > 38 ? `${prompt.slice(0, 38)}...` : prompt;
-      nextConversation.messages = [userMessage];
+      nextConversation.messages = appendUser ? [userMessage] : [];
       if (shouldPersist) {
         setConversations((current) => [nextConversation, ...current]);
         setActiveId(conversationId);
@@ -228,19 +262,21 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
         setActiveId(conversationId);
       }
     } else {
-      updateActiveConversation((conversation) => ({
-        ...conversation,
-        title:
-          conversation.messages.length === 0
-            ? prompt.slice(0, 42)
-            : conversation.title,
-        messages: [...conversation.messages, userMessage],
-        updated: "Now",
-      }));
+      if (appendUser) {
+        updateActiveConversation((conversation) => ({
+          ...conversation,
+          title:
+            conversation.messages.length === 0
+              ? prompt.slice(0, 42)
+              : conversation.title,
+          messages: [...conversation.messages, userMessage],
+          updated: "Now",
+        }));
+      }
     }
 
     setValue("");
-    setAttachments([]);
+    setFiles([]);
     setStreaming(true);
     setStreamedText("");
 
@@ -253,24 +289,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
         window.clearInterval(streamTimer.current);
         finishStream(
           conversationId,
-          {
-            role: "assistant",
-            content: responseText,
-            citations: searchEnabled
-              ? [
-                  {
-                    title: "Gateway routing baseline",
-                    source: "Maxshot product baseline",
-                    url: "#gateway-routing",
-                  },
-                  {
-                    title: "Provider privacy controls",
-                    source: "Provider configuration",
-                    url: "#privacy-controls",
-                  },
-                ]
-              : [],
-          },
+          buildAssistantMessage(),
           shouldPersist,
         );
       }
@@ -288,6 +307,13 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
           role: "assistant",
           content: `${streamedText} [Stopped]`,
           citations: [],
+          usage: {
+            inputTokens: 1842,
+            outputTokens: Math.max(Math.round(streamedText.length / 4), 1),
+            cachedTokens: 0,
+            cost: selectedModel.estimatedCost,
+            model: selectedModel.name,
+          },
         },
         !temporary,
       );
@@ -295,6 +321,31 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
       setStreaming(false);
       setStreamedText("");
     }
+  };
+
+  const regenerateLatest = () => {
+    if (streaming || !activeConversation) return;
+    const lastUser = [...messages].reverse().find((message) => message.role === "user");
+    if (!lastUser) return;
+    updateActiveConversation((conversation) => ({
+      ...conversation,
+      messages: conversation.messages.filter(
+        (message, index, list) =>
+          !(index === list.length - 1 && message.role === "assistant"),
+      ),
+    }));
+    send({ promptOverride: lastUser.content, appendUser: false });
+  };
+
+  const renameConversation = (event, conversation) => {
+    event.stopPropagation();
+    const nextTitle = window.prompt("Rename conversation", conversation.title);
+    if (!nextTitle?.trim()) return;
+    setConversations((current) =>
+      current.map((item) =>
+        item.id === conversation.id ? { ...item, title: nextTitle.trim() } : item,
+      ),
+    );
   };
 
   const removeConversation = (event, id) => {
@@ -356,6 +407,13 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
               >
                 <Trash size={14} />
               </i>
+              <i
+                role="button"
+                aria-label={`Rename ${conversation.title}`}
+                onClick={(event) => renameConversation(event, conversation)}
+              >
+                <PencilSimple size={14} />
+              </i>
             </button>
           ))}
         </div>
@@ -402,7 +460,8 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
                     >
                       <span>
                         <strong>{item.name}</strong>
-                        <small>{item.provider}</small>
+                        <small>{item.provider} · {item.tier}</small>
+                        <b>{modelCapabilityText(item)}</b>
                       </span>
                       {item.name === model && <Check size={15} />}
                     </button>
@@ -417,24 +476,24 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
               onClick={() => setPrivacyOpen((state) => !state)}
             >
               {zeroRetention ? <LockKey size={17} /> : <ShieldCheck size={17} />}
-              Privacy
+              Temporary Chat
             </button>
           </div>
           {privacyOpen && (
             <div className="privacy-popover">
-              <div>
-                <strong>Conversation privacy</strong>
-                <button onClick={() => setPrivacyOpen(false)} aria-label="Close privacy">
+              <div className="privacy-popover-header">
+                <strong>Temporary Chat</strong>
+                <button onClick={() => setPrivacyOpen(false)} aria-label="Close temporary chat settings">
                   <X size={16} />
                 </button>
               </div>
               <button className="privacy-option" onClick={toggleTemporary}>
-                <span>
-                  <ClockCounterClockwise size={19} />
-                  <i>
+                <span className="privacy-option-main">
+                  <span className="privacy-option-icon"><ClockCounterClockwise size={18} /></span>
+                  <span className="privacy-option-copy">
                     <strong>Temporary chat</strong>
                     <small>Not saved</small>
-                  </i>
+                  </span>
                 </span>
                 <b className={`mini-switch ${temporary ? "on" : ""}`} />
               </button>
@@ -443,22 +502,19 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
                 onClick={toggleZeroRetention}
                 disabled={!selectedModel.zeroRetention}
               >
-                <span>
-                  <LockKey size={19} />
-                  <i>
+                <span className="privacy-option-main">
+                  <span className="privacy-option-icon"><LockKey size={18} /></span>
+                  <span className="privacy-option-copy">
                     <strong>Zero retention</strong>
                     <small>
                       {selectedModel.zeroRetention
                         ? `${selectedModel.provider} eligible`
                         : "Unavailable for this model"}
                     </small>
-                  </i>
+                  </span>
                 </span>
                 <b className={`mini-switch ${zeroRetention ? "on" : ""}`} />
               </button>
-              {(temporary || zeroRetention) && (
-                <p>Memory off</p>
-              )}
             </div>
           )}
         </header>
@@ -492,23 +548,25 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
               searchEnabled={searchEnabled}
               setSearchEnabled={setSearchEnabled}
               searchAvailable={selectedModel.webSearch}
-              memoryEnabled={memoryEnabled}
-              setMemoryEnabled={setMemoryEnabled}
-              memoryLocked={temporary || zeroRetention}
-              attachments={attachments}
-              addAttachment={addAttachment}
-              removeAttachment={(id) =>
-                setAttachments((current) =>
-                  current.filter((attachment) => attachment.id !== id),
-                )
-              }
+              reasoningEnabled={reasoningEnabled}
+              setReasoningEnabled={setReasoningEnabled}
+              reasoningAvailable={selectedModel.reasoning}
+              files={files}
+              fileAvailable={selectedModel.files}
+              addFile={() => addMockFile(files, setFiles)}
+              removeFile={(id) => setFiles((current) => current.filter((file) => file.id !== id))}
             />
           </div>
         ) : (
           <>
             <div className="conversation chat-core-conversation">
               {messages.map((message, index) => (
-                <Message message={message} key={`${message.role}-${index}`} />
+                <Message
+                  message={message}
+                  key={`${message.role}-${index}`}
+                  isLatestAssistant={message.role === "assistant" && index === messages.length - 1}
+                  onRegenerate={regenerateLatest}
+                />
               ))}
               {streaming && (
                 <Message
@@ -527,20 +585,17 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
                 searchEnabled={searchEnabled}
                 setSearchEnabled={setSearchEnabled}
                 searchAvailable={selectedModel.webSearch}
-                memoryEnabled={memoryEnabled}
-                setMemoryEnabled={setMemoryEnabled}
-                memoryLocked={temporary || zeroRetention}
-                attachments={attachments}
-                addAttachment={addAttachment}
-                removeAttachment={(id) =>
-                  setAttachments((current) =>
-                    current.filter((attachment) => attachment.id !== id),
-                  )
-                }
+                reasoningEnabled={reasoningEnabled}
+                setReasoningEnabled={setReasoningEnabled}
+                reasoningAvailable={selectedModel.reasoning}
+                files={files}
+                fileAvailable={selectedModel.files}
+                addFile={() => addMockFile(files, setFiles)}
+                removeFile={(id) => setFiles((current) => current.filter((file) => file.id !== id))}
               />
               <p>
                 {temporary
-                  ? "Not saved"
+                  ? "Temporary chat · not saved"
                   : "Check important information."}
               </p>
             </div>
@@ -551,30 +606,41 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
   );
 }
 
-function Message({ message, streaming = false }) {
+function Message({ message, streaming = false, isLatestAssistant = false, onRegenerate }) {
   return (
     <article className={`message ${message.role}`}>
       <span className="message-role">
         {message.role === "user" ? "You" : "Maxshot"}
       </span>
-      {message.attachments?.length > 0 && (
-        <div className="message-attachments">
-          {message.attachments.map((attachment) => (
-            <span key={attachment.id}>
-              {attachment.type === "image" ? (
-                <ImageSquare size={17} />
-              ) : (
-                <FileText size={17} />
-              )}
-              {attachment.name}
-            </span>
-          ))}
-        </div>
-      )}
       <p>
         {message.content}
         {streaming && <i className="stream-cursor" />}
       </p>
+      {message.files?.length > 0 && (
+        <div className="message-files">
+          {message.files.map((file) => (
+            <span key={file.id}>
+              <FileText size={14} />
+              {file.name}
+            </span>
+          ))}
+        </div>
+      )}
+      {message.usage && (
+        <div className="message-usage">
+          <span>{message.usage.inputTokens.toLocaleString()} input</span>
+          <span>{message.usage.outputTokens.toLocaleString()} output</span>
+          <span>{message.usage.cachedTokens.toLocaleString()} cached</span>
+          <strong>{message.usage.cost}</strong>
+        </div>
+      )}
+      {message.role === "assistant" && !streaming && isLatestAssistant && (
+        <div className="message-actions">
+          <button onClick={onRegenerate}>
+            <ArrowClockwise size={14} /> {message.content.includes("[Stopped]") ? "Retry" : "Regenerate"}
+          </button>
+        </div>
+      )}
       {message.citations?.length > 0 && (
         <div className="citation-list">
           <span>Sources</span>
@@ -603,32 +669,26 @@ function ChatComposer({
   searchEnabled,
   setSearchEnabled,
   searchAvailable,
-  memoryEnabled,
-  setMemoryEnabled,
-  memoryLocked,
-  attachments,
-  addAttachment,
-  removeAttachment,
+  reasoningEnabled,
+  setReasoningEnabled,
+  reasoningAvailable,
+  files,
+  fileAvailable,
+  addFile,
+  removeFile,
 }) {
   return (
     <div className="chat-composer chat-core-composer">
-      {attachments.length > 0 && (
+      {files.length > 0 && (
         <div className="attachment-list">
-          {attachments.map((attachment) => (
-            <span key={attachment.id}>
-              {attachment.type === "image" ? (
-                <ImageSquare size={17} />
-              ) : (
-                <FileText size={17} />
-              )}
+          {files.map((file) => (
+            <span key={file.id}>
+              <FileText size={15} />
               <i>
-                <strong>{attachment.name}</strong>
-                <small>{attachment.size}</small>
+                <strong>{file.name}</strong>
+                <small>{file.type} · {file.size}</small>
               </i>
-              <button
-                onClick={() => removeAttachment(attachment.id)}
-                aria-label={`Remove ${attachment.name}`}
-              >
+              <button onClick={() => removeFile(file.id)} aria-label={`Remove ${file.name}`}>
                 <X size={14} />
               </button>
             </span>
@@ -649,7 +709,12 @@ function ChatComposer({
       />
       <div className="composer-actions">
         <div className="composer-tools">
-          <button onClick={addAttachment} aria-label="Add attachment" title="Add attachment">
+          <button
+            onClick={() => fileAvailable && addFile()}
+            disabled={!fileAvailable}
+            aria-label="Upload file"
+            title={fileAvailable ? "Upload file" : "File upload unavailable"}
+          >
             <Paperclip size={20} />
           </button>
           <button
@@ -662,20 +727,18 @@ function ChatComposer({
             <Globe size={20} />
           </button>
           <button
-            className={memoryEnabled ? "enabled" : ""}
-            onClick={() => !memoryLocked && setMemoryEnabled((state) => !state)}
-            disabled={memoryLocked}
-            aria-label="Toggle memory"
-            title={memoryLocked ? "Memory disabled by privacy mode" : "Memory"}
+            className={reasoningEnabled ? "enabled" : ""}
+            onClick={() => reasoningAvailable && setReasoningEnabled((state) => !state)}
+            disabled={!reasoningAvailable}
+            aria-label="Toggle reasoning"
+            title={reasoningAvailable ? "Deep thinking" : "Deep thinking unavailable"}
           >
             <Brain size={20} />
           </button>
-          {searchEnabled && <span className="composer-status"><Globe size={13} /> Search on</span>}
-          {memoryLocked && <span className="composer-status"><LockKey size={13} /> Memory off</span>}
         </div>
         <button
           className="send-button"
-          onClick={streaming ? stopStreaming : send}
+          onClick={streaming ? stopStreaming : () => send()}
           disabled={!streaming && !value.trim()}
           aria-label={streaming ? "Stop response" : "Send"}
         >

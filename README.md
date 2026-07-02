@@ -76,12 +76,12 @@ Vite's default preview port, normally
 - Mock email-link login.
 - Multi-model chat with history search and simulated streaming.
 - Temporary and zero-retention conversation controls.
-- Mock attachments, web search, citations, and memory controls.
+- Mock file upload, web search, citations, and reasoning controls.
 - Prompt creation, editing, search, variables, and insertion into chat.
 - Agent and skill builders.
 - Usage summaries and records.
 - API-key creation, one-time secret display, limits, logs, and revocation.
-- Purchased and subscription credit balances.
+- Free, paid, referral, and usable credit balances.
 - Card, Alipay, USDC, and other cryptocurrency funding methods.
 - Mock checkout, transactions, receipts, and monthly spending limits.
 - Monthly subscription plans and plan changes.
@@ -135,7 +135,7 @@ To add a prototype page:
 ### Chat
 
 `ChatPage` owns conversation state, history search, model selection, privacy
-controls, mock attachments, and simulated streaming.
+controls, mock file upload, and simulated streaming.
 
 It accepts:
 
