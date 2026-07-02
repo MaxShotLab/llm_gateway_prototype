@@ -1,16 +1,17 @@
 # Maxshot LLM Gateway Product Baseline
 
 **Status:** Authoritative product specification
-**Scope:** Phase 1 initial release and Phase 2 advanced features
-**Updated:** June 15, 2026
+**Scope:** Phase 1 usage-based release and Phase 2 advanced features
+**Updated:** July 2, 2026
 
 This document is the single source of truth for Maxshot LLM Gateway product
 design. It defines the product, users, framework decisions, feature scope,
 phases, navigation, terminology, and exclusions.
 
-`MAXSHOT_GATEWAY_PRD.md` is the single source of truth for product and
-engineering delivery. It translates this baseline into requirements, ownership,
-acceptance criteria, and migration work without changing product design.
+[MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) is the single source of truth
+for product and engineering delivery. It translates this baseline into
+requirements, ownership, acceptance criteria, and migration work without
+changing product design.
 
 Governance:
 
@@ -27,8 +28,9 @@ Maxshot provides:
 
 - Multi-model web chat.
 - An OpenAI-compatible API gateway.
-- Prepaid usage, account funding, and monthly subscriptions.
-- Advanced reusable prompts, agents, skills, and memory.
+- Prepaid usage, free and paid credits, account funding, referral rewards, and
+  spending limits.
+- Advanced reusable prompts, agents, skills, and memory after Phase 1.
 
 Users access the configured model catalog through chat or API keys. Maxshot
 manages identity, usage accounting, billing, provider routing, and privacy
@@ -63,8 +65,8 @@ prompts, agents, skills, memory, or product navigation.
 The Maxshot web application owns:
 
 - Product navigation and Maxshot visual design.
-- Account, Usage, API, Fund account, Subscription, Memory, Prompts, Agents,
-  Skills, and Settings screens.
+- Account, Usage, API, Top-up, Memory, Prompts, Agents, Skills, and
+  Settings screens.
 - assistant-ui composition and runtime adapters.
 - Product-specific validation and frontend state.
 
@@ -77,7 +79,7 @@ Maxshot services own:
 
 - Email identity, sessions, profile, and entitlements.
 - Conversation, prompt, agent, skill, memory, and file persistence.
-- Billing orchestration, payment integrations, and subscription state.
+- Billing orchestration, payment integrations, and user-facing balances.
 - The user-facing product API and authorization rules.
 
 ### New API
@@ -90,10 +92,9 @@ New API owns:
 - Provider routing and failover.
 - Token metering, provider cost, and gateway request metadata.
 
-Maxshot remains the authoritative user-facing system for balances,
-subscriptions, funding transactions, and product entitlements. A record must
-have one authoritative owner and must not be independently maintained by
-multiple systems.
+Maxshot remains the authoritative user-facing system for balances, funding
+transactions, and product entitlements. A record must have one authoritative
+owner and must not be independently maintained by multiple systems.
 
 ## 4. Phase 1: Framework And Key Paths
 
@@ -105,7 +106,7 @@ path from login to paid chat or API usage.
 
 - Email login and logout.
 - Profile containing email and display name.
-- Account balance and subscription status.
+- Account balance.
 - Monthly account spending limit.
 - Basic usage alerts.
 
@@ -114,18 +115,23 @@ Account deletion is not supported.
 ### 4.2 Chat
 
 - Start a conversation with a selected model.
+- Select from a configured default model list containing flagship models and a
+  few free models.
 - Stream assistant responses.
 - Stop and retry generation.
 - Save, reopen, rename, and search conversation history.
 - Show the selected model and model price before use.
 - Render text, Markdown, code, and error states.
+- Use temporary chat that is not saved to persistent history.
+- Show web search or reasoning controls only when the selected model or route
+  supports them.
 
 ### 4.3 API Access
 
 - Create and name an API key.
-- Display the secret once and allow it to be copied.
+- Display the secret once at creation and allow it to be copied then.
 - Revoke an API key.
-- Set or remove a monthly limit for each key.
+- Set or remove daily and monthly limits for each key.
 - Show request count, token usage, total cost, remaining limit, and last use.
 - Provide an OpenAI-compatible base URL and API documentation.
 
@@ -134,17 +140,22 @@ Account deletion is not supported.
 - Show chat and API usage in one account view.
 - Show timestamp, model, input tokens, output tokens, and credit cost.
 - Show current-period totals.
+- Export usage records.
 - Do not store prompt or response content in usage records.
 
 ### 4.5 Credits And Funding
 
 - Maintain a prepaid balance denominated in credits.
-- Show purchased credits separately from subscription credits.
+- Grant configurable free credits to registered users.
+- Add paid credits after successful top-up.
+- Show one usable spend balance while retaining separate free-credit and
+  paid-credit ledger entries internally.
 - Show the estimated USD value.
+- Consume expiring or free credits before paid credits.
 - Deduct metered usage from available credits.
 - Stop billable requests when balance or spending limits are exhausted.
-- Fund the account through configured methods, including cards, Alipay, USDC,
-  and other supported cryptocurrencies.
+- Fund the account through at least two configured top-up methods, including at
+  least one fiat card path.
 - Show exchange rates, network fees, payment fees, and final credit amount
   before confirmation.
 - Show funding status, transaction history, and receipts.
@@ -153,18 +164,9 @@ One credit is an internal usage-accounting unit. Credits are not redeemable,
 reserve-backed, transferable, or represented as cryptocurrency. Payments
 purchase credits and do not create a stored fiat or cryptocurrency balance.
 
-### 4.6 Subscription
+Monthly subscriptions are not part of Phase 1.
 
-- Offer monthly plans.
-- Grant recurring subscription credits and displayed product limits.
-- Show current plan and renewal date.
-- Expire unused subscription credits at the end of the billing period.
-- Keep purchased credits until consumed.
-- Support confirmed plan changes.
-
-Subscriptions do not provide unlimited or postpaid usage.
-
-### 4.7 Gateway
+### 4.6 Gateway
 
 - Connect to multiple configured model providers.
 - Expose the configured models through an OpenAI-compatible API.
@@ -172,6 +174,23 @@ Subscriptions do not provide unlimited or postpaid usage.
 - Retry eligible requests through a configured fallback route.
 - Record requested model, serving provider, tokens, latency, status, and cost.
 - Keep user balances and per-key limits synchronized with billable requests.
+
+### 4.7 Referral And Rewards
+
+- Generate a referral link for registered users.
+- Attribute new registered users to the referring user.
+- Reward the referrer when a referred user completes a confirmed top-up.
+- Use a configurable reward rate and maximum cap.
+- Default reward rate is 10% of the referred user's confirmed top-up amount.
+- Default maximum reward cap is 50% of the referred user's confirmed top-up
+  amount.
+- Show referral link, referred top-ups, earned rewards, and reward status.
+- Grant rewards only after the referred top-up is confirmed.
+- Withhold rewards for failed top-ups and revoke or withhold rewards for
+  abusive top-ups.
+
+Referral rewards are promotional credits. They must be tracked separately in
+the backend ledger and may be shown inside the combined usable spend balance.
 
 ## 5. Phase 2: Advanced Features
 
@@ -181,10 +200,8 @@ gateway visibility without changing the Phase 1 credit model.
 
 ### 5.1 Advanced Chat And Privacy
 
-- Temporary conversations that are not saved to history.
 - File and image attachments.
-- Web search for eligible models.
-- Search citations.
+- Search citations and advanced search UX.
 - Per-conversation memory controls.
 - Per-conversation zero-retention mode.
 - Route zero-retention conversations only through eligible provider routes.
@@ -250,16 +267,15 @@ Phase 1 navigation:
 1. Chat
 2. Usage
 3. API
-4. Fund account
-5. Subscription
-6. Settings
+4. Top-up
+5. Settings
 
 Phase 2 adds:
 
-7. Prompts
-8. Agents
-9. Skills
-10. Memory
+6. Prompts
+7. Agents
+8. Skills
+9. Memory
 
 ## 7. Required Definitions
 
@@ -269,10 +285,10 @@ Phase 2 adds:
 - **Failover:** Retrying an eligible request through a configured fallback
   route after the primary route fails.
 - **Credit:** Maxshot's non-transferable prepaid usage-accounting unit.
-- **Purchased credit:** A credit bought through account funding that remains
-  until consumed.
-- **Subscription credit:** A recurring plan credit that expires at the end of
-  its billing period.
+- **Free credit:** A configurable credit grant for registered users.
+- **Paid credit:** A funded credit added after successful top-up.
+- **Referral reward:** A promotional credit granted to a referrer after a
+  referred user's confirmed top-up.
 - **Pay-as-you-go:** Metered usage deducted from prepaid credits.
 - **Account funding:** Purchasing credits through a configured payment method.
 - **Spending limit:** A monthly account or API-key ceiling that blocks further
@@ -299,10 +315,11 @@ Phase 2 adds:
 - Agent publishing, revenue sharing, scheduled execution, and subaccounts.
 - Custom tools and user-managed MCP servers.
 - Independent agent balances or budgets.
-- Annual subscriptions and postpaid usage.
+- Monthly and annual subscriptions.
+- Postpaid usage.
 - Invoices and promotional rebates.
 - Redeemable, reserve-backed, utility, governance, or creator tokens.
-- Trading, referrals, deposits, and on-chain reserve accounting.
+- Trading, deposits, and on-chain reserve accounting.
 
 Any addition requires a product decision and an updated baseline.
 
@@ -316,6 +333,13 @@ Required alignment work:
 1. Migrate chat components and runtime state to assistant-ui.
 2. Add Phase 1 Settings.
 3. Align navigation to the phased release.
-4. Restrict agent and skill tools to the defined catalog.
-5. Complete builder deletion, agent-to-chat launch, and per-agent usage.
-6. Label mock-only actions until their services are connected.
+4. Label mock-only actions until their services are connected.
+5. Connect Phase 2 builder screens only after Phase 1 acceptance.
+
+## 10. Version History
+
+| Date | Version | Changes |
+|---|---|---|
+| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards with default 10% reward rate and configurable cap up to a default 50%. |
+| 2026-07-02 | Phase 1 usage-based revision | Removed subscriptions from Phase 1, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, temporary chat, capability-aware search/reasoning, and updated navigation. |
+| 2026-06-15 | Initial baseline | Defined original Phase 1/Phase 2 product baseline, assistant-ui/New API framework, subscriptions, credits, and advanced feature phases. |

@@ -10,7 +10,7 @@ Phase 1 delivers a comprehensive web chat and API gateway with a complete
 usage-based loop:
 
 ```text
-Sign up -> top up -> chat or API usage -> token metering -> bills and limits
+Sign up -> top up -> chat or API usage -> token metering -> usage totals and limits
 ```
 
 The release is usage-based only. Monthly subscriptions are not included in this
@@ -20,39 +20,41 @@ version.
 
 | Surface | Phase 1 Scope |
 |---|---|
-| Chat | Comprehensive multi-model chat web app |
-| Usage and billing | Token histories, daily/weekly/monthly bills, spending limits |
-| Top-up | Crypto and fiat top-up into usable credits/AIT balance |
-| Account | Email login, two-factor authentication, profile, security settings |
+| Chat | Multi-model chat with configured model list, history, temporary chat, and supported model capabilities |
+| Usage and billing | Free credits, paid credits, token histories, usage totals, balance, and spending limits |
+| Top-up | At least two configured top-up methods, including one fiat path |
+| Account | Email login and profile |
 | API keys | Multiple API keys with usage and limit controls |
+| Referral and rewards | Registered-user referral links and configurable top-up rewards |
 
 ## 3. Key Paths
 
-Phase 1 must optimize for five complete paths:
+Phase 1 must optimize for six complete paths:
 
 1. **Chat user:** sign up, top up, select a model, chat, review cost, continue
    from history.
-2. **Power chat user:** use temporary chat, system prompt, role preset, web
-   search or reasoning when supported by the selected model.
+2. **Power chat user:** use temporary chat plus web search or reasoning when
+   supported by the selected model.
 3. **API developer:** create an API key, call the OpenAI-compatible endpoint,
    monitor usage, set a limit, revoke the key.
-4. **Paying user:** top up with crypto or fiat, see fees and received balance,
-   review receipts.
+4. **Paying user:** top up through a configured payment method, see fees and
+   received balance, review receipts.
 5. **Controlled spender:** set account/key limits, hit a limit, and see a clear
    blocked state.
+6. **Referrer:** generate a referral link and receive configurable rewards when
+   referred users top up.
 
-## 4. Must-Do Versus Deferred
+## 4. Must-Do Scope
 
-| Area | Must do in Phase 1 | Defer |
-|---|---|---|
-| Chat core | Streaming chat, stop/retry/regenerate, history, search, model price/capability display | Branching, sharing, collaborative chat, generated artifacts |
-| Advanced chat | Temporary chat, system prompt, basic role presets, examples, web search/reasoning toggles when supported | Full prompt marketplace, agent builder, skill builder, custom tools |
-| Memory | Basic memory preference, visible memory state, delete/disable controls | Complex memory editor, memory import/export, memory attribution timeline |
-| Usage | Token histories, per-request costs, daily/weekly/monthly bills, chat/API split | Tax invoices, team cost allocation, advanced analytics |
-| Limits | Account limits, API-key limits, low-balance warning, hard block on exhausted balance/limit | Budgets by project/team, soft approvals, postpaid usage |
-| Top-up | One reliable crypto path and one reliable fiat path, receipts, status | Broad chain coverage, bridging, saved payment methods, promo campaigns |
-| Account | Email login, OAuth, wallet binding, profile, 2FA, session management | Organizations, roles, account deletion, enterprise SSO |
-| API | Multiple keys, OpenAI-compatible endpoint, docs, usage by key, revoke/rotate | Anthropic/Gemini-compatible APIs, batch API, user-supplied provider keys |
+| Area | Must do in Phase 1 |
+|---|---|
+| Chat | Configured flagship/free model list, streaming chat, stop/retry/regenerate, history, search, model price/capability display, temporary chat, web search/reasoning toggles when supported |
+| Usage | Configurable registered-user free credits, paid credits after top-up, token histories, per-request costs, current-period totals, CSV export, chat/API split |
+| Limits | Account limits, API-key limits, low-balance warning, hard block on exhausted balance/limit |
+| Top-up | At least two configured top-up methods, including one fiat path, receipts, status |
+| Account | Email login, profile, logout |
+| API | Multiple keys, OpenAI-compatible endpoint, docs, usage by key, revoke |
+| Referral | Registered-user referral link, attributed referee top-ups, configurable reward rate and cap |
 
 ## 5. Chat
 
@@ -60,32 +62,22 @@ Phase 1 chat should feel like a complete product, not a gateway demo.
 
 Must-do features:
 
-- New chat, persistent history, rename, delete, and search.
+- New chat and persistent history.
+- Reopen, rename, delete, and search conversations.
 - Streaming responses, stop, retry, and regenerate.
+- Configurable default model list with flagship models and a few free models.
 - Model selector with provider, price, context, and capability metadata.
-- Per-message model identity and cost estimate.
+- Selected model and estimated cost visible before use.
 - Web search toggle when the selected model or route supports it.
 - Deep thinking/reasoning toggle when the selected model supports it.
-- Temporary chat with no long-term history or memory.
-- Basic memory on/off controls, visible memory state, deletion, and retention
-  preference.
-- System prompt editor.
-- Basic role presets such as researcher, coder, trader, analyst, and writer.
-- Basic prompt/examples gallery.
-- Developer mode for system prompt, temperature, max tokens, and raw metadata.
+- Temporary chat not saved to persistent history.
 
 Feature controls must be capability-aware. If the selected model does not
 support search, tools, files, vision, audio, or reasoning, the UI must show that
 clearly and disable unsupported controls.
 
-Deferred:
-
-- Full prompt library management.
-- Agent and skill builders.
-- Custom tools or user-managed MCP servers.
-- Conversation sharing, branching, or collaborative chat.
-- Advanced memory editor, memory import/export, or detailed memory attribution.
-- Generated artifacts workspace.
+The default model list must include at least one model or route that supports
+web search or reasoning if that feature is part of Phase 1 acceptance.
 
 ## 6. Usage-Based Billing
 
@@ -94,10 +86,13 @@ subscription credits, plan renewal, or subscription expiry in this version.
 
 Must-do features:
 
-- Credit/AIT balance and USD estimate.
+- Usable spend balance and USD estimate.
+- Configurable free credits granted to registered users.
+- Paid credits added after user top-up.
+- Free and paid credits combined into one usable spend balance.
 - Chat and API usage separated by source.
 - Token consumption history.
-- Daily, weekly, and monthly bills.
+- Current-period request, token, and cost totals.
 - Per-request records with timestamp, source, model, input tokens, output
   tokens, cached tokens when available, and cost.
 - CSV export.
@@ -109,79 +104,68 @@ Must-do features:
 
 Usage records must not store prompt or response content.
 
-Deferred:
-
-- Tax invoices.
-- Team/project allocation.
-- Advanced cost analytics.
-- Postpaid balances.
-- Auto-refill unless explicitly approved later.
+The UI may show one combined usable balance, but the backend ledger must retain
+separate free-credit and paid-credit entries, including source, grant/top-up
+time, expiry policy, and consumption order. Expiring or free credits are
+consumed before paid credits.
 
 ## 7. Top-Up
 
-Top-up converts external payment into gateway spend balance.
+Top-up converts external payment into gateway spend balance. Phase 1 requires
+at least two configured top-up methods, including at least one fiat payment
+path.
 
-Must-do crypto top-up:
+Must-do top-up:
 
-- Wallet connect.
-- Deposit address.
-- Base USDC and Base AIT first.
+- One confirmed fiat card payment path.
+- One additional configured method, preferably Base USDC or Base AIT through
+  wallet connect or deposit address.
 - Quote, network fee, payment fee, expected credits, and final amount before
   confirmation.
 - Transaction status and top-up history.
-
-Must-do fiat top-up:
-
-- Card payment.
 - Payment status, receipt, and credit arrival confirmation.
 
 The conversion must be explicit:
 
 ```text
-Pay $10 / 10 USDC / 10 AIT -> receive 5,000,000 credits
+Pay $10, 10 USDC, or 10 AIT, subject to configured rates and fees -> receive estimated credits
 ```
-
-Deferred:
-
-- Broad multi-chain coverage beyond the first supported chain.
-- Bridging and token swaps.
-- Saved payment methods.
-- Apple Pay, Google Pay, Alipay, and WeChat Pay if the selected payment partner
-  is not ready for launch.
-- Promo codes, referral credits, or campaign rewards.
 
 ## 8. Account And Security
 
 Must-do features:
 
 - Email login.
-- Google and GitHub OAuth.
-- Wallet connect and wallet binding.
-- Two-factor authentication.
-- Login method management.
-- Bound wallet management.
-- Active sessions and sign out from all devices.
-- Profile with display name, email, avatar, language, timezone, and currency
-  display.
-- Chat retention preference.
-- Memory preference.
-- Developer mode preference.
+- Profile with display name and email.
+- Logout.
+- Account balance visible from the app shell.
 
-Deferred:
+## 9. Referral And Rewards
 
-- Organizations, teams, roles, and permissions.
-- Enterprise SSO.
-- Account deletion.
-- Passkeys unless already available from the auth provider.
+Must-do features:
 
-## 9. API Keys
+- Generate a referral link for registered users.
+- Attribute new registered users to the referring user.
+- Reward the referrer when a referred user completes a confirmed top-up.
+- Default reward rate is 10% of the referred user's confirmed top-up amount.
+- Reward rate and maximum reward cap are configurable.
+- Default maximum reward cap is 50% of the referred user's confirmed top-up
+  amount.
+- Show referral link, referred top-ups, earned rewards, and reward status.
+- Grant rewards only after the referred top-up is confirmed.
+- Withhold rewards for failed top-ups and revoke or withhold rewards for
+  abusive top-ups.
+
+Referral rewards are promotional credits. They must be tracked separately in
+the backend ledger and may be shown inside the combined usable spend balance.
+
+## 10. API Keys
 
 Must-do features:
 
 - Create multiple API keys.
 - Name keys.
-- Display secret once and copy it.
-- Reveal or rotate according to security policy.
+- Display the secret once at creation and allow it to be copied then.
 - Revoke keys.
 - Show key prefix, status, created time, last used time, usage this period, and
   remaining limit.
@@ -201,38 +185,41 @@ Created
 Last used
 Used this period
 Daily/monthly spending limit
-Actions: copy, rotate, revoke
+Actions: copy secret at creation, revoke
 ```
 
-Deferred:
-
-- Anthropic-compatible or Gemini-compatible customer APIs.
-- Batch API.
-- User-supplied provider credentials.
-- Project/team scoped API keys.
-- Fine-grained endpoint permissions.
-
-## 10. Phase 1 Acceptance Criteria
+## 11. Phase 1 Acceptance Criteria
 
 Phase 1 is acceptable when a test user can complete these paths end to end:
 
-1. Create an account with email login and enable two-factor authentication.
-2. Top up through at least one crypto method and one fiat method.
+1. Create an account with email login.
+2. Top up through at least two configured methods, including one fiat method.
 3. Send chat messages, including a temporary chat and a capability-aware model
    feature such as search or reasoning.
 4. See token usage, request cost, and updated balance after chat usage.
 5. Create multiple API keys, set limits, call the OpenAI-compatible API, and
    revoke a key.
-6. Review daily, weekly, and monthly bills across chat and API usage.
+6. Review request history, current-period totals, and exported usage across
+   chat and API usage.
 7. Hit a configured spending limit and see the request blocked clearly.
-8. Export usage records without prompt or response content.
+8. Generate a referral link, complete a referred top-up, and see the configured
+   referral reward credited to the referrer.
+9. Export usage records without prompt or response content.
 
-## 11. Priority Order
+## 12. Priority Order
 
 1. Chat completeness.
-2. Usage metering, bills, and spending limits.
+2. Usage metering, usage totals, and spending limits.
 3. Top-up and balance conversion.
-4. API key management.
-5. Account, login, profile, and security.
-6. Advanced chat controls: temporary chat, memory, system prompts, presets,
-   examples, web search, and deep thinking.
+4. Referral and reward attribution.
+5. API key management.
+6. Account, login, profile, and security.
+7. Advanced chat controls: temporary chat, web search, and deep thinking.
+
+## 13. Version History
+
+| Date | Version | Changes |
+|---|---|---|
+| 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards with default 10% reward rate and configurable cap up to a default 50%. |
+| 2026-07-02 | Tightened must-do revision | Reduced Phase 1 to must-do chat/API/top-up/usage/account surfaces, removed subscriptions/2FA/memory/prompts/agents/system prompts from launch scope, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, and creation-time-only API key secret copy. |
+| 2026-07-02 | Initial Phase 1 draft | Added standalone Phase 1 PRD and feature surface document for team discussion. |
