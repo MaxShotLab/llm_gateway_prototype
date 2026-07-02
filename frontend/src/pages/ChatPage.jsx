@@ -467,6 +467,9 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                 </>
               )}
             </div>
+            <div className="empty-conversation-title">
+              New conversation
+            </div>
             <h1>
               Welcome to <span className="wordmark">Maxshot</span>, how can I help?
             </h1>

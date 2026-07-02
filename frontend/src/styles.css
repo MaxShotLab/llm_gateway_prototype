@@ -288,6 +288,14 @@ select:focus-visible {
   line-height: 1.25;
 }
 
+.empty-conversation-title {
+  margin: 0 0 14px;
+  color: #d7d9d1;
+  font-size: 15px;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
 .inline-wordmark {
   width: 61px;
   height: 26px;
@@ -6605,6 +6613,10 @@ body {
   border-radius: 18px;
 }
 
+.theme-light .empty-conversation-title {
+  color: #243246;
+}
+
 .theme-light .chat-empty h1 {
   color: #202733;
   font-size: clamp(30px, 3vw, 40px);
@@ -6614,12 +6626,9 @@ body {
 }
 
 .theme-light .chat-composer {
-  min-height: 68px;
-  padding: 8px 10px 8px 20px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
+  min-height: 112px;
+  padding: 16px 10px 9px 20px;
+  display: block;
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(93, 127, 168, 0.16);
   border-radius: 32px;
@@ -6628,15 +6637,18 @@ body {
 }
 
 .theme-light .chat-composer textarea {
-  height: 30px;
+  height: 36px;
   padding: 0;
   color: #1f2937;
   background: transparent;
   font-size: 16px;
-  line-height: 30px;
+  line-height: 1.4;
 }
 
 .theme-light .composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 7px;
 }
 
