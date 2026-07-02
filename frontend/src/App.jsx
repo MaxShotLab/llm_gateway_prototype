@@ -2,20 +2,17 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Brain,
-  CaretDown,
   ChatsCircle,
   Check,
   Code,
   Copy,
   DotsThree,
-  FilePlus,
   Gauge,
   Globe,
   Key,
   Lightning,
   MagnifyingGlass,
   MagicWand,
-  PencilSimple,
   PaperPlaneRight,
   Plus,
   PuzzlePiece,
@@ -68,25 +65,71 @@ const protectedPageCopy = {
   },
   settings: {
     label: "Profile",
-    description: "Profile, security, and account settings are available after login.",
+    description: "Profile and account settings are available after login.",
   },
   agents: {
     label: "Agents",
-    description: "Agent presets and saved workflows require an account workspace.",
+    description: "Agents are an experimental workspace feature.",
   },
   toolkits: {
     label: "Toolkits",
-    description: "Skills, prompts, and memory are saved to your personal workspace.",
+    description: "Toolkits are an experimental workspace feature.",
   },
 };
 
 const mockUsage = [
-  ["Jun 11, 11:32", "MiniMax-M3", "Chat", "2,481", "3,147"],
-  ["Jun 11, 09:18", "GPT-5 mini", "API", "1,907", "2,642"],
-  ["Jun 10, 17:44", "Claude Sonnet 4.6", "Chat", "4,221", "9,885"],
-  ["Jun 10, 14:06", "Gemini 3.1 Pro", "API", "2,814", "4,023"],
-  ["Jun 09, 20:51", "DeepSeek V4 Flash", "Chat", "1,102", "1,398"],
+  {
+    time: "Jun 11, 11:32",
+    source: "Chat",
+    model: "MiniMax-M3",
+    input: "2,481",
+    output: "3,147",
+    cost: "5,628",
+    status: "Charged",
+  },
+  {
+    time: "Jun 11, 09:18",
+    source: "API",
+    model: "GPT-5 mini",
+    input: "1,907",
+    output: "2,642",
+    cost: "4,549",
+    status: "Charged",
+  },
+  {
+    time: "Jun 10, 17:44",
+    source: "Chat",
+    model: "Claude Sonnet 4.6",
+    input: "4,221",
+    output: "9,885",
+    cost: "14,106",
+    status: "Charged",
+  },
+  {
+    time: "Jun 10, 14:06",
+    source: "API",
+    model: "Gemini 3.1 Pro",
+    input: "2,814",
+    output: "4,023",
+    cost: "6,837",
+    status: "Charged",
+  },
+  {
+    time: "Jun 09, 20:51",
+    source: "Chat",
+    model: "DeepSeek V4 Flash",
+    input: "1,102",
+    output: "1,398",
+    cost: "0",
+    status: "Free",
+  },
 ];
+
+const dashboardChartData = {
+  "7 days": [38, 52, 44, 68, 59, 74, 63],
+  "30 days": [42, 58, 35, 66, 52, 76, 61, 84, 70, 90, 63, 78, 55, 86],
+  All: [28, 34, 41, 36, 52, 48, 63, 58, 71, 66, 80, 74, 86, 79, 92, 88, 76, 83],
+};
 
 const referralConfig = {
   rewardRate: 10,
@@ -252,8 +295,9 @@ const starterSkills = [
   },
 ];
 
-function AppShell({ active, onNavigate, user, onLogin, authHint, theme, setTheme, children }) {
+function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme, setTheme, children }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const isLight = theme === "light";
   const visibleAuthHint =
     authHint || (!user ? "Log in to unlock Dashboard, API, Credits, and account features." : "");
@@ -311,10 +355,39 @@ function AppShell({ active, onNavigate, user, onLogin, authHint, theme, setTheme
                 55,500,000 credits
                 <small>≈ $55.50</small>
               </a>
-              <button className="account-button" onClick={() => onNavigate("settings")}>
-                <UserCircle size={18} />
-                <span>{user}</span>
-              </button>
+              <div className="account-menu-wrap">
+                <button
+                  className="account-button"
+                  onClick={() => setAccountOpen((open) => !open)}
+                  aria-expanded={accountOpen}
+                  aria-haspopup="menu"
+                >
+                  <UserCircle size={18} />
+                  <span>{user}</span>
+                </button>
+                {accountOpen && (
+                  <div className="account-menu" role="menu">
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        onNavigate("settings");
+                      }}
+                    >
+                      Profile
+                    </button>
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        onLogout();
+                      }}
+                    >
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
               <ThemeToggle isLight={isLight} onToggle={() => setTheme(isLight ? "dark" : "light")} />
             </div>
           ) : (
@@ -368,7 +441,7 @@ function NavGroup({ items, active, collapsed, user, onNavigate }) {
 }
 
 function LoginModal({ onClose, onSuccess }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("demo@maxshot.ai");
   const [sent, setSent] = useState(false);
 
   const submit = (event) => {
@@ -443,6 +516,18 @@ function PageHeader({ eyebrow, title, description, action }) {
   );
 }
 
+function DeferredNotice({ title }) {
+  return (
+    <section className="panel deferred-notice">
+      <span>Experimental</span>
+      <div>
+        <h2>{title} are not part of Phase 1.</h2>
+        <p>This prototype is kept for product review. Launch scope remains Chat, Dashboard, API, Credits, Referral, and Profile.</p>
+      </div>
+    </section>
+  );
+}
+
 function ReferralPage() {
   const [copied, setCopied] = useState(false);
   const confirmedTopUp = referralTopUps.reduce(
@@ -463,13 +548,13 @@ function ReferralPage() {
   return (
     <main className="content-page referral-page">
       <PageHeader
-        title="Referral & Rewards"
+        title="Referral"
       />
 
       <section className="referral-hero panel">
         <div>
-          <h2>Invite users. Earn on confirmed top-ups.</h2>
-          <p>10% reward, capped at $50 from each referee.</p>
+          <h2>Invite users. Earn confirmed rewards.</h2>
+          <p>Share your link. When a referred user tops up, you receive 10% promotional credits, capped at $50 from each referee.</p>
         </div>
         <div className="referral-link-box">
           <code>{referralConfig.link}</code>
@@ -480,11 +565,26 @@ function ReferralPage() {
         </div>
       </section>
 
+      <section className="referral-rules">
+        <article>
+          <strong>1</strong>
+          <span>Registered users can invite.</span>
+        </article>
+        <article>
+          <strong>{referralConfig.rewardRate}%</strong>
+          <span>Reward from confirmed referee top-ups.</span>
+        </article>
+        <article>
+          <strong>${referralConfig.maxRewardUsd}</strong>
+          <span>Maximum reward from each referee.</span>
+        </article>
+      </section>
+
       <section className="metric-grid referral-metrics">
-        <MetricCard label="Reward rate" value={`${referralConfig.rewardRate}%`} note="Of confirmed referee top-up" />
-        <MetricCard label="Reward cap" value={`$${referralConfig.maxRewardUsd}`} note="Per referred user" />
         <MetricCard label="Earned rewards" value={formatCurrency(earnedRewards)} note="Confirmed promotional credits" />
         <MetricCard label="Confirmed top-up" value={formatCurrency(confirmedTopUp)} note="Measured referee volume" />
+        <MetricCard label="Reward rate" value={`${referralConfig.rewardRate}%`} note="Of confirmed referee top-up" />
+        <MetricCard label="Reward cap" value={`$${referralConfig.maxRewardUsd}`} note="Per referred user" />
       </section>
 
       <section className="panel referral-table-panel">
@@ -536,28 +636,53 @@ function formatCurrency(value) {
 }
 
 function UsagePage() {
+  const periods = ["7 days", "30 days", "All"];
+  const [activePeriod, setActivePeriod] = useState("30 days");
+  const chartData = dashboardChartData[activePeriod];
+
   return (
-    <main className="content-page">
+    <main className="content-page dashboard-page">
       <PageHeader
-        title="Usage"
-        action={
-          <button className="secondary-button">
-            Last 30 days <CaretDown size={14} />
-          </button>
-        }
+        title="Dashboard"
       />
 
       <section className="metric-grid">
-        <MetricCard label="Paid credits" value="48,200,000" note="Top-up balance" />
-        <MetricCard label="Free credits" value="6,800,000" note="Consumed first" />
-        <MetricCard label="Referral rewards" value="500,000" note="Promotional credits" />
         <MetricCard label="Usable balance" value="$55.50" note="55,500,000 credits" />
+        <MetricCard label="Free credits" value="6,800,000" note="Consumed before paid credits" />
+        <MetricCard label="Paid credits" value="48,200,000" note="Top-up balance" />
+        <MetricCard label="Period spend" value="31,120" note="Credits used in 30 days" />
+      </section>
+
+      <section className="limit-grid">
+        <div className="panel limit-card">
+          <span>Daily limit</span>
+          <strong>$8.40 / $25.00</strong>
+          <div className="limit-track"><i style={{ width: "34%" }} /></div>
+        </div>
+        <div className="panel limit-card">
+          <span>Monthly limit</span>
+          <strong>$55.50 / $150.00</strong>
+          <div className="limit-track"><i style={{ width: "37%" }} /></div>
+        </div>
       </section>
 
       <section className="panel usage-chart-panel">
         <div className="panel-heading">
           <div>
-            <h2>Credit consumption</h2>
+            <h2>Credit usage</h2>
+            <p>Chat and API usage are metered without storing prompt or response content.</p>
+          </div>
+          <div className="period-tabs" aria-label="Usage period">
+            {periods.map((period) => (
+              <button
+                key={period}
+                className={period === activePeriod ? "active" : ""}
+                onClick={() => setActivePeriod(period)}
+                aria-pressed={period === activePeriod}
+              >
+                {period}
+              </button>
+            ))}
           </div>
           <div className="legend">
             <span>
@@ -568,8 +693,8 @@ function UsagePage() {
             </span>
           </div>
         </div>
-        <div className="chart" aria-label="Mock usage chart">
-          {[42, 58, 35, 66, 52, 76, 61, 84, 70, 90, 63, 78, 55, 86].map(
+        <div className="chart" aria-label={`Mock ${activePeriod} usage chart`}>
+          {chartData.map(
             (height, index) => (
               <div className="bar-column" key={index}>
                 <span
@@ -590,29 +715,39 @@ function UsagePage() {
         <div className="panel-heading">
           <div>
             <h2>Recent activity</h2>
+            <p>Per-request token and credit records.</p>
           </div>
-          <button className="icon-text-button">
-            <MagnifyingGlass size={16} />
-            Filter
+          <button className="secondary-button compact">
+            Export CSV
           </button>
         </div>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Model</th>
+                <th>Time</th>
                 <th>Source</th>
-                <th>Tokens</th>
-                <th>Credits</th>
+                <th>Model</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Cost</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {mockUsage.map((row) => (
-                <tr key={row.join("-")}>
-                  {row.map((cell) => (
-                    <td key={cell}>{cell}</td>
-                  ))}
+                <tr key={`${row.time}-${row.model}`}>
+                  <td>{row.time}</td>
+                  <td>{row.source}</td>
+                  <td>{row.model}</td>
+                  <td>{row.input}</td>
+                  <td>{row.output}</td>
+                  <td>{row.cost}</td>
+                  <td>
+                    <span className={`status-pill ${row.status === "Free" ? "neutral" : "success"}`}>
+                      <i /> {row.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -626,11 +761,11 @@ function UsagePage() {
 function SettingsPage({ user }) {
   return (
     <main className="content-page settings-page">
-      <PageHeader title="Settings" />
+      <PageHeader title="Profile" />
       <section className="panel settings-panel">
         <div className="panel-heading">
           <div>
-            <h2>Profile</h2>
+            <h2>Account</h2>
             <p>Email login and account display settings.</p>
           </div>
         </div>
@@ -641,15 +776,18 @@ function SettingsPage({ user }) {
           </label>
           <label>
             Email
-            <input type="email" defaultValue={user || "you@company.com"} />
+            <input type="email" defaultValue={user || "demo@maxshot.ai"} readOnly />
           </label>
+        </div>
+        <div className="profile-actions">
+          <button className="secondary-button compact">Save account</button>
         </div>
       </section>
       <section className="panel settings-panel">
         <div className="panel-heading">
           <div>
             <h2>Spend controls</h2>
-            <p>Account-level limits block new billable requests when reached.</p>
+            <p>Account-level limits block new billable requests when reached. API key limits stay on the API page.</p>
           </div>
         </div>
         <div className="settings-grid">
@@ -661,6 +799,35 @@ function SettingsPage({ user }) {
             Monthly limit
             <input defaultValue="$150" />
           </label>
+        </div>
+        <div className="profile-actions">
+          <button className="secondary-button compact">Save limits</button>
+        </div>
+      </section>
+      <section className="panel settings-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Defaults</h2>
+            <p>Global preferences used when a page does not override them.</p>
+          </div>
+        </div>
+        <div className="settings-grid">
+          <label>
+            Default model
+            <select defaultValue="MiniMax-M3">
+              <option>MiniMax-M3</option>
+              <option>GPT-5 mini</option>
+              <option>Claude Sonnet 4.6</option>
+              <option>Gemini 3.1 Pro</option>
+            </select>
+          </label>
+          <label>
+            Low-balance alert
+            <input defaultValue="$10" />
+          </label>
+        </div>
+        <div className="profile-actions">
+          <button className="secondary-button compact">Save defaults</button>
         </div>
       </section>
     </main>
@@ -711,10 +878,9 @@ function FeatureModal({ title, description, onClose, children, footer }) {
 }
 
 function PromptsPage({ onUsePrompt, embedded = false }) {
-  const [prompts, setPrompts] = useState(starterPrompts);
+  const [prompts] = useState(starterPrompts);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
-  const [editing, setEditing] = useState(null);
   const Shell = embedded ? "section" : "main";
 
   const filtered = prompts.filter((prompt) => {
@@ -724,45 +890,16 @@ function PromptsPage({ onUsePrompt, embedded = false }) {
     return matchesQuery && (category === "All" || prompt.category === category);
   });
 
-  const savePrompt = (event) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const next = {
-      id: editing?.id ?? Date.now(),
-      title: form.get("title"),
-      description: form.get("description"),
-      category: form.get("category"),
-      owner: "You",
-      content: form.get("content"),
-    };
-    setPrompts((current) =>
-      editing?.id
-        ? current.map((prompt) => (prompt.id === editing.id ? next : prompt))
-        : [next, ...current],
-    );
-    setEditing(null);
-  };
-
   return (
     <Shell className={embedded ? "toolkit-panel feature-page" : "content-page feature-page"}>
       {!embedded ? (
-        <PageHeader
-          title="Prompts"
-          action={
-            <button className="primary-button compact" onClick={() => setEditing({})}>
-              <Plus size={17} /> New prompt
-            </button>
-          }
-        />
+        <PageHeader title="Prompts" />
       ) : (
         <div className="toolkit-panel-heading">
           <div>
             <h2>Prompts</h2>
-            <p>Reusable instructions for common chat and API workflows.</p>
+            <p>Saved templates that can start a Chat request.</p>
           </div>
-          <button className="primary-button compact" onClick={() => setEditing({})}>
-            <Plus size={17} /> New prompt
-          </button>
         </div>
       )}
       <div className="feature-toolbar">
@@ -784,55 +921,18 @@ function PromptsPage({ onUsePrompt, embedded = false }) {
           <article className="feature-card prompt-card" key={prompt.id}>
             <div className="feature-card-top">
               <span className="feature-icon"><MagicWand size={20} /></span>
-              <button className="ghost-icon" aria-label={`Edit ${prompt.title}`} onClick={() => setEditing(prompt)}>
-                <PencilSimple size={17} />
-              </button>
+              <span className="card-kicker">{prompt.category}</span>
             </div>
-            <span className="card-kicker">{prompt.category}</span>
             <h2>{prompt.title}</h2>
             <div className="prompt-preview">{prompt.content}</div>
             <footer>
               <button className="secondary-button compact" onClick={() => onUsePrompt(prompt.content)}>
-                Use <ArrowRight size={15} />
+                Use in Chat <ArrowRight size={15} />
               </button>
             </footer>
           </article>
         ))}
       </section>
-      {editing && (
-        <FeatureModal
-          title={editing.id ? "Edit prompt" : "Create prompt"}
-          onClose={() => setEditing(null)}
-        >
-          <form className="builder-form" onSubmit={savePrompt}>
-            <label>
-              Name
-              <input name="title" defaultValue={editing.title || ""} placeholder="Prompt name" required />
-            </label>
-            <label>
-              Description
-              <input name="description" defaultValue={editing.description || ""} placeholder="When should this prompt be used?" required />
-            </label>
-            <label>
-              Category
-              <select name="category" defaultValue={editing.category || "Writing"}>
-                <option>Writing</option>
-                <option>Engineering</option>
-                <option>Research</option>
-                <option>Operations</option>
-              </select>
-            </label>
-            <label>
-              Prompt
-              <textarea name="content" defaultValue={editing.content || ""} placeholder="Write the reusable prompt..." required />
-            </label>
-            <div className="form-actions">
-              <button type="button" className="secondary-button" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="primary-button compact" type="submit">Save prompt</button>
-            </div>
-          </form>
-        </FeatureModal>
-      )}
     </Shell>
   );
 }
@@ -891,6 +991,7 @@ function AgentsPage() {
           </button>
         }
       />
+      <DeferredNotice title="Agents" />
       <div className="feature-toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search agents" />
       </div>
@@ -999,29 +1100,7 @@ function AgentsPage() {
 function SkillsPage({ embedded = false }) {
   const [skills, setSkills] = useState(starterSkills);
   const [query, setQuery] = useState("");
-  const [editing, setEditing] = useState(null);
   const Shell = embedded ? "section" : "main";
-
-  const saveSkill = (event) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const next = {
-      id: editing?.id ?? Date.now(),
-      name: form.get("name"),
-      title: form.get("title"),
-      description: form.get("description"),
-      invocation: form.get("invocation"),
-      active: editing?.active ?? true,
-      tools: [...form.getAll("tools")],
-      owner: "You",
-    };
-    setSkills((current) =>
-      editing?.id
-        ? current.map((skill) => (skill.id === editing.id ? next : skill))
-        : [next, ...current],
-    );
-    setEditing(null);
-  };
 
   const filtered = skills.filter((skill) =>
     `${skill.title} ${skill.name} ${skill.description}`.toLowerCase().includes(query.toLowerCase()),
@@ -1030,24 +1109,12 @@ function SkillsPage({ embedded = false }) {
   return (
     <Shell className={embedded ? "toolkit-panel feature-page" : "content-page feature-page"}>
       {!embedded ? (
-        <PageHeader
-          title="Skills"
-          action={
-            <div className="header-actions">
-              <button className="secondary-button"><UploadSimple size={16} /> Import</button>
-              <button className="primary-button compact" onClick={() => setEditing({})}><Plus size={17} /> New skill</button>
-            </div>
-          }
-        />
+        <PageHeader title="Skills" />
       ) : (
         <div className="toolkit-panel-heading">
           <div>
             <h2>Skills</h2>
-            <p>Model-invoked capabilities and tool access rules.</p>
-          </div>
-          <div className="header-actions">
-            <button className="secondary-button"><UploadSimple size={16} /> Import</button>
-            <button className="primary-button compact" onClick={() => setEditing({})}><Plus size={17} /> New skill</button>
+            <p>Curated actions available to Chat when enabled.</p>
           </div>
         </div>
       )}
@@ -1075,45 +1142,9 @@ function SkillsPage({ embedded = false }) {
             >
               <span />
             </button>
-            <button className="ghost-icon" onClick={() => setEditing(skill)} aria-label={`Edit ${skill.title}`}><PencilSimple size={17} /></button>
           </article>
         ))}
       </section>
-      {editing && (
-        <FeatureModal
-          title={editing.id ? "Edit skill" : "Create skill"}
-          onClose={() => setEditing(null)}
-        >
-          <form className="builder-form" onSubmit={saveSkill}>
-            <div className="builder-grid">
-              <label>Display name<input name="title" defaultValue={editing.title || ""} placeholder="Skill name" required /></label>
-              <label>Identifier<input name="name" defaultValue={editing.name || ""} placeholder="kebab-case-name" pattern="[a-z0-9][a-z0-9-]*" required /></label>
-            </div>
-            <label>Description<input name="description" defaultValue={editing.description || ""} placeholder="Describe exactly when the model should use this skill." required /></label>
-            <label>
-              Invocation
-              <select name="invocation" defaultValue={editing.invocation || "Model-invoked"}>
-                <option>Manual with $</option>
-                <option>Model-invoked</option>
-                <option>Always apply</option>
-              </select>
-            </label>
-            <fieldset>
-              <legend>Allowed tools</legend>
-              <div className="checkbox-list inline">
-                {["Web search", "Code interpreter", "File search"].map((tool) => (
-                  <label key={tool}><input type="checkbox" name="tools" value={tool} defaultChecked={editing.tools?.includes(tool)} /><span>{tool}</span></label>
-                ))}
-              </div>
-            </fieldset>
-            <label>Instructions<textarea name="instructions" defaultValue="# Instructions\n\nFollow the procedure for this skill." /></label>
-            <div className="form-actions">
-              <button type="button" className="secondary-button" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="primary-button compact" type="submit">Save skill</button>
-            </div>
-          </form>
-        </FeatureModal>
-      )}
     </Shell>
   );
 }
@@ -1210,9 +1241,6 @@ function MemoryPage({ embedded = false }) {
           <h2>Memory vault</h2>
           <p>{memories.length} items</p>
         </div>
-        <button className="icon-text-button">
-          <MagnifyingGlass size={16} /> Search
-        </button>
       </div>
       <section className="memory-grid">
         {memories.map((memory) => (
@@ -1234,10 +1262,6 @@ function MemoryPage({ embedded = false }) {
             <p>{memory.body}</p>
           </article>
         ))}
-        <button className="memory-import-card">
-          <FilePlus size={24} />
-          <strong>Import memories</strong>
-        </button>
       </section>
     </Shell>
   );
@@ -1255,8 +1279,9 @@ function ToolkitsPage({ onUsePrompt }) {
     <main className="content-page toolkits-page">
       <PageHeader
         title="Toolkits"
-        subtitle="Experimental workspace for reusable skills, prompts, and memory controls."
+        subtitle="Reusable Chat helpers: skills, prompt templates, and memory."
       />
+      <DeferredNotice title="Toolkits" />
       <div className="toolkit-tabs" role="tablist" aria-label="Toolkit sections">
         {tabs.map(({ id, label, Icon }) => (
           <button
@@ -1280,7 +1305,7 @@ function ToolkitsPage({ onUsePrompt }) {
 export function App() {
   const [active, setActive] = useState("chat");
   const [loginOpen, setLoginOpen] = useState(false);
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState("demo@maxshot.ai");
   const [chatSeed, setChatSeed] = useState("");
   const [theme, setTheme] = useState("light");
   const [authHint, setAuthHint] = useState("");
@@ -1293,6 +1318,14 @@ export function App() {
     }
     setAuthHint("");
     setActive(nextPage);
+  };
+
+  const logout = () => {
+    setUser("");
+    setAuthHint("");
+    if (protectedPageCopy[active]) {
+      setActive("chat");
+    }
   };
 
   const page = useMemo(() => {
@@ -1332,6 +1365,7 @@ export function App() {
         onNavigate={navigate}
         user={user}
         onLogin={() => setLoginOpen(true)}
+        onLogout={logout}
         authHint={authHint}
         theme={theme}
         setTheme={setTheme}

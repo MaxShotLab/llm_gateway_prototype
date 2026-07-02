@@ -65,8 +65,8 @@ prompts, agents, skills, memory, or product navigation.
 The Maxshot web application owns:
 
 - Product navigation and Maxshot visual design.
-- Account, Usage, API, Top-up, Memory, Prompts, Agents, Skills, and
-  Settings screens.
+- Chat, Dashboard, API, Credits, Referral, and Profile screens.
+- Experimental Agents and Toolkits prototype surfaces when enabled.
 - assistant-ui composition and runtime adapters.
 - Product-specific validation and frontend state.
 
@@ -266,17 +266,17 @@ Anthropic- or Gemini-compatible customer APIs are not included in Phase 2.
 Phase 1 navigation:
 
 1. Chat
-2. Usage
+2. Dashboard
 3. API
-4. Top-up
-5. Settings
+4. Credits
+5. Referral
+6. Profile
 
-Phase 2 adds:
+Experimental coming-soon surfaces may remain visible in the prototype when
+clearly labeled as deferred and not part of Phase 1 production scope:
 
-6. Prompts
 7. Agents
-8. Skills
-9. Memory
+8. Toolkits
 
 ## 7. Required Definitions
 
@@ -342,6 +342,7 @@ Required alignment work:
 | Date | Version | Changes |
 |---|---|---|
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
+| 2026-07-02 | Prototype navigation alignment | Aligned navigation with current Phase 1 surfaces and moved Agents/Toolkits to Experimental coming soon. |
 | 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |
 | 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards. |
 | 2026-07-02 | Phase 1 usage-based revision | Removed subscriptions from Phase 1, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, temporary chat, capability-aware search/reasoning, and updated navigation. |

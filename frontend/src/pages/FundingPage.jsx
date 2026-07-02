@@ -24,10 +24,12 @@ export function FundingPage() {
   const [transactions, setTransactions] = useState(starterFundingTransactions);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [receiptTarget, setReceiptTarget] = useState(null);
-  const [spendingLimit, setSpendingLimit] = useState(150);
-  const [limitSaved, setLimitSaved] = useState(false);
 
   const method = paymentMethods.find((item) => item.id === methodId);
+  const updateAmount = (value) => {
+    const nextAmount = Number(value);
+    setAmount(Number.isFinite(nextAmount) ? Math.max(nextAmount, 0) : 0);
+  };
   const paymentFee = amount * method.feeRate + method.fixedFee;
   const networkFee = method.networkFee || 0;
   const total = amount + paymentFee + networkFee;
@@ -60,11 +62,17 @@ export function FundingPage() {
     <main className="content-page funding-page">
       <div className="page-heading">
         <div>
-          <h1>Top-up</h1>
+          <h1>Credits</h1>
         </div>
       </div>
 
       <section className="credit-balance-grid">
+        <BalanceCard
+          icon={<CurrencyCircleDollar size={20} />}
+          label="Usable balance"
+          value="$55.50"
+          note="55.5M credits"
+        />
         <BalanceCard
           icon={<Wallet size={20} />}
           label="Paid credits"
@@ -83,21 +91,30 @@ export function FundingPage() {
           value="500,000"
           note="Promotional credits"
         />
-        <BalanceCard
-          icon={<CurrencyCircleDollar size={20} />}
-          label="Usable balance"
-          value="$55.50"
-          note="55.5M credits"
-        />
       </section>
 
       <div className="billing-layout">
         <section className="panel purchase-panel">
           <div className="panel-heading">
             <div>
-              <h2>Top up credits</h2>
+              <h2>Add credits</h2>
+              <p>Choose an amount and payment method.</p>
             </div>
           </div>
+
+          <label className="field-label">Amount</label>
+          <label className="topup-amount-input">
+            <i>$</i>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={amount}
+              onChange={(event) => updateAmount(event.target.value)}
+              aria-label="Custom top-up amount"
+            />
+          </label>
+
           <div className="amount-grid">
             {[5, 10, 25, 50, 100, 250].map((value) => (
               <button
@@ -131,8 +148,13 @@ export function FundingPage() {
         </section>
 
         <aside className="panel order-summary">
-          <span className="eyebrow">Summary</span>
+          <span className="eyebrow">Preview</span>
           <h2>{credits.toLocaleString()}</h2>
+          <p>Credits added</p>
+          <div className="summary-line">
+            <span>Method</span>
+            <strong>{method.name}</strong>
+          </div>
           <div className="summary-line">
             <span>Credit purchase</span>
             <strong>${amount.toFixed(2)}</strong>
@@ -167,37 +189,10 @@ export function FundingPage() {
         </aside>
       </div>
 
-      <section className="panel account-limit-panel">
-        <div>
-          <h2>Monthly limit</h2>
-        </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            setLimitSaved(true);
-            window.setTimeout(() => setLimitSaved(false), 1600);
-          }}
-        >
-          <label className="currency-input">
-            <i>$</i>
-            <input
-              type="number"
-              min="0"
-              value={spendingLimit}
-              onChange={(event) => setSpendingLimit(Number(event.target.value))}
-              aria-label="Account monthly spending limit"
-            />
-          </label>
-          <button className="secondary-button compact" type="submit">
-            {limitSaved ? <><Check size={16} /> Saved</> : "Save limit"}
-          </button>
-        </form>
-      </section>
-
       <section className="panel funding-history">
         <div className="panel-heading">
           <div>
-            <h2>Transactions</h2>
+            <h2>Top-up history</h2>
           </div>
         </div>
         <div className="table-scroll">

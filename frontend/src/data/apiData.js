@@ -5,6 +5,8 @@ export const starterApiKeys = [
     prefix: "sk-maxshot-dev-3f9a",
     created: "Jun 4, 2026",
     lastUsed: "2 minutes ago",
+    dailyLimit: 25,
+    dailySpent: 8.42,
     monthlyLimit: 25,
     spent: 8.42,
     requests: 842,
@@ -18,6 +20,8 @@ export const starterApiKeys = [
     prefix: "sk-maxshot-prod-92c1",
     created: "May 18, 2026",
     lastUsed: "18 minutes ago",
+    dailyLimit: 50,
+    dailySpent: 12.18,
     monthlyLimit: 100,
     spent: 42.76,
     requests: 3241,
@@ -104,7 +108,7 @@ export const starterRequestLogs = [
   },
 ];
 
-export function createMockApiKey(name, monthlyLimit, index) {
+export function createMockApiKey(name, dailyLimit, monthlyLimit, index) {
   const suffix = Math.random().toString(36).slice(2, 10).toUpperCase();
 
   return {
@@ -114,6 +118,8 @@ export function createMockApiKey(name, monthlyLimit, index) {
       prefix: `sk-maxshot-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${suffix.slice(-4)}`,
       created: "Just now",
       lastUsed: "Never",
+      dailyLimit,
+      dailySpent: 0,
       monthlyLimit,
       spent: 0,
       requests: 0,

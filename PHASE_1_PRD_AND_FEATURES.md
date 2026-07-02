@@ -27,6 +27,10 @@ version.
 | API keys | Multiple API keys with usage and limit controls |
 | Referral and rewards | Registered-user referral links and configurable top-up rewards |
 
+Agents and Toolkits may appear in the prototype under Experimental
+(Coming Soon) when clearly labeled as deferred, but they are not Phase 1 launch
+scope.
+
 ## 3. Key Paths
 
 Phase 1 must optimize for six complete paths:
@@ -224,6 +228,7 @@ Phase 1 is acceptable when a test user can complete these paths end to end:
 | Date | Version | Changes |
 |---|---|---|
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
+| 2026-07-02 | Prototype navigation alignment | Clarified that Agents and Toolkits are Experimental coming-soon prototype entries, not Phase 1 scope. |
 | 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |
 | 2026-07-02 | Referral reward revision | Added registered-user referral links and configurable top-up rewards. |
 | 2026-07-02 | Tightened must-do revision | Reduced Phase 1 to must-do chat/API/top-up/usage/account surfaces, removed subscriptions/2FA/memory/prompts/agents/system prompts from launch scope, added configured flagship/free model list, registered-user free credits, separate free/paid credit ledger, at least two top-up methods including fiat, and creation-time-only API key secret copy. |

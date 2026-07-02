@@ -54,8 +54,9 @@ export function ApiPage() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const name = form.get("name").trim();
-    const monthlyLimit = Number(form.get("limit")) || 0;
-    const created = createMockApiKey(name, monthlyLimit, keys.length + 1);
+    const dailyLimit = Number(form.get("dailyLimit")) || 0;
+    const monthlyLimit = Number(form.get("monthlyLimit")) || 0;
+    const created = createMockApiKey(name, dailyLimit, monthlyLimit, keys.length + 1);
 
     setKeys((current) => [...current, created.key]);
     setSelectedKeyId(created.key.id);
@@ -66,10 +67,11 @@ export function ApiPage() {
   const updateLimit = (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const dailyLimit = Number(form.get("dailyLimit")) || 0;
     const monthlyLimit = Number(form.get("monthlyLimit")) || 0;
     setKeys((current) =>
       current.map((item) =>
-        item.id === selectedKey.id ? { ...item, monthlyLimit } : item,
+        item.id === selectedKey.id ? { ...item, dailyLimit, monthlyLimit } : item,
       ),
     );
   };
@@ -85,7 +87,8 @@ export function ApiPage() {
     <main className="content-page api-page">
       <div className="page-heading">
         <div>
-          <h1>API Gateway</h1>
+          <h1>API</h1>
+          <p>OpenAI-compatible keys, limits, and request usage.</p>
         </div>
         <button className="primary-button compact" onClick={() => setCreateOpen(true)}>
           <Plus size={17} /> Create API key
@@ -95,7 +98,7 @@ export function ApiPage() {
       <section className="api-intro">
         <div>
           <span className="api-chip">OpenAI compatible</span>
-          <h2>One endpoint. Every model.</h2>
+          <h2>One endpoint. Key-based access.</h2>
           <a className="api-doc-link" href={`${import.meta.env.BASE_URL}docs/api.html`} target="_blank" rel="noreferrer">
             Documentation <ArrowRight size={15} />
           </a>
@@ -109,6 +112,7 @@ export function ApiPage() {
             </button>
           </div>
           <code>https://api.maxshot.ai/v1</code>
+          <small>Authorization: Bearer YOUR_API_KEY</small>
         </div>
       </section>
 
@@ -183,11 +187,30 @@ export function ApiPage() {
               <ApiMetric label="Input tokens" value={formatNumber(selectedKey.inputTokens)} />
               <ApiMetric label="Output tokens" value={formatNumber(selectedKey.outputTokens)} />
               <ApiMetric
-                label="Remaining limit"
+                label="Daily remaining"
+                value={selectedKey.dailyLimit ? `$${Math.max(selectedKey.dailyLimit - selectedKey.dailySpent, 0).toFixed(2)}` : "Unlimited"}
+              />
+              <ApiMetric
+                label="Monthly remaining"
                 value={selectedKey.monthlyLimit ? `$${Math.max(selectedKey.monthlyLimit - selectedKey.spent, 0).toFixed(2)}` : "Unlimited"}
               />
             </div>
             <form className="spending-limit-form" onSubmit={updateLimit}>
+              <label>
+                Daily limit
+                <span className="currency-input">
+                  <i>$</i>
+                  <input
+                    name="dailyLimit"
+                    type="number"
+                    min="0"
+                    step="1"
+                    defaultValue={selectedKey.dailyLimit}
+                    key={`${selectedKey.id}-daily`}
+                    aria-label="Daily spending limit"
+                  />
+                </span>
+              </label>
               <label>
                 Monthly limit
                 <span className="currency-input">
@@ -203,7 +226,7 @@ export function ApiPage() {
                   />
                 </span>
               </label>
-              <button className="secondary-button compact" type="submit">Save limit</button>
+              <button className="secondary-button compact" type="submit">Save limits</button>
             </form>
           </section>
 
@@ -211,6 +234,7 @@ export function ApiPage() {
             <div className="panel-heading request-log-heading">
               <div>
                 <h2>Request log</h2>
+                <p>Metadata only. Prompts and responses are not stored.</p>
               </div>
               <div className="log-filters">
                 <label>
@@ -305,7 +329,8 @@ export function ApiPage() {
             <h2 id="create-key-title">Create API key</h2>
             <form onSubmit={createKey}>
               <label>Key name<input name="name" placeholder="Production API" required autoFocus /></label>
-              <label>Monthly limit<span className="currency-input"><i>$</i><input name="limit" type="number" min="0" step="1" defaultValue="25" /></span></label>
+              <label>Daily limit<span className="currency-input"><i>$</i><input name="dailyLimit" type="number" min="0" step="1" defaultValue="25" /></span></label>
+              <label>Monthly limit<span className="currency-input"><i>$</i><input name="monthlyLimit" type="number" min="0" step="1" defaultValue="100" /></span></label>
               <div className="form-actions">
                 <button type="button" className="secondary-button" onClick={() => setCreateOpen(false)}>Cancel</button>
                 <button type="submit" className="primary-button compact">Create key</button>
