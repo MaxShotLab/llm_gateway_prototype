@@ -6602,8 +6602,8 @@ body {
 }
 
 .theme-light .chat-core-empty {
-  width: min(780px, calc(100% - 64px));
-  padding-top: clamp(126px, 20vh, 190px);
+  width: min(760px, calc(100% - 48px));
+  padding-top: clamp(100px, 15vh, 145px);
 }
 
 .theme-light .mode-summary {
@@ -6614,15 +6614,17 @@ body {
 }
 
 .theme-light .empty-conversation-title {
+  display: block;
   color: #243246;
 }
 
 .theme-light .chat-empty h1 {
   color: #202733;
-  font-size: clamp(30px, 3vw, 40px);
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 1.18;
+  font-size: clamp(28px, 2.55vw, 34px);
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  line-height: 1.16;
+  margin: 0 0 30px;
 }
 
 .theme-light .chat-composer {
