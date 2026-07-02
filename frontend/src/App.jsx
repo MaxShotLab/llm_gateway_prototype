@@ -49,6 +49,37 @@ const phaseTwoNavItems = [
   { id: "toolkits", label: "Toolkits", Icon: PuzzlePiece },
 ];
 
+const protectedPageCopy = {
+  usage: {
+    label: "Dashboard",
+    description: "Usage, bills, balances, and spending limits are tied to your account.",
+  },
+  api: {
+    label: "API",
+    description: "Create keys, set limits, and review request logs after signing in.",
+  },
+  topup: {
+    label: "Credits",
+    description: "Top-ups, payment methods, receipts, and credit balances require an account.",
+  },
+  referral: {
+    label: "Referral",
+    description: "Referral links and rewards are generated for registered users.",
+  },
+  settings: {
+    label: "Profile",
+    description: "Profile, security, and account settings are available after login.",
+  },
+  agents: {
+    label: "Agents",
+    description: "Agent presets and saved workflows require an account workspace.",
+  },
+  toolkits: {
+    label: "Toolkits",
+    description: "Skills, prompts, and memory are saved to your personal workspace.",
+  },
+};
+
 const mockUsage = [
   ["Jun 11, 11:32", "MiniMax-M3", "Chat", "2,481", "3,147"],
   ["Jun 11, 09:18", "GPT-5 mini", "API", "1,907", "2,642"],
@@ -221,9 +252,11 @@ const starterSkills = [
   },
 ];
 
-function AppShell({ active, onNavigate, user, onLogin, theme, setTheme, children }) {
+function AppShell({ active, onNavigate, user, onLogin, authHint, theme, setTheme, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const isLight = theme === "light";
+  const visibleAuthHint =
+    authHint || (!user ? "Log in to unlock Dashboard, API, Credits, and account features." : "");
 
   return (
     <div className={`app-shell theme-${theme} ${collapsed ? "is-collapsed" : ""}`}>
@@ -234,9 +267,21 @@ function AppShell({ active, onNavigate, user, onLogin, theme, setTheme, children
         </button>
 
         <nav className="main-nav" aria-label="Main navigation">
-          <NavGroup items={phaseOneNavItems} active={active} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavGroup
+            items={phaseOneNavItems}
+            active={active}
+            collapsed={collapsed}
+            user={user}
+            onNavigate={onNavigate}
+          />
           <div className="nav-section-label">Experimental <span>(Coming Soon)</span></div>
-          <NavGroup items={phaseTwoNavItems} active={active} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavGroup
+            items={phaseTwoNavItems}
+            active={active}
+            collapsed={collapsed}
+            user={user}
+            onNavigate={onNavigate}
+          />
         </nav>
 
         <button
@@ -252,7 +297,13 @@ function AppShell({ active, onNavigate, user, onLogin, theme, setTheme, children
 
       <section className="workspace">
         <header className="topbar">
-          <span />
+          {visibleAuthHint ? (
+            <div className="auth-hint" role="status">
+              {visibleAuthHint}
+            </div>
+          ) : (
+            <span />
+          )}
 
           {user ? (
             <div className="topbar-account">
@@ -295,19 +346,25 @@ function ThemeToggle({ isLight, onToggle }) {
   );
 }
 
-function NavGroup({ items, active, collapsed, onNavigate }) {
-  return items.map((item) => (
-    <button
-      className={`nav-item ${active === item.id ? "active" : ""}`}
-      key={item.id}
-      onClick={() => onNavigate(item.id)}
-      title={collapsed ? item.label : undefined}
-      aria-label={item.label}
-    >
-      <item.Icon size={19} weight={active === item.id ? "duotone" : "regular"} />
-      <span>{item.label}</span>
-    </button>
-  ));
+function NavGroup({ items, active, collapsed, user, onNavigate }) {
+  return items.map((item) => {
+    const locked = !user && Boolean(protectedPageCopy[item.id]);
+
+    return (
+      <button
+        className={`nav-item ${active === item.id ? "active" : ""} ${locked ? "locked" : ""}`}
+        key={item.id}
+        onClick={() => onNavigate(item.id)}
+        title={locked ? "Log in required" : collapsed ? item.label : undefined}
+        aria-label={item.label}
+        aria-disabled={locked}
+        disabled={locked}
+      >
+        <item.Icon size={19} weight={active === item.id ? "duotone" : "regular"} />
+        <span>{item.label}</span>
+      </button>
+    );
+  });
 }
 
 function LoginModal({ onClose, onSuccess }) {
@@ -1226,6 +1283,17 @@ export function App() {
   const [user, setUser] = useState("");
   const [chatSeed, setChatSeed] = useState("");
   const [theme, setTheme] = useState("light");
+  const [authHint, setAuthHint] = useState("");
+
+  const navigate = (nextPage) => {
+    const protectedCopy = protectedPageCopy[nextPage];
+    if (!user && protectedCopy) {
+      setAuthHint(`Log in to access ${protectedCopy.label}.`);
+      return;
+    }
+    setAuthHint("");
+    setActive(nextPage);
+  };
 
   const page = useMemo(() => {
     if (active === "agents") return <AgentsPage />;
@@ -1234,7 +1302,7 @@ export function App() {
         <ToolkitsPage
           onUsePrompt={(prompt) => {
             setChatSeed(prompt);
-            setActive("chat");
+            navigate("chat");
           }}
         />
       );
@@ -1249,7 +1317,10 @@ export function App() {
         seedPrompt={chatSeed}
         onSeedConsumed={() => setChatSeed("")}
         canChat={Boolean(user)}
-        onLoginRequired={() => setLoginOpen(true)}
+        onLoginRequired={() => {
+          setAuthHint("Log in to start chatting.");
+          setLoginOpen(true);
+        }}
       />
     );
   }, [active, chatSeed, user]);
@@ -1258,9 +1329,10 @@ export function App() {
     <div className={`app-theme theme-${theme}`}>
       <AppShell
         active={active}
-        onNavigate={setActive}
+        onNavigate={navigate}
         user={user}
         onLogin={() => setLoginOpen(true)}
+        authHint={authHint}
         theme={theme}
         setTheme={setTheme}
       >
@@ -1271,6 +1343,7 @@ export function App() {
           onClose={() => setLoginOpen(false)}
           onSuccess={(email) => {
             setUser(email);
+            setAuthHint("");
             setLoginOpen(false);
           }}
         />

@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: process.env.GITHUB_PAGES === "true" ? "/llm_gateway_prototype/" : "/",
+  base: process.env.GITHUB_PAGES === "true" ? "./" : "/",
   build: {
     outDir: process.env.GITHUB_PAGES === "true" ? "../docs" : "dist",
     emptyOutDir: true,

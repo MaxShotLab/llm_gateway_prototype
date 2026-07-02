@@ -6418,6 +6418,43 @@ body {
   background: #f8f5ee;
 }
 
+.auth-hint {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  color: #dbe6f4;
+  background: rgba(143, 166, 194, 0.12);
+  border: 1px solid rgba(143, 166, 194, 0.22);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.nav-item.locked {
+  opacity: 0.54;
+  cursor: not-allowed;
+}
+
+.nav-item.locked:hover {
+  opacity: 0.72;
+}
+
+.nav-item.locked:disabled {
+  opacity: 0.54;
+}
+
+.theme-light .auth-hint {
+  color: #4f6681;
+  background: rgba(93, 127, 168, 0.1);
+  border-color: rgba(93, 127, 168, 0.2);
+}
+
+.theme-light .nav-item.locked,
+.theme-light .nav-item.locked > svg {
+  color: #8a93a1;
+}
+
 /* Chat capability toggles: use Maxshot blue-gray, not green. */
 .composer-tools button.enabled {
   color: #8fa6c2;
