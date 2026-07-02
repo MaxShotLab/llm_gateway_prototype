@@ -14,6 +14,7 @@ services.
 | Document | Authority |
 |---|---|
 | [`llm-gateway-product-baselines.md`](./llm-gateway-product-baselines.md) | Single source of truth for product design, scope, phases, navigation, and terminology |
+| [`PHASE_1_PRD_AND_FEATURES.md`](./PHASE_1_PRD_AND_FEATURES.md) | Current Phase 1 usage-based product surface definition for discussion |
 | [`MAXSHOT_GATEWAY_PRD.md`](./MAXSHOT_GATEWAY_PRD.md) | Single source of truth for product and engineering delivery requirements |
 | [`MAXSHOT_UI_SPECS.md`](./MAXSHOT_UI_SPECS.md) | Current visual tokens, typography, layout, and component rules |
 | [`design-qa.md`](./design-qa.md) | Visual QA status, evidence, and known differences |
@@ -182,7 +183,7 @@ data modules as production integration begins.
 - Global design rules live in `frontend/src/styles.css`.
 - Product-page density overrides are near the end of that file.
 - Visual tokens and layout requirements are documented in
-  `MAXSHOT_UI_SPECS.md`.
+  [MAXSHOT_UI_SPECS.md](./MAXSHOT_UI_SPECS.md).
 - Public asset paths are absolute from `frontend/public/`, for example
   `/maxshot-assets/logo.svg`.
 
@@ -198,8 +199,8 @@ With the development server running, comparison pages are available at:
 - [Chat comparison](http://127.0.0.1:5173/qa-maxshot/compare.html)
 - [API comparison](http://127.0.0.1:5173/qa-maxshot/api-compare.html)
 
-See `design-qa.md` before treating historical screenshots as current pixel
-references.
+See [design-qa.md](./design-qa.md) before treating historical screenshots as
+current pixel references.
 
 ## Current Gaps
 
@@ -213,4 +214,4 @@ references.
 - No automated test suite or lint script is configured.
 
 The required implementation order and acceptance criteria are defined in
-`MAXSHOT_GATEWAY_PRD.md`.
+[MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md).
