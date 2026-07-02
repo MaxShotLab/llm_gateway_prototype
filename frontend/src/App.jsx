@@ -221,9 +221,8 @@ const starterSkills = [
   },
 ];
 
-function AppShell({ active, onNavigate, user, onLogin, children }) {
+function AppShell({ active, onNavigate, user, onLogin, theme, setTheme, children }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [theme, setTheme] = useState("light");
   const isLight = theme === "light";
 
   return (
@@ -1226,6 +1225,7 @@ export function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [user, setUser] = useState("");
   const [chatSeed, setChatSeed] = useState("");
+  const [theme, setTheme] = useState("light");
 
   const page = useMemo(() => {
     if (active === "agents") return <AgentsPage />;
@@ -1248,17 +1248,21 @@ export function App() {
       <ChatPage
         seedPrompt={chatSeed}
         onSeedConsumed={() => setChatSeed("")}
+        canChat={Boolean(user)}
+        onLoginRequired={() => setLoginOpen(true)}
       />
     );
   }, [active, chatSeed, user]);
 
   return (
-    <>
+    <div className={`app-theme theme-${theme}`}>
       <AppShell
         active={active}
         onNavigate={setActive}
         user={user}
         onLogin={() => setLoginOpen(true)}
+        theme={theme}
+        setTheme={setTheme}
       >
         {page}
       </AppShell>
@@ -1271,6 +1275,6 @@ export function App() {
           }}
         />
       )}
-    </>
+    </div>
   );
 }

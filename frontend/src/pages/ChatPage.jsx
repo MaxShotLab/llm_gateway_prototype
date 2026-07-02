@@ -10,12 +10,10 @@ import {
   FileText,
   Globe,
   LinkSimple,
-  LockKey,
   MagnifyingGlass,
   Paperclip,
   PencilSimple,
   Plus,
-  ShieldCheck,
   SidebarSimple,
   Sparkle,
   Stop,
@@ -56,7 +54,7 @@ function addMockFile(currentFiles, setFiles) {
   if (nextFile) setFiles((current) => [...current, nextFile]);
 }
 
-export function ChatPage({ seedPrompt, onSeedConsumed }) {
+export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired }) {
   const [conversations, setConversations] = useState(starterConversations);
   const [transientConversation, setTransientConversation] = useState(null);
   const [activeId, setActiveId] = useState(null);
@@ -70,8 +68,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
   const [searchEnabled, setSearchEnabled] = useState(false);
   const [reasoningEnabled, setReasoningEnabled] = useState(false);
   const [temporary, setTemporary] = useState(false);
-  const [zeroRetention, setZeroRetention] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [files, setFiles] = useState([]);
   const [streaming, setStreaming] = useState(false);
   const [streamedText, setStreamedText] = useState("");
@@ -133,33 +129,15 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     setTransientConversation(null);
     setModel(conversation.model);
     setTemporary(false);
-    setZeroRetention(false);
     setReasoningEnabled(false);
     setFiles([]);
     if (window.matchMedia("(max-width: 900px)").matches) setHistoryOpen(false);
   };
 
   const toggleTemporary = () => {
-    if (zeroRetention) {
-      setZeroRetention(false);
-      setTemporary(false);
-      return;
-    }
-
     const next = !temporary;
     setTemporary(next);
     if (next) {
-      setActiveId(null);
-      setTransientConversation(null);
-    }
-  };
-
-  const toggleZeroRetention = () => {
-    if (!selectedModel.zeroRetention) return;
-    const next = !zeroRetention;
-    setZeroRetention(next);
-    if (next) {
-      setTemporary(true);
       setActiveId(null);
       setTransientConversation(null);
     }
@@ -171,10 +149,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
     if (!nextModel.webSearch) setSearchEnabled(false);
     if (!nextModel.reasoning) setReasoningEnabled(false);
     if (!nextModel.files) setFiles([]);
-    if (!nextModel.zeroRetention && zeroRetention) {
-      setZeroRetention(false);
-      setTemporary(true);
-    }
   };
 
   const finishStream = (conversationId, assistantMessage, persist) => {
@@ -239,6 +213,10 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
 
   const send = ({ promptOverride, appendUser = true } = {}) => {
     if ((!promptOverride && !value.trim()) || streaming) return;
+    if (!canChat) {
+      onLoginRequired?.();
+      return;
+    }
     const prompt = promptOverride || value.trim();
     const userMessage = {
       role: "user",
@@ -432,11 +410,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
             <div className="chat-title">
               <strong>{activeConversation?.title || "New conversation"}</strong>
               <span>
-                {zeroRetention
-                  ? "Zero retention"
-                  : temporary
-                    ? "Temporary"
-                    : "Saved to history"}
+                {temporary ? "Temporary" : "Saved to history"}
               </span>
             </div>
           </div>
@@ -470,63 +444,20 @@ export function ChatPage({ seedPrompt, onSeedConsumed }) {
               )}
             </div>
             <button
-              className={`privacy-button ${
-                temporary || zeroRetention ? "enabled" : ""
-              }`}
-              onClick={() => setPrivacyOpen((state) => !state)}
+              className={`privacy-button ${temporary ? "enabled" : ""}`}
+              onClick={toggleTemporary}
+              aria-pressed={temporary}
             >
-              {zeroRetention ? <LockKey size={17} /> : <ShieldCheck size={17} />}
+              <ClockCounterClockwise size={17} />
               Temporary Chat
             </button>
           </div>
-          {privacyOpen && (
-            <div className="privacy-popover">
-              <div className="privacy-popover-header">
-                <strong>Temporary Chat</strong>
-                <button onClick={() => setPrivacyOpen(false)} aria-label="Close temporary chat settings">
-                  <X size={16} />
-                </button>
-              </div>
-              <button className="privacy-option" onClick={toggleTemporary}>
-                <span className="privacy-option-main">
-                  <span className="privacy-option-icon"><ClockCounterClockwise size={18} /></span>
-                  <span className="privacy-option-copy">
-                    <strong>Temporary chat</strong>
-                    <small>Not saved</small>
-                  </span>
-                </span>
-                <b className={`mini-switch ${temporary ? "on" : ""}`} />
-              </button>
-              <button
-                className="privacy-option"
-                onClick={toggleZeroRetention}
-                disabled={!selectedModel.zeroRetention}
-              >
-                <span className="privacy-option-main">
-                  <span className="privacy-option-icon"><LockKey size={18} /></span>
-                  <span className="privacy-option-copy">
-                    <strong>Zero retention</strong>
-                    <small>
-                      {selectedModel.zeroRetention
-                        ? `${selectedModel.provider} eligible`
-                        : "Unavailable for this model"}
-                    </small>
-                  </span>
-                </span>
-                <b className={`mini-switch ${zeroRetention ? "on" : ""}`} />
-              </button>
-            </div>
-          )}
         </header>
 
         {!hasMessages ? (
           <div className="chat-empty chat-core-empty">
             <div className="mode-summary">
-              {zeroRetention ? (
-                <>
-                  <LockKey size={16} /> Zero-retention route
-                </>
-              ) : temporary ? (
+              {temporary ? (
                 <>
                   <ClockCounterClockwise size={16} /> Temporary chat
                 </>
