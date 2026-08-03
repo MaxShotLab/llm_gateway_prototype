@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studio-prototype",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd studio-prototype && python3 -m http.server $PORT"],
+      "port": 8743,
+      "autoPort": true
+    }
+  ]
+}
