@@ -99,7 +99,7 @@ export function ApiPage() {
         <div>
           <span className="api-chip">OpenAI compatible</span>
           <h2>One endpoint. Key-based access.</h2>
-          <a className="api-doc-link" href={`${import.meta.env.BASE_URL}docs/api.html`} target="_blank" rel="noreferrer">
+          <a className="api-doc-link" href="https://docs.maxshot.ai/" target="_blank" rel="noreferrer">
             Documentation <ArrowRight size={15} />
           </a>
         </div>

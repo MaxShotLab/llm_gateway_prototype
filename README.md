@@ -13,6 +13,9 @@ services.
 
 | Document | Authority |
 |---|---|
+| [`docs/MAXSHOT_GATEWAY_PRODUCT_GUIDE.md`](./docs/MAXSHOT_GATEWAY_PRODUCT_GUIDE.md) | User-facing product overview and Release 1.0 scope |
+| [`docs/MAXSHOT_GATEWAY_PRODUCT_DOCUMENT.md`](./docs/MAXSHOT_GATEWAY_PRODUCT_DOCUMENT.md) | Detailed product, workflow, and API reference |
+| [`docs/MAXSHOT_GATEWAY_USER_GUIDE.md`](./docs/MAXSHOT_GATEWAY_USER_GUIDE.md) | Screenshot-based operating manual for Gateway users |
 | [`llm-gateway-product-baselines.md`](./llm-gateway-product-baselines.md) | Single source of truth for product design, scope, phases, navigation, and terminology |
 | [`PHASE_1_PRD_AND_FEATURES.md`](./PHASE_1_PRD_AND_FEATURES.md) | Current Phase 1 usage-based product surface definition for discussion |
 | [`MAXSHOT_GATEWAY_PRD.md`](./MAXSHOT_GATEWAY_PRD.md) | Single source of truth for product and engineering delivery requirements |
@@ -95,7 +98,6 @@ come from starter data.
 index.html                  Committed GitHub Pages app shell for root publishing
 assets/                     Committed Pages build assets
 maxshot-assets/             Logo, menu icon, and Onest font for root Pages
-docs/api.html               Static API quick-start page
 qa-maxshot/                 Visual comparison pages and captures for root Pages
 frontend/
   public/
