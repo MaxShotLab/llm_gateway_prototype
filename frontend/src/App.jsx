@@ -334,7 +334,17 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
             user={user}
             onNavigate={onNavigate}
           />
-          <div className="nav-section-label">Community</div>
+          <div className="nav-section-label">Experimental <span>(Coming Soon)</span></div>
+          <NavGroup
+            items={phaseTwoNavItems}
+            active={active}
+            collapsed={collapsed}
+            user={user}
+            onNavigate={onNavigate}
+          />
+        </nav>
+
+        <div className="community-dock">
           <div className="community-row">
             {communityLinks.map((link) => (
               <a
@@ -350,15 +360,7 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
               </a>
             ))}
           </div>
-          <div className="nav-section-label">Experimental <span>(Coming Soon)</span></div>
-          <NavGroup
-            items={phaseTwoNavItems}
-            active={active}
-            collapsed={collapsed}
-            user={user}
-            onNavigate={onNavigate}
-          />
-        </nav>
+        </div>
 
         <button
           className="collapse-tab"

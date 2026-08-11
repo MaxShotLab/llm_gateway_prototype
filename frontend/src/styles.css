@@ -2371,10 +2371,18 @@ textarea:focus-visible {
   background: rgba(255, 255, 255, 0.09);
 }
 
+.community-dock {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 58px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
 .community-row {
   display: flex;
   gap: 6px;
-  padding: 0 13px;
 }
 
 .community-link {
@@ -2394,10 +2402,14 @@ textarea:focus-visible {
   color: inherit;
 }
 
+.is-collapsed .community-dock {
+  left: 7px;
+  right: 7px;
+}
+
 .is-collapsed .community-row {
   flex-wrap: wrap;
   width: 44px;
-  padding: 0 7px;
 }
 
 .language-button {
