@@ -1034,6 +1034,25 @@ th {
   text-align: center;
 }
 
+.support-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.support-link:hover {
+  color: var(--black);
+  background: var(--active);
+}
+
 .memory-hero {
   border-radius: 18px;
   background: linear-gradient(105deg, var(--lavender), var(--panel) 57%, var(--blue));
@@ -2350,6 +2369,35 @@ textarea:focus-visible {
   overflow: hidden;
   color: transparent;
   background: rgba(255, 255, 255, 0.09);
+}
+
+.community-row {
+  display: flex;
+  gap: 6px;
+  padding: 0 13px;
+}
+
+.community-link {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.community-link:hover {
+  background: var(--active);
+  color: inherit;
+}
+
+.is-collapsed .community-row {
+  flex-wrap: wrap;
+  width: 44px;
+  padding: 0 7px;
 }
 
 .language-button {
@@ -4781,6 +4829,10 @@ th {
 
 .content-page .spend-only-note {
   font-size: 9px;
+}
+
+.content-page .support-link {
+  font-size: 11px;
 }
 
 .content-page .account-limit-panel {

@@ -7,7 +7,9 @@ import {
   Code,
   Copy,
   DotsThree,
+  FileText,
   Gauge,
+  GithubLogo,
   Globe,
   Key,
   Lightning,
@@ -21,12 +23,14 @@ import {
   ShareNetwork,
   Sparkle,
   Sun,
+  TelegramLogo,
   Trash,
   UploadSimple,
   UserCircle,
   Wallet,
   Wrench,
   X,
+  XLogo,
 } from "@phosphor-icons/react";
 import { ChatPage } from "./pages/ChatPage";
 import { ApiPage } from "./pages/ApiPage";
@@ -44,6 +48,18 @@ const phaseOneNavItems = [
 const phaseTwoNavItems = [
   { id: "agents", label: "Agents", Icon: Robot },
   { id: "toolkits", label: "Toolkits", Icon: PuzzlePiece },
+];
+
+// TODO: replace with the real Telegram / X community links before shipping.
+const TELEGRAM_COMMUNITY_URL = "PASTE_YOUR_TELEGRAM_COMMUNITY_LINK_HERE";
+const X_COMMUNITY_URL = "PASTE_YOUR_X_TWITTER_LINK_HERE";
+const GITHUB_URL = "https://github.com/MaxShotLab/llm_gateway_prototype";
+
+const communityLinks = [
+  { id: "telegram", label: "Telegram", href: TELEGRAM_COMMUNITY_URL, Icon: TelegramLogo },
+  { id: "x", label: "X (Twitter)", href: X_COMMUNITY_URL, Icon: XLogo },
+  { id: "docs", label: "Docs", href: `${import.meta.env.BASE_URL}docs/api.html`, Icon: FileText },
+  { id: "github", label: "GitHub", href: GITHUB_URL, Icon: GithubLogo },
 ];
 
 const protectedPageCopy = {
@@ -318,6 +334,22 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
             user={user}
             onNavigate={onNavigate}
           />
+          <div className="nav-section-label">Community</div>
+          <div className="community-row">
+            {communityLinks.map((link) => (
+              <a
+                className="community-link"
+                key={link.id}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                title={link.label}
+                aria-label={link.label}
+              >
+                <link.Icon size={16} weight={link.id === "docs" ? "regular" : "fill"} />
+              </a>
+            ))}
+          </div>
           <div className="nav-section-label">Experimental <span>(Coming Soon)</span></div>
           <NavGroup
             items={phaseTwoNavItems}

@@ -8,6 +8,7 @@ import {
   CurrencyCircleDollar,
   DownloadSimple,
   ShieldCheck,
+  TelegramLogo,
   Wallet,
   X,
 } from "@phosphor-icons/react";
@@ -17,6 +18,8 @@ import {
 } from "../data/billingData";
 
 const creditsPerUsd = 1_000_000;
+// TODO: replace with the real Telegram support link (e.g. https://t.me/yourhandle) before shipping.
+const TELEGRAM_SUPPORT_URL = "PASTE_YOUR_TELEGRAM_SUPPORT_LINK_HERE";
 
 export function FundingPage() {
   const [amount, setAmount] = useState(25);
@@ -186,6 +189,15 @@ export function FundingPage() {
           <small className="spend-only-note">
             Credits are for Maxshot usage only. Balance withdrawals are not supported.
           </small>
+          <a
+            className="support-link"
+            href={TELEGRAM_SUPPORT_URL}
+            target="_blank"
+            rel="noreferrer"
+            title="Talk to a human on Telegram"
+          >
+            <TelegramLogo size={15} weight="fill" /> Need help? Talk to us on Telegram
+          </a>
         </aside>
       </div>
 
