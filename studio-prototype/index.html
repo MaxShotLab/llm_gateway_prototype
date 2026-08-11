@@ -40,6 +40,14 @@
   .gw-nav-item.active { background: var(--gw-accent-soft); color: var(--gw-accent); font-weight: 600; }
   .gw-nav-gap { height: 10px; }
   .gw-nav-divider { height: 1px; background: var(--gw-border); margin: 12px 4px; }
+  .gw-nav-section-label { font-size: 10.5px; letter-spacing: 0.5px; color: var(--gw-muted); font-weight: 700; text-transform: uppercase; padding: 2px 10px 8px; }
+  .gw-community-row { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 4px; }
+  .gw-community-btn {
+    width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--gw-border); background: transparent;
+    color: var(--gw-muted); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .gw-community-btn:hover { color: var(--gw-text); border-color: var(--gw-accent); }
+  .gw-community-btn svg { width: 15px; height: 15px; }
   .gw-search-row { display: flex; gap: 8px; margin-top: 4px; }
   .gw-search-row input {
     flex: 1; border: 1px solid var(--gw-border); background: var(--gw-bg); border-radius: 9px;
@@ -107,13 +115,63 @@
   .gw-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gw-border); font-size: 13px; }
   .gw-row:last-child { border-bottom: none; }
   .gw-row span:first-child { color: var(--gw-muted); }
-  .gw-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
-  .gw-stat { background: var(--gw-sidebar); border: 1px solid var(--gw-border); border-radius: 14px; padding: 18px; text-align: center; }
-  .gw-stat b { display: block; font-size: 22px; }
-  .gw-stat span { font-size: 12px; color: var(--gw-muted); }
+  .gw-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .gw-stat { background: var(--gw-sidebar); border: 1px solid var(--gw-border); border-radius: 14px; padding: 16px 16px 15px; }
+  .gw-stat .icon { width: 22px; height: 22px; border: 1px solid var(--gw-border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--gw-muted); margin-bottom: 20px; }
+  .gw-stat label { display: block; font-size: 10px; letter-spacing: 0.5px; color: var(--gw-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .gw-stat b { display: block; font-size: 20px; font-weight: 700; }
+  .gw-stat b small { font-size: 12px; font-weight: 500; color: var(--gw-muted); margin-left: 4px; }
+  .gw-stat span { display: block; font-size: 11.5px; color: var(--gw-muted); margin-top: 2px; }
   .gw-btn { border: 1px solid var(--gw-border); background: var(--gw-bg); color: var(--gw-text); border-radius: 20px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .gw-btn.primary { background: var(--gw-accent); border-color: var(--gw-accent); color: #fff; }
   .gw-code { background: var(--gw-bg); border: 1px solid var(--gw-border); border-radius: 10px; padding: 12px 14px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--gw-text); overflow-x: auto; }
+
+  .gw-billing-layout { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; margin-bottom: 24px; }
+  .gw-billing-layout .gw-card { margin-bottom: 0; padding: 22px; }
+  .gw-eyebrow { display: block; font-size: 10px; letter-spacing: 0.5px; color: var(--gw-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .gw-field-label { display: block; font-size: 11.5px; color: var(--gw-muted); font-weight: 600; margin: 0 0 8px; }
+  .gw-amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .gw-amount-grid button { border: 1px solid var(--gw-border); border-radius: 9px; background: var(--gw-bg); color: var(--gw-text); padding: 11px 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .gw-amount-grid button.selected { background: var(--gw-accent); border-color: var(--gw-accent); color: #fff; }
+  .gw-amount-grid .custom { grid-column: 1 / -1; color: var(--gw-muted); font-weight: 500; }
+  .gw-pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gw-pay-methods .m { border: 1px solid var(--gw-border); border-radius: 10px; padding: 13px 14px; }
+  .gw-pay-methods .m.selected { border-color: var(--gw-text); border-width: 2px; }
+  .gw-pay-methods .m b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+  .gw-pay-methods .m span { font-size: 11.5px; color: var(--gw-muted); }
+  .gw-pay-methods .m.disabled { opacity: 0.45; }
+  .gw-summary-head { display: flex; align-items: center; justify-content: space-between; }
+  .gw-estimated-badge { font-size: 9.5px; letter-spacing: 0.3px; font-weight: 700; color: var(--gw-muted); border: 1px solid var(--gw-border); border-radius: 20px; padding: 2px 8px; }
+  .gw-credits-total { font-size: 26px; font-weight: 700; margin: 8px 0 14px; }
+  .gw-summary-line.total { font-weight: 700; }
+  .gw-summary-line.total span:first-child { color: var(--gw-text); }
+  .gw-continue-btn { width: 100%; margin-top: 14px; border: none; }
+  .gw-settlement-note { display: block; text-align: center; margin-top: 10px; font-size: 11px; color: var(--gw-muted); }
+  .gw-support-entry {
+    display: flex; align-items: center; gap: 9px; margin-top: 12px; padding: 9px 11px;
+    border: 1px solid var(--gw-border); border-radius: 10px; text-decoration: none; color: var(--gw-text);
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .gw-support-entry:hover { border-color: var(--gw-accent); background: var(--gw-accent-soft); }
+  .gw-support-entry .ico { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #2aa9e0; color: #fff; }
+  .gw-support-entry .ico svg { width: 14px; height: 14px; }
+  .gw-support-entry .copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .gw-support-entry .copy b { font-size: 12.5px; font-weight: 600; }
+  .gw-support-entry .copy span { font-size: 10.5px; color: var(--gw-muted); }
+  .gw-support-entry .go { margin-left: auto; color: var(--gw-muted); font-size: 13px; flex-shrink: 0; }
+  .gw-support-entry:hover .go { color: var(--gw-accent); }
+  .gw-table-wrap { overflow-x: auto; }
+  .gw-table-wrap table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12.5px; }
+  .gw-table-wrap th { text-align: left; font-size: 10px; letter-spacing: 0.4px; color: var(--gw-muted); font-weight: 700; text-transform: uppercase; padding: 0 14px 10px 0; border-bottom: 1px solid var(--gw-border); white-space: nowrap; }
+  .gw-table-wrap td { padding: 12px 14px 12px 0; border-bottom: 1px solid var(--gw-border); color: var(--gw-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .gw-table-wrap td:last-child, .gw-table-wrap th:last-child { text-align: right; padding-right: 0; }
+  .gw-status-pill { display: inline-flex; align-items: center; gap: 5px; background: var(--gw-accent-soft); color: var(--gw-accent); border-radius: 20px; padding: 3px 9px; font-size: 11px; font-weight: 700; }
+  .gw-status-pill i { width: 5px; height: 5px; border-radius: 50%; background: var(--gw-accent); display: block; }
+  .gw-footnote { font-size: 11px; color: var(--gw-muted); margin-top: 14px; }
+  @media (max-width: 860px) {
+    .gw-billing-layout { grid-template-columns: 1fr; }
+    .gw-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
 
   /* ================= Studio canvas: scoped dark theme, ported from the Studio module ================= */
   .studio-canvas {
@@ -255,6 +313,18 @@
 
   .studio-canvas .edit-tools-row { display: none; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
   .studio-canvas .edit-tools-row.show { display: flex; }
+  .studio-canvas .chip-cost { opacity: 0.6; font-weight: 400; }
+
+  .studio-canvas .edit-lineage { display: none; align-items: center; gap: 10px; margin: -6px 0 14px; font-size: 12px; color: var(--muted); }
+  .studio-canvas .edit-lineage.show { display: flex; }
+  .studio-canvas .edit-lineage-link { border: none; background: transparent; color: var(--accent-ink); text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .studio-canvas .edit-lineage-compare { margin-left: auto; border: 1px solid var(--border-2); background: var(--bg); color: var(--muted); border-radius: 14px; padding: 4px 10px; font-size: 11.5px; cursor: pointer; flex-shrink: 0; }
+  .studio-canvas .edit-lineage-compare:hover { border-color: var(--accent); color: var(--text); }
+  .studio-canvas .edit-lineage-compare.active { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+
+  .studio-canvas .card .lineage-badge { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%; background: rgba(10,10,15,0.6); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .studio-canvas .card .lineage-badge svg { width: 11px; height: 11px; }
+  [data-shell-theme="light"] .studio-canvas .card .lineage-badge { color: #fff; }
 
   /* Asset picker modal (fixed, escapes the canvas — reuses same dark vars via inline scope) */
   .modal-overlay { position: fixed; inset: 0; background: rgba(6,6,10,0.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
@@ -354,7 +424,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4L2 12l6 8M16 4l6 8-6 8"/></svg>
         API
       </button>
-      <button class="gw-nav-item">
+      <button class="gw-nav-item" data-view="credits">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
         Credits
       </button>
@@ -366,6 +436,23 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
         Profile
       </button>
+
+      <div class="gw-nav-divider"></div>
+      <div class="gw-nav-section-label">Community</div>
+      <div class="gw-community-row">
+        <a class="gw-community-btn" href="#" data-community-link="telegram" target="_blank" rel="noreferrer" title="Telegram" aria-label="Telegram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </a>
+        <a class="gw-community-btn" href="#" data-community-link="x" target="_blank" rel="noreferrer" title="X (Twitter)" aria-label="X (Twitter)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+        </a>
+        <a class="gw-community-btn" href="#" data-community-link="docs" target="_blank" rel="noreferrer" title="Docs" aria-label="Docs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+        </a>
+        <a class="gw-community-btn" href="https://github.com/MaxShotLab/llm_gateway_prototype" target="_blank" rel="noreferrer" title="GitHub" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.48 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.46-1.19-1.11-1.51-1.11-1.51-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.93.86.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.05 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.3 9.3 0 015 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.92-2.34 4.79-4.57 5.04.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.59.69.48A10.02 10.02 0 0022 12.26C22 6.58 17.52 2 12 2z"/></svg>
+        </a>
+      </div>
     </nav>
 
     <div class="gw-search-row">
@@ -432,6 +519,101 @@
         <div class="studio-canvas" id="creationsCanvas"></div>
       </section>
 
+      <!-- CREDITS -->
+      <section class="gw-view hidden" id="view-credits">
+        <div class="gw-page" style="max-width:1080px;">
+          <h1>Credits</h1>
+
+          <div class="gw-stat-grid">
+            <div class="gw-stat">
+              <div class="icon">$</div>
+              <label>Usable balance</label>
+              <b id="creditsUsableValue">975K <small>≈$0.97</small></b>
+              <span>credits</span>
+            </div>
+            <div class="gw-stat">
+              <div class="icon">+</div>
+              <label>Paid credits</label>
+              <b>475K</b>
+              <span>credits</span>
+            </div>
+            <div class="gw-stat">
+              <div class="icon">＊</div>
+              <label>Free credits</label>
+              <b>500K</b>
+              <span>credits</span>
+            </div>
+            <div class="gw-stat">
+              <div class="icon">%</div>
+              <label>Referral rewards</label>
+              <b>0</b>
+              <span>credits</span>
+            </div>
+          </div>
+
+          <div class="gw-billing-layout">
+            <div class="gw-card">
+              <span class="gw-eyebrow">Step 1</span>
+              <h3 style="font-size:17px;margin:2px 0 18px;">Add credits</h3>
+              <label class="gw-field-label">Amount</label>
+              <div class="gw-amount-grid" id="creditsAmountGrid">
+                <button data-amount="5">$5</button>
+                <button data-amount="10">$10</button>
+                <button data-amount="25" class="selected">$25</button>
+                <button data-amount="50">$50</button>
+                <button data-amount="100">$100</button>
+                <button data-amount="250">$250</button>
+                <div class="custom">Custom</div>
+              </div>
+              <label class="gw-field-label">Payment method</label>
+              <div class="gw-pay-methods">
+                <div class="m selected"><b>Crypto</b><span>LI.FI on-chain</span></div>
+                <div class="m disabled"><b>Card</b><span>Stripe checkout</span></div>
+              </div>
+            </div>
+
+            <aside class="gw-card">
+              <div class="gw-summary-head">
+                <span class="gw-eyebrow" style="margin-bottom:0;">Credits added</span>
+                <span class="gw-estimated-badge">ESTIMATED</span>
+              </div>
+              <div class="gw-credits-total" id="creditsTotalValue">23.75M</div>
+              <div class="gw-row"><span>Method</span><span id="creditsMethodValue">Crypto</span></div>
+              <div class="gw-row"><span>You pay</span><span id="creditsPayValue">$25.00</span></div>
+              <div class="gw-row"><span>Network fee</span><span>$0.00</span></div>
+              <div class="gw-row"><span>Platform fee</span><span id="creditsFeeValue">$1.25 (5%)</span></div>
+              <div class="gw-row total"><span>You receive</span><span id="creditsReceiveValue">$23.75 → 23,750,000</span></div>
+              <button class="gw-btn primary gw-continue-btn" id="creditsContinueBtn">Continue</button>
+              <span class="gw-settlement-note">On-chain settlement</span>
+
+              <a class="gw-support-entry" href="#" data-community-link="telegram" target="_blank" rel="noreferrer" title="Talk to a human on Telegram">
+                <span class="ico">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 3.2L2.9 10.5c-1.3.5-1.3 1.2-.2 1.6l4.8 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.2-2.1 4.6 3.4c.8.5 1.4.2 1.6-.8l3-14c.3-1.3-.4-1.9-1.4-1.6z"/></svg>
+                </span>
+                <span class="copy"><b>Need help? Talk to us on Telegram</b><span>Real person, usually replies in minutes</span></span>
+                <span class="go">→</span>
+              </a>
+            </aside>
+          </div>
+
+          <div class="gw-card">
+            <span class="gw-eyebrow">Top-up history</span>
+            <div class="gw-table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Method</th><th>Paid</th><th>Fees</th><th>Credits</th><th>Status</th><th>Receipt</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>7/1/2026, 11:02:12 AM</td><td>USDC · Base</td><td>1 USDC</td><td>$0.00</td><td>475K</td>
+                    <td><span class="gw-status-pill"><i></i>confirmed</span></td><td>↓</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="gw-footnote">Credits are for Maxshot usage only. Withdrawals/refunds are not supported.</div>
+          </div>
+        </div>
+      </section>
+
     </div>
   </div>
 </div>
@@ -486,14 +668,52 @@ $('gwChatSend').addEventListener('click', () => {
 });
 $('gwNewConv').addEventListener('click', () => toast('New conversation (prototype only)'));
 
+/* ---------------- shell: community links (sidebar, below Profile) ---------------- */
+// TODO: replace with the real Telegram / X / Docs links before shipping.
+const COMMUNITY_LINKS = {
+  telegram: 'PASTE_YOUR_TELEGRAM_COMMUNITY_LINK_HERE',
+  x: 'PASTE_YOUR_X_TWITTER_LINK_HERE',
+  docs: 'PASTE_YOUR_DOCS_LINK_HERE',
+};
+document.querySelectorAll('[data-community-link]').forEach(el => {
+  const url = COMMUNITY_LINKS[el.dataset.communityLink];
+  el.href = url;
+  el.addEventListener('click', e => {
+    if (!/^https?:\/\//.test(url)) { e.preventDefault(); toast(el.title + ' link not configured yet'); }
+  });
+});
+
 /* ---------------- shell: credits shared across chat / Studio ---------------- */
 const shell = { credits: 975000 };
 function updateShellCredits() {
   $('gwCreditsLabel').textContent = formatK(shell.credits);
+  const usable = $('creditsUsableValue');
+  if (usable) usable.innerHTML = formatK(shell.credits) + ' <small>≈$' + (shell.credits / 1000000).toFixed(2) + '</small>';
 }
 
+/* ---------------- credits page: amount selector + live preview ---------------- */
+const CREDITS_PER_USD = 1000000;
+const PLATFORM_FEE_RATE = 0.05;
+function updateCreditsPreview(amount) {
+  const fee = amount * PLATFORM_FEE_RATE;
+  const net = amount - fee;
+  const credits = Math.round(net * CREDITS_PER_USD);
+  $('creditsTotalValue').textContent = (credits / 1000000).toFixed(2) + 'M';
+  $('creditsPayValue').textContent = '$' + amount.toFixed(2);
+  $('creditsFeeValue').textContent = '$' + fee.toFixed(2) + ' (' + (PLATFORM_FEE_RATE * 100) + '%)';
+  $('creditsReceiveValue').textContent = '$' + net.toFixed(2) + ' → ' + credits.toLocaleString();
+}
+document.querySelectorAll('#creditsAmountGrid button[data-amount]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#creditsAmountGrid button[data-amount]').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    updateCreditsPreview(parseInt(btn.dataset.amount, 10));
+  });
+});
+$('creditsContinueBtn').addEventListener('click', () => toast('Mock checkout — no funds transmitted (prototype only)'));
+
 /* ---------------- shell: sidebar nav / view switching ---------------- */
-const SHELL_VIEWS = ['chat', 'studio', 'creations'];
+const SHELL_VIEWS = ['chat', 'studio', 'creations', 'credits'];
 document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.remove('active'));
@@ -501,6 +721,7 @@ document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
     SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== btn.dataset.view));
     $('gwModelSelect').style.display = btn.dataset.view === 'chat' ? 'flex' : 'none';
     if (btn.dataset.view === 'creations') renderCreationsGrid();
+    if (btn.dataset.view === 'credits') updateShellCredits();
   });
 });
 
@@ -580,13 +801,35 @@ const I18N = {
   filterVideos: { en: 'Videos', zh: '视频' }, emptyCreations: { en: 'Nothing here yet — try Studio first', zh: '还没有内容，先去 Studio 生成吧' },
   audio: { en: 'Audio', zh: '音频' }, audioDescLabel: { en: 'Audio description (optional)', zh: '音频描述（可选）' },
   audioWord: { en: 'Audio', zh: '音频' },
+  derivedFromLabel: { en: 'Edited from', zh: '编辑自' }, compareOriginal: { en: 'Compare original', zh: '对比原图' },
+  showEdited: { en: 'Show edited', zh: '显示编辑后' },
+  needInpaintMaskToast: { en: 'Paint over the area you want to redo first', zh: '请先在图片上涂抹需要重绘的区域' },
+  inpaintPlaceholder: { en: 'Describe what the painted area should become...', zh: '描述涂抹区域应该变成什么样...' },
 };
 function t(key) { return I18N[key][uiLang]; }
-const GRADIENTS = [
-  'linear-gradient(135deg,#8b5cf6,#22d3ee)', 'linear-gradient(135deg,#f0554a,#f5b942)', 'linear-gradient(135deg,#34d399,#22d3ee)',
-  'linear-gradient(135deg,#f472b6,#8b5cf6)', 'linear-gradient(135deg,#f5b942,#f0554a)', 'linear-gradient(135deg,#60a5fa,#34d399)',
-  'linear-gradient(135deg,#a78bfa,#f472b6)'
-];
+
+// Per-style color palettes so the "Style" pill visibly affects the mock result,
+// instead of being a control with no effect on the output.
+const STYLE_PALETTES = {
+  none: [['#8b5cf6', '#22d3ee'], ['#f0554a', '#f5b942'], ['#34d399', '#22d3ee'], ['#f472b6', '#8b5cf6'], ['#f5b942', '#f0554a'], ['#60a5fa', '#34d399'], ['#a78bfa', '#f472b6']],
+  photo: [['#f5b942', '#f0554a'], ['#fbbf24', '#ea580c'], ['#fde68a', '#b45309']],
+  anime: [['#f472b6', '#8b5cf6'], ['#facc15', '#fb7185'], ['#38bdf8', '#a78bfa']],
+  '3d': [['#34d399', '#22d3ee'], ['#60a5fa', '#34d399'], ['#a78bfa', '#22d3ee']],
+  cinematic: [['#1e293b', '#f0554a'], ['#0f172a', '#f5b942'], ['#111827', '#dc2626']],
+  watercolor: [['#a78bfa', '#f472b6'], ['#60a5fa', '#f9a8d4'], ['#93c5fd', '#fbcfe8']],
+};
+function pickStyleGradient(styleKey) {
+  const palette = STYLE_PALETTES[styleKey] || STYLE_PALETTES.none;
+  const pair = palette[Math.floor(Math.random() * palette.length)];
+  return 'linear-gradient(135deg,' + pair[0] + ',' + pair[1] + ')';
+}
+function extractGradientColors(css) { return (css && css.match(/#[0-9a-fA-F]{6}/g)) || []; }
+function hexToRgb(hex) { const n = parseInt(hex.slice(1), 16); return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }; }
+function rgbToHex(r, g, b) { return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
+function blendHex(hexA, hexB, t) {
+  const a = hexToRgb(hexA), b = hexToRgb(hexB);
+  return rgbToHex(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t);
+}
 
 $('studioCanvas').innerHTML = `
   <div class="st-topbar" id="stTopbar">
@@ -607,6 +850,11 @@ $('studioCanvas').innerHTML = `
         <button class="edit-icon-btn" id="editDeleteBtn" title="Delete" style="color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg></button>
       </div>
     </div>
+    <div class="edit-lineage" id="editLineage">
+      <span data-key="derivedFromLabel">Edited from</span>
+      <button class="edit-lineage-link" id="editLineageLink"></button>
+      <button class="edit-lineage-compare" id="editCompareBtn" data-key="compareOriginal">Compare original</button>
+    </div>
     <div class="edit-preview-wrap" id="editPreviewWrap">
       <div class="edit-preview" id="editPreview">
         <div class="surf" id="editSurf"></div>
@@ -614,10 +862,10 @@ $('studioCanvas').innerHTML = `
       </div>
     </div>
     <div class="edit-tools-row" id="editToolsRow">
-      <button class="chip" data-tool="inpaint" data-key="toolInpaint">Inpaint</button>
-      <button class="chip" data-tool="removebg" data-key="toolRemoveBg">Remove background</button>
-      <button class="chip" data-tool="upscale" data-key="toolUpscale">Upscale</button>
-      <button class="chip" data-tool="animate" data-key="toolAnimate">Animate</button>
+      <button class="chip" data-tool="inpaint"></button>
+      <button class="chip" data-tool="removebg"></button>
+      <button class="chip" data-tool="upscale"></button>
+      <button class="chip" data-tool="animate"></button>
     </div>
     <div class="brush-row" id="editBrushRow"><span data-key="brushSize">Brush size</span><input type="range" id="editBrushSize" min="8" max="60" value="24" style="flex:1"></div>
     <div class="trim-block" id="editTrimBlock">
@@ -1009,16 +1257,47 @@ function handleGenerate() {
 let assetSeq = 1;
 function makeAsset(prompt) {
   const isVideo = state.mode === 'video';
+  const needsUpload = state.tab === 'img2img' || state.tab === 'img2vid';
+  let gradient = pickStyleGradient(state.style);
+  let strength = null;
+  if (needsUpload) {
+    strength = parseInt($('strengthRange').value, 10);
+    const ref = state.uploadedImgs[0];
+    if (ref && ref.isGradient) {
+      const refColors = extractGradientColors(ref.src);
+      const styleColors = extractGradientColors(gradient);
+      if (refColors.length === 2 && styleColors.length === 2) {
+        const t2 = strength / 100; // higher strength = closer to the reference's colors
+        gradient = 'linear-gradient(135deg,' + blendHex(styleColors[0], refColors[0], t2) + ',' + blendHex(styleColors[1], refColors[1], t2) + ')';
+      }
+    }
+  }
   const asset = {
-    id: assetSeq++, type: isVideo ? 'video' : 'image', gradient: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)],
+    id: assetSeq++, type: isVideo ? 'video' : 'image', gradient,
     aspect: state.aspect, prompt: prompt, duration: isVideo ? $('durationRange').value + 's' : null, model: state.model,
     audio: isVideo ? state.audio === 'on' : false,
     audioDesc: isVideo && state.audio === 'on' ? $('audioDescInput').value.trim() : '',
+    style: state.style, strength,
+    parentId: null, editType: null,
   };
   state.assets.unshift(asset);
   return asset;
 }
 function updateGalleryCount() { const el = $('galleryCount'); if (el) el.textContent = state.assets.length + ' ' + t('results'); }
+
+/* ---------------- shared thumb rendering: gradient, transparent (removebg), or composited raster (inpaint) ---------------- */
+function setThumbBackground(el, asset) {
+  if (asset.thumbDataUrl) {
+    el.style.backgroundImage = 'url(' + asset.thumbDataUrl + ')';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+  } else if (asset.transparent) {
+    el.style.backgroundImage = 'repeating-conic-gradient(#2a2a34 0% 25%, #1a1a22 0% 50%)';
+    el.style.backgroundSize = '16px 16px';
+  } else {
+    el.style.background = asset.gradient;
+  }
+}
 
 /* ---------------- gallery card ---------------- */
 function buildCard(asset) {
@@ -1029,12 +1308,19 @@ function buildCard(asset) {
   card.dataset.id = asset.id;
   const thumb = document.createElement('div');
   thumb.className = 'thumb';
-  thumb.style.background = asset.gradient;
+  setThumbBackground(thumb, asset);
   card.appendChild(thumb);
   const badge = document.createElement('div');
   badge.className = 'badge';
   badge.textContent = asset.type === 'video' ? t('videoBadge') : t('imageBadge');
   card.appendChild(badge);
+  if (asset.parentId) {
+    const lineageBadge = document.createElement('div');
+    lineageBadge.className = 'lineage-badge';
+    lineageBadge.title = t('derivedFromLabel');
+    lineageBadge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5V15.5M8.3 10.5c2.5 1 4.5 1 7.4 0"/></svg>';
+    card.appendChild(lineageBadge);
+  }
   if (asset.type === 'video') {
     const play = document.createElement('div');
     play.className = 'play';
@@ -1045,6 +1331,11 @@ function buildCard(asset) {
     dur.style.display = 'flex'; dur.style.alignItems = 'center'; dur.style.gap = '3px';
     dur.innerHTML = (asset.audio ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>' : '') + '<span>' + asset.duration + '</span>';
     card.appendChild(dur);
+  } else if (asset.upscaled) {
+    const res = document.createElement('div');
+    res.className = 'duration';
+    res.textContent = asset.resolutionLabel;
+    card.appendChild(res);
   }
   const overlay = document.createElement('div');
   overlay.className = 'overlay';
@@ -1142,8 +1433,9 @@ function renderPickerGrid(assetType) {
     const card = document.createElement('div');
     card.className = 'picker-card';
     const badgeText = asset.type === 'video' ? t('videoBadge') : t('imageBadge');
-    card.innerHTML = '<div class="thumb" style="background:' + asset.gradient + '"></div><div class="badge">' + badgeText + '</div>' +
+    card.innerHTML = '<div class="thumb"></div><div class="badge">' + badgeText + '</div>' +
       (asset.type === 'video' ? '<div class="play"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="10" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg></div>' : '');
+    setThumbBackground(card.querySelector('.thumb'), asset);
     card.addEventListener('click', () => {
       $('assetPickerOverlay').classList.remove('show');
       if (pickerOnSelect) pickerOnSelect(asset);
@@ -1160,6 +1452,7 @@ let editDrawing = false, editImageTool = null;
 function enterEditMode(asset) {
   state.editing = asset;
   editImageTool = null;
+  comparingOriginal = false;
   closeAllPopovers();
 
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'studio'));
@@ -1178,8 +1471,24 @@ function enterEditMode(asset) {
   $('editTrimBlock').classList.toggle('show', isVideo);
   $('editBrushRow').classList.remove('show');
   document.querySelectorAll('#editToolsRow .chip').forEach(c => c.classList.remove('active'));
+  renderEditToolLabels();
 
-  $('editBarTitle').textContent = (isVideo ? t('videoResultTitle') : t('imageResultTitle')) + '  ·  ' + asset.model + '  ·  ' + asset.aspect + (asset.duration ? '  ·  ' + asset.duration : '');
+  const metaParts = [isVideo ? t('videoResultTitle') : t('imageResultTitle'), asset.model, asset.aspect];
+  if (asset.duration) metaParts.push(asset.duration);
+  const styleObj = STYLES.find(s => s.key === asset.style);
+  if (styleObj && styleObj.key !== 'none') metaParts.push(styleObj[uiLang]);
+  if (asset.strength != null) metaParts.push(t('strength') + ' ' + asset.strength + '%');
+  $('editBarTitle').textContent = metaParts.join('  ·  ');
+
+  const parent = asset.parentId ? state.assets.find(a => a.id === asset.parentId) : null;
+  if (parent) {
+    $('editLineage').classList.add('show');
+    $('editLineageLink').textContent = (parent.type === 'video' ? t('videoResultTitle') : t('imageResultTitle')) + (parent.prompt ? ' · ' + parent.prompt.slice(0, 28) : '');
+    $('editCompareBtn').classList.remove('active');
+    $('editCompareBtn').textContent = t('compareOriginal');
+  } else {
+    $('editLineage').classList.remove('show');
+  }
 
   renderEditPreview(asset);
 
@@ -1195,6 +1504,7 @@ function enterEditMode(asset) {
 function exitEditMode() {
   state.editing = null;
   $('editBar').classList.remove('show');
+  $('editLineage').classList.remove('show');
   $('editPreviewWrap').classList.remove('show');
   $('editToolsRow').classList.remove('show');
   $('editTrimBlock').classList.remove('show');
@@ -1215,13 +1525,70 @@ function renderEditPreview(asset) {
   let w, h;
   if (a.w >= a.h) { w = maxDim; h = Math.round(maxDim * a.h / a.w); } else { h = maxDim; w = Math.round(maxDim * a.w / a.h); }
   surf.style.width = w + 'px'; surf.style.height = h + 'px'; surf.style.borderRadius = '12px';
-  surf.style.background = asset.gradient;
+  surf.style.backgroundImage = ''; surf.style.background = '';
+  setThumbBackground(surf, asset);
   surf.style.display = 'flex'; surf.style.alignItems = 'center'; surf.style.justifyContent = 'center';
   surf.innerHTML = asset.type === 'video' ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg>' : '';
   const mask = $('editMaskLayer');
   mask.width = w; mask.height = h; mask.style.width = w + 'px'; mask.style.height = h + 'px';
   mask.getContext('2d').clearRect(0, 0, w, h);
   mask.classList.remove('active');
+}
+
+let comparingOriginal = false;
+function toggleCompareOriginal() {
+  const asset = state.editing;
+  const parent = asset.parentId ? state.assets.find(a => a.id === asset.parentId) : null;
+  if (!parent) return;
+  comparingOriginal = !comparingOriginal;
+  renderEditPreview(comparingOriginal ? parent : asset);
+  $('editCompareBtn').classList.toggle('active', comparingOriginal);
+  $('editCompareBtn').textContent = comparingOriginal ? t('showEdited') : t('compareOriginal');
+}
+
+const REMOVEBG_COST = 800, UPSCALE_COST = 500;
+function renderEditToolLabels() {
+  document.querySelector('[data-tool="inpaint"]').innerHTML = t('toolInpaint') + ' <span class="chip-cost">· ' + EDIT_COST.toLocaleString() + '</span>';
+  document.querySelector('[data-tool="removebg"]').innerHTML = t('toolRemoveBg') + ' <span class="chip-cost">· ' + REMOVEBG_COST.toLocaleString() + '</span>';
+  document.querySelector('[data-tool="upscale"]').innerHTML = t('toolUpscale') + ' <span class="chip-cost">· ' + UPSCALE_COST.toLocaleString() + '</span>';
+  document.querySelector('[data-tool="animate"]').textContent = t('toolAnimate');
+}
+
+function runInstantEdit(asset, tool) {
+  const cost = tool === 'removebg' ? REMOVEBG_COST : UPSCALE_COST;
+  if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
+  const sk = document.createElement('div');
+  sk.className = 'card skeleton';
+  const a0 = ASPECTS.find(x => x.id === asset.aspect) || ASPECTS[0];
+  sk.style.aspectRatio = a0.w + ' / ' + a0.h;
+  $('galleryGrid').prepend(sk);
+  updateGalleryCount();
+  exitEditMode();
+
+  setTimeout(() => {
+    shell.credits -= cost;
+    updateShellCredits();
+    const newAsset = {
+      id: assetSeq++, type: 'image', gradient: asset.gradient,
+      aspect: asset.aspect, prompt: asset.prompt, duration: null, model: asset.model, audio: false, audioDesc: '',
+      style: asset.style, strength: asset.strength,
+      parentId: asset.id, editType: tool,
+    };
+    let msg;
+    if (tool === 'removebg') {
+      newAsset.transparent = true;
+      msg = t('bgRemovedToast');
+    } else {
+      newAsset.upscaled = true;
+      newAsset.resolutionLabel = state.resolution === '2k' ? '4K' : '2K';
+      msg = t('upscaledToast') + ' ' + newAsset.resolutionLabel;
+    }
+    state.assets.unshift(newAsset);
+    const card = buildCard(newAsset);
+    sk.replaceWith(card);
+    updateGalleryCount();
+    toast(msg + ' — ' + formatK(cost) + ' ' + t('creditsWord'));
+  }, 1200 + Math.random() * 400);
 }
 
 $('editExitBtn').addEventListener('click', () => exitEditMode());
@@ -1234,31 +1601,28 @@ $('editDeleteBtn').addEventListener('click', () => {
   exitEditMode();
   toast(t('deletedToast'));
 });
+$('editLineageLink').addEventListener('click', () => {
+  const asset = state.editing;
+  const parent = asset && asset.parentId ? state.assets.find(a => a.id === asset.parentId) : null;
+  if (parent) enterEditMode(parent);
+});
+$('editCompareBtn').addEventListener('click', () => toggleCompareOriginal());
 
 document.querySelectorAll('#editToolsRow .chip').forEach(btn => {
   btn.addEventListener('click', () => {
     const tool = btn.dataset.tool;
     const asset = state.editing;
     if (tool === 'animate') { jumpToImageToVideo(asset); return; }
-    if (tool === 'upscale') { toast(t('upscaledToast') + ' ' + (state.resolution === '2k' ? '4K' : '2K')); return; }
+    if (tool === 'removebg' || tool === 'upscale') { runInstantEdit(asset, tool); return; }
 
+    // inpaint: toggle paint mode — the mask is applied when the Generate button is clicked
     const turningOn = editImageTool !== tool;
     editImageTool = turningOn ? tool : null;
     document.querySelectorAll('#editToolsRow .chip').forEach(c => c.classList.remove('active'));
     if (turningOn) btn.classList.add('active');
     $('editMaskLayer').classList.toggle('active', editImageTool === 'inpaint');
     $('editBrushRow').classList.toggle('show', editImageTool === 'inpaint');
-
-    if (tool === 'removebg') {
-      if (turningOn) {
-        $('editSurf').style.backgroundImage = 'repeating-conic-gradient(#2a2a34 0% 25%, #1a1a22 0% 50%)';
-        $('editSurf').style.backgroundSize = '16px 16px';
-        setTimeout(() => toast(t('bgRemovedToast')), 300);
-      } else {
-        $('editSurf').style.backgroundImage = 'none';
-        $('editSurf').style.background = asset.gradient;
-      }
-    }
+    $('promptInput').placeholder = editImageTool === 'inpaint' ? t('inpaintPlaceholder') : t('editImgPlaceholder');
     if (tool === 'inpaint' && turningOn) toast(t('inpaintToast'));
   });
 });
@@ -1313,10 +1677,37 @@ dragTrimHandle($('trimHandleEnd'), false);
 $('audioSrcOriginal').addEventListener('click', () => { $('audioSrcOriginal').classList.add('active'); $('audioSrcGenerate').classList.remove('active'); });
 $('audioSrcGenerate').addEventListener('click', () => { $('audioSrcGenerate').classList.add('active'); $('audioSrcOriginal').classList.remove('active'); });
 
+function maskHasPaint() {
+  const mask = $('editMaskLayer');
+  const data = mask.getContext('2d').getImageData(0, 0, mask.width, mask.height).data;
+  for (let i = 3; i < data.length; i += 4) { if (data[i] > 0) return true; }
+  return false;
+}
+function compositeInpaintResult(asset) {
+  const mask = $('editMaskLayer');
+  const out = document.createElement('canvas');
+  out.width = mask.width; out.height = mask.height;
+  const ctx = out.getContext('2d');
+  const colors = extractGradientColors(asset.gradient);
+  if (colors.length === 2) {
+    const g = ctx.createLinearGradient(0, 0, out.width, out.height);
+    g.addColorStop(0, colors[0]); g.addColorStop(1, colors[1]);
+    ctx.fillStyle = g;
+  } else {
+    ctx.fillStyle = '#333';
+  }
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(mask, 0, 0);
+  return out.toDataURL('image/png');
+}
+
 function handleEditApply() {
   const asset = state.editing;
   const isVideo = asset.type === 'video';
   const desc = $('promptInput').value.trim();
+  const isInpaint = !isVideo && editImageTool === 'inpaint';
+
+  if (isInpaint && !maskHasPaint()) { toast(t('needInpaintMaskToast')); return; }
   if (!desc) { toast(isVideo ? t('needContinueDescToast') : t('needEditDescToast')); return; }
   const cost = isVideo ? EXTEND_COST : EDIT_COST;
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
@@ -1330,10 +1721,12 @@ function handleEditApply() {
   $('galleryGrid').prepend(sk);
   updateGalleryCount();
 
-  let clipLen, useGeneratedAudio;
+  let clipLen, useGeneratedAudio, inpaintThumb;
   if (isVideo) {
     clipLen = trimState.end - trimState.start;
     useGeneratedAudio = $('audioSrcGenerate').classList.contains('active');
+  } else if (isInpaint) {
+    inpaintThumb = compositeInpaintResult(asset);
   }
   exitEditMode();
 
@@ -1344,16 +1737,19 @@ function handleEditApply() {
     if (isVideo) {
       const newDuration = Math.round((clipLen + 4) * 10) / 10;
       newAsset = {
-        id: assetSeq++, type: 'video', gradient: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)],
+        id: assetSeq++, type: 'video', gradient: pickStyleGradient(asset.style),
         aspect: asset.aspect, prompt: desc, duration: newDuration + 's', model: asset.model,
         audio: useGeneratedAudio ? true : asset.audio,
         audioDesc: useGeneratedAudio ? desc : asset.audioDesc,
+        style: asset.style, strength: asset.strength, parentId: asset.id, editType: 'extend',
       };
     } else {
       newAsset = {
-        id: assetSeq++, type: 'image', gradient: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)],
+        id: assetSeq++, type: 'image', gradient: pickStyleGradient(asset.style),
         aspect: asset.aspect, prompt: desc, duration: null, model: asset.model, audio: false, audioDesc: '',
+        style: asset.style, strength: asset.strength, parentId: asset.id, editType: isInpaint ? 'inpaint' : 'editimg',
       };
+      if (isInpaint) newAsset.thumbDataUrl = inpaintThumb;
     }
     state.assets.unshift(newAsset);
     const card = buildCard(newAsset);
@@ -1379,7 +1775,7 @@ window.addEventListener('mouseup', () => { editDrawing = false; });
 
 /* ---------------- init ---------------- */
 function initStudio() {
-  renderTabs(); populateModels(); renderAR(); renderStyles(); renderResGrid(); renderAudioOptions(); updateComposerForTab();
+  renderTabs(); populateModels(); renderAR(); renderStyles(); renderResGrid(); renderAudioOptions(); updateComposerForTab(); renderEditToolLabels();
   ['Neon cyberpunk street at night', 'Minimal white product shot, softbox lighting', 'Sunrise over snow peaks', 'Vintage film-style portrait'].forEach((p, i) => {
     state.mode = i === 2 ? 'video' : 'image';
     const a = makeAsset(p);
