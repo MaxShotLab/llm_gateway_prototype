@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** August 13, 2026
+**Updated:** August 14, 2026
 
 ## 1. Purpose
 
@@ -95,12 +95,18 @@ requirements, ownership, and acceptance.
 
 1. Browse Assets or My Creations.
 2. Select a result made by themselves, another creator, or Maxshot.
-3. Use "Try this" to reload its exact reference image(s) and prompt into the
+3. In Assets, review a read-only preview — the media, its reference image(s),
+   and its prompt as plain text — then choose Try this. In My Creations, Try
+   this is also available directly from the gallery card or from inside the
+   full editing view.
+4. Use "Try this" to reload its exact reference image(s) and prompt into the
    composer.
-4. Adjust the prompt or reference and generate a new result.
+5. Adjust the prompt or reference and generate a new result.
 
 The Reuse path is what makes Assets valuable: every item is a working
-recipe, not just a preview image.
+recipe, not just a preview image. Assets is reuse-only — opening an item
+there never enters the editing view, even for the current user's own
+published work; editing an asset always happens from My Creations.
 
 ## 5. Product Framework
 
@@ -242,11 +248,15 @@ Acceptance:
   user's own generations and edits.
 - Per-item actions: open (edit), Try this, download, delete.
 - Deleting a source asset does not delete results derived from it.
+- Editing and deleting a result are only available from My Creations — see
+  P1.1 for why Assets is reuse-only.
 
 Acceptance:
 
 - A user can find any of their own past generations by type filter.
 - Deletion only affects the deleted asset and its own gallery entry.
+- Opening an item's editing view from My Creations and returning ("Back")
+  returns to My Creations, not a generic generation screen.
 
 ### P0.5 Credit Integration
 
@@ -271,19 +281,24 @@ Acceptance:
 - A single feed combining the current user's own generations with
   community- and Maxshot-published examples — no "mine vs. theirs" filter,
   only a type filter (all/image/video).
-- Every item, regardless of source, shows its prompt and reference image(s)
-  and supports Try this and (for the owner) edit.
-- Published items not owned by the current user are not deletable by that
-  user.
+- Opening any item — regardless of source, including the current user's own
+  published work — shows a read-only preview: the media, its reference
+  image(s), and its prompt as plain text, not an editable field.
+- Assets never offers edit or delete, for any item, regardless of ownership.
+  Editing an owned asset happens only from My Creations (P0.4).
+- Every item supports Try this and download, from both the gallery card and
+  the preview.
 - Non-owned items show a creator attribution badge (name, or a Maxshot-team
   label for official examples).
 
 Acceptance:
 
-- A user can open any Assets item and see the same prompt/reference detail
-  regardless of who made it.
-- Attempting to delete a non-owned item has no effect and is not offered as a
-  control.
+- A user can open any Assets item and see the same read-only prompt/reference
+  detail regardless of who made it, including their own.
+- No edit or delete control is offered anywhere in Assets, including on the
+  current user's own items.
+- Opening an Assets item and returning ("Back") stays within Assets — it does
+  not enter the Studio composer or change the active sidebar section.
 
 ### P1.2 Try This
 
@@ -412,3 +427,4 @@ into production.
 | Date | Version | Changes |
 |---|---|---|
 | 2026-08-13 | Initial PRD | Defined Studio's four generation paths, inline editing, asset lineage, credit integration, and the Assets community library, based on the HTML prototype and its live-demo proof of concept. |
+| 2026-08-14 | Assets scope refinement | Scoped Assets to reuse-only: opening any item — including the current user's own published work — shows a read-only preview (media, references, plain-text prompt) with Try this/download only; edit and delete are exclusive to My Creations (P0.4), and returning from either surface's detail view stays on that surface. |
