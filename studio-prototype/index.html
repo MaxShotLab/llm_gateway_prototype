@@ -224,6 +224,11 @@
   .studio-canvas .chip:hover { color: var(--text); border-color: var(--accent); }
   .studio-canvas .chip.active { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
 
+  .studio-canvas .asset-subtabs { display: flex; gap: 4px; margin: 0 auto 20px; max-width: 900px; border-bottom: 1px solid var(--border); }
+  .studio-canvas .asset-subtab { font-size: 14px; font-weight: 600; padding: 10px 4px; margin-right: 20px; border: none; background: transparent; color: var(--muted-2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .studio-canvas .asset-subtab:hover { color: var(--text); }
+  .studio-canvas .asset-subtab.active { color: var(--accent-ink); border-bottom-color: var(--accent); }
+
   .studio-canvas textarea.prompt { width: 100%; min-height: 60px; resize: vertical; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 12px 14px; font-size: 14px; line-height: 1.5; outline: none; font-family: inherit; }
   .studio-canvas textarea.prompt:focus { border-color: var(--accent); }
 
@@ -270,13 +275,12 @@
   .studio-canvas .video-only, .studio-canvas .strength-only { display: none; }
   .studio-canvas .video-only.show, .studio-canvas .strength-only.show { display: block; }
 
-  .studio-canvas .gallery-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; max-width: 900px; margin-left: auto; margin-right: auto; }
-  .studio-canvas .gallery-header h2 { font-size: 15px; margin: 0; font-weight: 600; }
-  .studio-canvas .gallery-header span { font-size: 12px; color: var(--muted-2); }
   .studio-canvas .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
   .studio-canvas .card { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: var(--panel); cursor: pointer; aspect-ratio: 1 / 1; }
   .studio-canvas .card .thumb { width: 100%; height: 100%; }
   .studio-canvas .card .badge { position: absolute; top: 8px; left: 8px; font-size: 10.5px; padding: 3px 8px; border-radius: 20px; background: rgba(10,10,15,0.6); color: #fff; }
+  .studio-canvas .card .views-badge { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; gap: 3px; font-size: 10.5px; padding: 3px 8px; border-radius: 20px; background: rgba(10,10,15,0.6); color: #fff; }
+  .studio-canvas .card .views-badge svg { width: 10px; height: 10px; }
   .studio-canvas .card .duration { position: absolute; bottom: 8px; right: 8px; font-size: 10.5px; padding: 2px 7px; border-radius: 6px; background: rgba(10,10,15,0.7); color: #fff; }
   .studio-canvas .card .play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: opacity .2s; }
   .studio-canvas .card .play svg { width: 34px; height: 34px; opacity: 0.9; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
@@ -289,9 +293,9 @@
   .studio-canvas .icon-btn { width: 26px; height: 26px; border-radius: 7px; border: none; background: rgba(255,255,255,0.12); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .studio-canvas .icon-btn:hover { background: rgba(255,255,255,0.28); }
   .studio-canvas .icon-btn svg { width: 14px; height: 14px; }
-  .studio-canvas .card.skeleton { background: linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%); background-size: 200% 100%; animation: st-shimmer 1.1s infinite; cursor: default; }
-  @keyframes st-shimmer { to { background-position: -200% 0; } }
+  .studio-canvas .icon-btn.liked svg { fill: #f43f5e; stroke: #f43f5e; }
 
+  .studio-canvas #materialsCanvas { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
   .studio-canvas .view-title { font-size: 18px; font-weight: 600; margin: 4px auto 18px; max-width: 900px; }
   .studio-canvas .view-title:has(+ .materials-subtitle) { margin-bottom: 2px; }
   .studio-canvas .materials-subtitle { font-size: 12.5px; color: var(--muted); margin: 0 auto 16px; max-width: 900px; }
@@ -300,6 +304,8 @@
   /* Inline editing — editing happens in the same composer card used for generation, no popup */
   .studio-canvas .edit-bar { display: none; align-items: center; gap: 10px; margin-bottom: 16px; }
   .studio-canvas .edit-bar.show { display: flex; }
+  .studio-canvas #editMetaBadges { display: none; }
+  .studio-canvas #editMetaBadges.show { display: flex; }
   .studio-canvas .edit-exit-btn { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border-2); background: var(--bg); color: var(--text); border-radius: 20px; padding: 7px 14px 7px 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
   .studio-canvas .edit-exit-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
   .studio-canvas .edit-exit-btn svg { width: 14px; height: 14px; }
@@ -308,6 +314,8 @@
   .studio-canvas .edit-icon-btn { width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border-2); background: var(--bg); color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
   .studio-canvas .edit-icon-btn:hover { color: var(--text); border-color: var(--accent); }
   .studio-canvas .edit-icon-btn svg { width: 15px; height: 15px; }
+  .studio-canvas .edit-icon-btn.liked { color: #f43f5e; border-color: #f43f5e; }
+  .studio-canvas .edit-icon-btn.liked svg { fill: #f43f5e; }
   .studio-canvas .edit-try-btn {
     display: flex; align-items: center; gap: 6px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-ink);
     border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; flex-shrink: 0;
@@ -315,18 +323,26 @@
   .studio-canvas .edit-try-btn:hover { background: var(--accent); color: #fff; }
   .studio-canvas .edit-try-btn svg { width: 14px; height: 14px; }
 
+  .studio-canvas .meta-badges { display: flex; flex-wrap: wrap; gap: 14px; margin: 2px 0 14px; }
+  .studio-canvas .meta-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted-2); }
+  .studio-canvas .meta-badge svg { width: 13px; height: 13px; flex-shrink: 0; }
+
   .studio-canvas .edit-reference-row { display: none; align-items: center; gap: 8px; margin: -6px 0 14px; font-size: 12px; color: var(--muted); }
   .studio-canvas .edit-reference-row.show { display: flex; }
   .studio-canvas .edit-reference-row .ref-thumbs { display: flex; gap: 4px; flex-shrink: 0; }
   .studio-canvas .edit-reference-row .ref-thumb { width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--border-2); }
 
-  .studio-canvas .edit-preview-wrap { display: none; justify-content: center; margin-bottom: 16px; }
+  .studio-canvas .edit-preview-wrap { display: none; justify-content: center; margin-bottom: 16px; overflow: hidden; border-radius: 12px; }
   .studio-canvas .edit-preview-wrap.show { display: flex; }
   .studio-canvas .edit-preview { position: relative; border-radius: 12px; overflow: hidden; }
   .studio-canvas .edit-preview canvas.mask-layer { position: absolute; inset: 0; cursor: crosshair; display: none; }
   .studio-canvas .edit-preview canvas.mask-layer.active { display: block; }
+  .studio-canvas .edit-preview.playing { animation: st-video-preview 1.8s ease-in-out infinite; }
 
   .studio-canvas .material-preview { max-width: 900px; margin: 0 auto; }
+
+  .ref-lightbox-img { width: min(640px, 84vw); height: min(640px, 74vh); border-radius: 16px; background-size: cover; background-position: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+
   .studio-canvas .material-preview-prompt-label { font-size: 11px; letter-spacing: 0.4px; color: var(--muted-2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
   .studio-canvas .material-preview-prompt-text { font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; padding-bottom: 8px; }
 
@@ -431,12 +447,8 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
         Studio
       </button>
-      <button class="gw-nav-item" data-view="creations">
+      <button class="gw-nav-item" data-view="assets">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        My Creations
-      </button>
-      <button class="gw-nav-item" data-view="materials">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>
         Assets
       </button>
 
@@ -539,14 +551,55 @@
         <div class="studio-canvas" id="studioCanvas"></div>
       </section>
 
-      <!-- MY CREATIONS (placeholder here — full gallery inserted next step) -->
-      <section class="gw-view hidden" id="view-creations">
-        <div class="studio-canvas" id="creationsCanvas"></div>
+      <!-- ASSETS (My Creations + Liked) -->
+      <section class="gw-view hidden" id="view-assets">
+        <div class="studio-canvas" id="assetsCanvas"></div>
       </section>
 
-      <!-- ASSETS (materials users upload themselves — usable as prompt references and editable) -->
-      <section class="gw-view hidden" id="view-materials">
-        <div class="studio-canvas" id="materialsCanvas"></div>
+      <!-- Shared read-only preview, opened from Discover or Assets > Liked -->
+      <section class="gw-view hidden" id="view-preview">
+        <div class="studio-canvas">
+          <div class="material-preview" id="materialPreview">
+            <div class="edit-bar show">
+              <button class="edit-exit-btn" id="materialPreviewBack">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+                <span data-key="backLabel">Back</span>
+              </button>
+              <div class="edit-bar-title" id="materialPreviewTitle"></div>
+              <div class="edit-bar-actions">
+                <button class="edit-try-btn" id="materialPreviewTryBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/></svg>
+                  <span data-key="tryThisLabel">Try this</span>
+                </button>
+                <button class="edit-icon-btn" id="materialPreviewEditBtn" title="Edit" style="display:none">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+                </button>
+                <button class="edit-icon-btn" id="materialPreviewDownloadBtn" title="Download">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg>
+                </button>
+                <button class="edit-icon-btn" id="materialPreviewAnimateBtn" title="Animate" style="display:none">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>
+                </button>
+                <button class="edit-icon-btn" id="materialPreviewLikeBtn" title="Like" style="display:none">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.35-10-9.28C.5 8.5 2 5 5.5 5c2 0 3.5 1 4.5 2.5C11 6 12.5 5 14.5 5 18 5 19.5 8.5 22 11.72 19 16.65 12 21 12 21z"/></svg>
+                </button>
+                <button class="edit-icon-btn" id="materialPreviewDeleteBtn" title="Delete" style="display:none;color:var(--danger)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="meta-badges" id="materialPreviewMetaBadges"></div>
+            <div class="edit-reference-row" id="materialPreviewRefRow">
+              <div class="ref-thumbs" id="materialPreviewRefThumbs"></div>
+              <span data-key="referenceUsedLabel">Reference used</span>
+            </div>
+            <div class="edit-preview-wrap show">
+              <div class="edit-preview" id="materialPreviewSurf"></div>
+            </div>
+            <div class="material-preview-prompt-label" data-key="promptLabel">Prompt</div>
+            <div class="material-preview-prompt-text" id="materialPreviewPromptText"></div>
+          </div>
+        </div>
       </section>
 
       <!-- CREDITS -->
@@ -661,6 +714,12 @@
   </div>
 </div>
 
+<!-- Reference-thumbnail preview: click a reference image in the composer to see it enlarged -->
+<div class="modal-overlay" id="refLightbox">
+  <button class="close-modal" id="refLightboxClose">&times;</button>
+  <div class="ref-lightbox-img" id="refLightboxImg"></div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -743,16 +802,17 @@ document.querySelectorAll('#creditsAmountGrid button[data-amount]').forEach(btn 
 $('creditsContinueBtn').addEventListener('click', () => toast('Mock checkout — no funds transmitted (prototype only)'));
 
 /* ---------------- shell: sidebar nav / view switching ---------------- */
-const SHELL_VIEWS = ['chat', 'studio', 'creations', 'materials', 'credits'];
+const SHELL_VIEWS = ['chat', 'studio', 'assets', 'credits', 'preview'];
 document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     if (state.editing) exitEditMode();
+    previewingMaterial = null;
     document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== btn.dataset.view));
     $('gwModelSelect').style.display = btn.dataset.view === 'chat' ? 'flex' : 'none';
-    if (btn.dataset.view === 'creations') renderCreationsGrid();
-    if (btn.dataset.view === 'materials') renderMaterialsGrid();
+    if (btn.dataset.view === 'assets') renderAssetsView();
+    if (btn.dataset.view === 'studio') renderMaterialsGrid();
     if (btn.dataset.view === 'credits') updateShellCredits();
   });
 });
@@ -761,7 +821,7 @@ document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
 let uiLang = 'en';
 const state = {
   mode: 'image', tab: 'txt2img', uploadedImgs: [], model: '', resolution: 'hd', aspect: '1:1', style: 'none', assets: [],
-  audio: 'on', editing: null
+  audio: 'on', editing: null, assetsTab: 'mine', likedIds: new Set()
 };
 const TABS = {
   image: [{ id: 'txt2img', en: 'Text to Image', zh: '文生图' }, { id: 'img2img', en: 'Image to Image', zh: '图生图' }],
@@ -772,6 +832,9 @@ const MODELS = {
   video: ['Kling 2.1', 'Sora 2', 'Seedance 1.0 Pro', 'Wan 2.2', 'Runway Gen-4', 'Hailuo 2.3']
 };
 const MAX_UPLOADS = 9;
+// Liked/favoriting is a low-priority feature for now — flip this on to bring back the
+// heart toggle on Discover/Liked cards and in the preview panel, and the Liked sub-tab on Assets.
+const LIKES_ENABLED = false;
 const RES_OPTIONS = [
   { key: 'sd', en: 'SD (768px)', zh: '标清 (768px)', shortEn: 'SD', shortZh: '标清' },
   { key: 'hd', en: 'HD (1024px)', zh: '高清 (1024px)', shortEn: 'HD', shortZh: '高清' },
@@ -790,9 +853,8 @@ const I18N = {
   model: { en: 'Model', zh: '模型' }, aspect: { en: 'Aspect ratio', zh: '画面比例' }, resolution: { en: 'Resolution', zh: '分辨率' },
   duration: { en: 'Duration', zh: '时长' }, strength: { en: 'Reference strength', zh: '参考图强度' }, style: { en: 'Style', zh: '风格' },
   enhanceTitle: { en: 'Enhance prompt', zh: '优化提示词' }, generateTitle: { en: 'Generate', zh: '生成' },
-  recentGenerations: { en: 'Recent generations', zh: '最近生成' }, results: { en: 'results', zh: '个结果' },
   imageBadge: { en: 'Image', zh: '图像' }, videoBadge: { en: 'Video', zh: '视频' }, uploadLabel: { en: 'Upload', zh: '上传图片' },
-  removeTitle: { en: 'Remove', zh: '移除' }, refSettingsTitle: { en: 'Reference settings', zh: '参考图设置' },
+  removeTitle: { en: 'Remove', zh: '移除' },
   uploadHintDefault: { en: 'Drag & drop or click to upload reference images (up to 9)', zh: '拖拽或点击上传参考图（最多9张）' },
   placeholderImage: { en: 'Describe the image you want to create...', zh: '描述你想生成的图片...' },
   placeholderVideo: { en: 'Describe the video you want to create...', zh: '描述你想生成的视频...' },
@@ -811,7 +873,6 @@ const I18N = {
   needEditDescToast: { en: 'Describe the edit you want first', zh: '请先描述想要的编辑效果' },
   editAppliedToast: { en: 'Image edited', zh: '图片已编辑生成' },
   audioDescPlaceholder: { en: 'e.g. ambient city sounds, soft music', zh: '例如：城市环境音、轻柔音乐' },
-  refSettingsToast: { en: 'Reference settings (prototype only)', zh: '参考图设置（原型演示）' },
   maxUploadsToast: { en: 'Up to 9 reference images', zh: '最多支持 9 张参考图' },
   maxUploadsKeptToast: { en: 'Up to 9 reference images — kept the first', zh: '最多支持 9 张参考图，已保留前' },
   needUploadToast: { en: 'Upload a reference image first', zh: '请先上传参考图片' },
@@ -831,14 +892,16 @@ const I18N = {
   toolDownload: { en: 'Download', zh: '下载' }, toolDelete: { en: 'Delete', zh: '删除' }, brushSize: { en: 'Brush size', zh: '笔刷大小' },
   myCreationsTitle: { en: 'My Creations', zh: '我的创作' }, filterAll: { en: 'All', zh: '全部' }, filterImages: { en: 'Images', zh: '图像' },
   filterVideos: { en: 'Videos', zh: '视频' }, emptyCreations: { en: 'Nothing here yet — try Studio first', zh: '还没有内容，先去 Studio 生成吧' },
+  likedTitle: { en: 'Liked', zh: '收藏' }, emptyLiked: { en: "Nothing liked yet — like something in Discover", zh: '还没有收藏，去 Discover 收藏喜欢的作品吧' },
+  likeCardTitle: { en: 'Like', zh: '收藏' },
   audio: { en: 'Audio', zh: '音频' }, audioDescLabel: { en: 'Audio description (optional)', zh: '音频描述（可选）' },
   audioWord: { en: 'Audio', zh: '音频' },
   derivedFromLabel: { en: 'Edited from', zh: '编辑自' }, compareOriginal: { en: 'Compare original', zh: '对比原图' },
   showEdited: { en: 'Show edited', zh: '显示编辑后' },
   needInpaintMaskToast: { en: 'Paint over the area you want to redo first', zh: '请先在图片上涂抹需要重绘的区域' },
   inpaintPlaceholder: { en: 'Describe what the painted area should become...', zh: '描述涂抹区域应该变成什么样...' },
-  materialsTitle: { en: 'Assets', zh: '素材' },
-  materialsSubtitle: { en: 'Everything the community has published — every item carries its prompt, ready to reuse or modify.', zh: '社区里所有人发布的素材 — 每一项都带着它的 Prompt，可直接复用或修改。' },
+  materialsTitle: { en: 'Discover', zh: '发现' },
+  materialsSubtitle: { en: "Everyone's published work, ranked by popularity — every item carries its prompt, ready to reuse or modify.", zh: '所有人发布的作品，按热度排序 — 每一项都带着它的 Prompt，可直接复用或修改。' },
   byCreatorLabel: { en: 'by', zh: '来自' },
   tryThisCardTitle: { en: 'Try this', zh: '再次生成' },
   emptyMaterials: { en: 'Nothing here yet — try Studio first', zh: '还没有内容，先去 Studio 生成吧' },
@@ -874,40 +937,40 @@ function extractGradientColors(css) { return (css && css.match(/#[0-9a-fA-F]{6}/
 const COMMUNITY_ASSETS = [
   {
     // text-to-image
-    id: 9001, type: 'image', creator: 'Oprelia AI', model: 'FLUX.1.1 Pro', aspect: '1:1',
+    id: 9001, type: 'image', creator: 'Oprelia AI', model: 'FLUX.1.1 Pro', aspect: '1:1', views: 18400, resolution: 'hd', createdAt: '2026-08-09T10:00:00Z',
     prompt: 'Retro concert poster, bold hand-lettered band name, warm halftone texture, illustrated noodle-chef mascot holding chopsticks like a guitar.',
     gradient: pickStyleGradient('watercolor'),
   },
   {
     // text-to-video
-    id: 9002, type: 'video', creator: 'Umlilo Ngcobo', model: 'Seedance 1.0 Pro', aspect: '16:9', duration: '8s', audio: true,
+    id: 9002, type: 'video', creator: 'Umlilo Ngcobo', model: 'Seedance 1.0 Pro', aspect: '16:9', duration: '8s', audio: true, views: 42100, resolution: '2k', createdAt: '2026-07-28T10:00:00Z',
     prompt: 'Aerial drone shot sweeping over rolling green hills at golden hour, a line of people in traditional dress walking a ridge trail toward the coast.',
     gradient: pickStyleGradient('none'),
   },
   {
     // image-to-image — one reference: the plain photo it started from
-    id: 9003, type: 'image', creator: 'ThinkTankTom', model: 'Midjourney v7', aspect: '3:4',
+    id: 9003, type: 'image', creator: 'ThinkTankTom', model: 'Midjourney v7', aspect: '3:4', views: 96700, resolution: 'hd', createdAt: '2026-08-03T10:00:00Z',
     prompt: 'Turn the reference photo into a tiny orange kitten in a hand-stitched fabric Spider-Man suit, mid-swing through a warm-lit hallway, photorealistic, shallow depth of field.',
     gradient: pickStyleGradient('photo'),
     refImages: [{ src: pickStyleGradient('none'), isGradient: true }],
   },
   {
     // image-to-video — one reference: the first-frame image it was animated from
-    id: 9004, type: 'video', creator: 'NachoCheese', model: 'Kling 2.1', aspect: '16:9', duration: '10s', audio: true,
+    id: 9004, type: 'video', creator: 'NachoCheese', model: 'Kling 2.1', aspect: '16:9', duration: '10s', audio: true, views: 128300, resolution: '2k', createdAt: '2026-07-15T10:00:00Z',
     prompt: 'Animate the reference image into a cinematic pullback shot: a low-poly cyberpunk street vendor grills noodles under neon signs as rain reflects off the pavement, camera slowly pulls back to reveal the full night market.',
     gradient: pickStyleGradient('cinematic'),
     refImages: [{ src: pickStyleGradient('cinematic'), isGradient: true }],
   },
   {
     // image-to-video — one reference, a second example with a different creator and subject
-    id: 9005, type: 'video', creator: 'Maxshot Team', model: 'Wan 2.2', aspect: '9:16', duration: '6s', audio: false,
+    id: 9005, type: 'video', creator: 'Maxshot Team', model: 'Wan 2.2', aspect: '9:16', duration: '6s', audio: false, views: 7600, resolution: 'hd', createdAt: '2026-08-14T10:00:00Z',
     prompt: 'Animate the reference product photo: a skincare bottle rotating slowly on a marble pedestal, soft box lighting, water droplets falling in slow motion.',
     gradient: pickStyleGradient('3d'),
     refImages: [{ src: pickStyleGradient('3d'), isGradient: true }],
   },
   {
     // image-to-video — two references: two character portraits composited into one scene
-    id: 9006, type: 'video', creator: 'NachoCheese', model: 'HH 1.1', aspect: '16:9', duration: '10s', audio: true,
+    id: 9006, type: 'video', creator: 'NachoCheese', model: 'HH 1.1', aspect: '16:9', duration: '10s', audio: true, views: 61200, resolution: '2k', createdAt: '2026-07-22T10:00:00Z',
     prompt: 'Cinematic pullback shot: it begins on a close-up of the low-poly character from the first reference image, calmly sipping milk tea. As the camera pulls back, it reveals the character from the second reference image sitting beside him. A homage to the Korova Milk Bar scene from A Clockwork Orange, flat-shaded low-poly 3D, dramatic side lighting.',
     gradient: pickStyleGradient('cinematic'),
     refImages: [
@@ -946,6 +1009,7 @@ $('studioCanvas').innerHTML = `
         <button class="edit-icon-btn" id="editDeleteBtn" title="Delete" style="color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg></button>
       </div>
     </div>
+    <div class="meta-badges" id="editMetaBadges"></div>
     <div class="edit-reference-row" id="editReferenceRow">
       <div class="ref-thumbs" id="editReferenceThumbs"></div>
       <span data-key="referenceUsedLabel">Reference used</span>
@@ -1040,7 +1104,7 @@ $('studioCanvas').innerHTML = `
         </button>
         <div class="pill-pop" id="strengthPop"><label class="row-between"><span data-key="strength">Reference strength</span><span class="val" id="strengthVal">65%</span></label><input type="range" id="strengthRange" min="0" max="100" step="5" value="65"></div>
       </div>
-      <div class="pill-wrap">
+      <div class="pill-wrap strength-only" id="styleWrap">
         <button class="pill" id="stylePillBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/></svg>
           <span id="stylePillLabel">None</span>
@@ -1059,8 +1123,7 @@ $('studioCanvas').innerHTML = `
       </button>
     </div>
   </div>
-  <div class="gallery-header"><h2 id="galleryTitle">Recent generations</h2><span id="galleryCount">0 results</span></div>
-  <div class="gallery-grid" id="galleryGrid"></div>
+  <div id="materialsCanvas"></div>
 `;
 
 /* ---------------- popovers ---------------- */
@@ -1133,9 +1196,10 @@ function renderTabs() {
 function updateComposerForTab() {
   const needsRefUpload = state.tab === 'img2img' || state.tab === 'img2vid';
   $('uploadRow').classList.toggle('show', needsRefUpload);
-  $('strengthWrap').classList.toggle('show', needsRefUpload);
+  $('strengthWrap').classList.toggle('show', state.tab === 'img2img');
   $('durationWrap').classList.toggle('show', state.mode === 'video');
   $('audioWrap').classList.toggle('show', state.mode === 'video');
+  $('styleWrap').classList.toggle('show', state.mode === 'image');
   if (needsRefUpload) renderUploadThumbs();
   $('promptInput').placeholder = state.mode === 'video' ? t('placeholderVideo') : t('placeholderImage');
   $('generateBtn').title = t('generateTitle');
@@ -1168,8 +1232,8 @@ function renderUploadThumbs() {
     thumb.className = 'upload-thumb';
     const inner = item.isGradient ? '<div style="width:100%;height:100%;background:' + item.src + '"></div>' : '<img src="' + item.src + '">';
     thumb.innerHTML = inner +
-      '<button class="thumb-remove" data-idx="' + i + '" title="' + t('removeTitle') + '">&times;</button>' +
-      '<button class="thumb-settings" data-idx="' + i + '" title="' + t('refSettingsTitle') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M4 12h16M4 18h7"/><circle cx="17" cy="6" r="2"/><circle cx="9" cy="18" r="2"/></svg></button>';
+      '<button class="thumb-remove" data-idx="' + i + '" title="' + t('removeTitle') + '">&times;</button>';
+    thumb.dataset.idx = i;
     row.appendChild(thumb);
   });
   if (state.uploadedImgs.length < MAX_UPLOADS) {
@@ -1214,8 +1278,21 @@ function renderUploadThumbs() {
     row.appendChild(count);
   }
   row.querySelectorAll('.thumb-remove').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); state.uploadedImgs.splice(parseInt(btn.dataset.idx, 10), 1); renderUploadThumbs(); }));
-  row.querySelectorAll('.thumb-settings').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); toast(t('refSettingsToast')); }));
+  row.querySelectorAll('.upload-thumb').forEach(thumb => thumb.addEventListener('click', () => openRefLightbox(state.uploadedImgs[parseInt(thumb.dataset.idx, 10)])));
 }
+
+/* ---------------- reference-thumbnail preview lightbox ---------------- */
+function openRefLightbox(item) {
+  if (!item) return;
+  const box = $('refLightboxImg');
+  box.style.background = '';
+  box.style.backgroundImage = '';
+  if (item.isGradient) { box.style.background = item.src; }
+  else { box.style.backgroundImage = 'url(' + item.src + ')'; }
+  $('refLightbox').classList.add('show');
+}
+$('refLightboxClose').addEventListener('click', () => $('refLightbox').classList.remove('show'));
+$('refLightbox').addEventListener('click', e => { if (e.target === $('refLightbox')) $('refLightbox').classList.remove('show'); });
 function handleFiles(fileList) {
   const remaining = MAX_UPLOADS - state.uploadedImgs.length;
   if (remaining <= 0) { toast(t('maxUploadsToast')); return; }
@@ -1318,7 +1395,6 @@ function updateCostHint() {
   const cost = state.editing ? (state.editing.type === 'video' ? EXTEND_COST : EDIT_COST) : costFor();
   el.innerHTML = costBadgeHTML(cost);
 }
-function arRatioCss() { const a = ASPECTS.find(x => x.id === state.aspect) || ASPECTS[0]; return a.w + ' / ' + a.h; }
 
 $('generateBtn').addEventListener('click', e => {
   e.stopPropagation();
@@ -1335,22 +1411,14 @@ function handleGenerate() {
   const cost = costFor();
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
 
-  const grid = $('galleryGrid');
   const btn = $('generateBtn');
   btn.disabled = true;
-  const sk = document.createElement('div');
-  sk.className = 'card skeleton';
-  sk.style.aspectRatio = arRatioCss();
-  grid.prepend(sk);
-  updateGalleryCount();
 
   setTimeout(() => {
     shell.credits -= cost;
     updateShellCredits();
-    const asset = makeAsset(prompt);
-    const card = buildCard(asset);
-    sk.replaceWith(card);
-    updateGalleryCount();
+    makeAsset(prompt);
+    if ($('materialsGrid')) renderMaterialsGrid();
     btn.disabled = false;
     toast(t('generateCompleteToast') + ' — ' + t('usedToast') + ' ' + formatK(cost) + ' ' + t('creditsWord'));
   }, 1400 + Math.random() * 500);
@@ -1362,7 +1430,7 @@ function makeAsset(prompt) {
   const needsUpload = state.tab === 'img2img' || state.tab === 'img2vid';
   let gradient = pickStyleGradient(state.style);
   let strength = null;
-  if (needsUpload) {
+  if (needsUpload && !isVideo) {
     strength = parseInt($('strengthRange').value, 10);
     const ref = state.uploadedImgs[0];
     if (ref && ref.isGradient) {
@@ -1379,8 +1447,8 @@ function makeAsset(prompt) {
     aspect: state.aspect, prompt: prompt, duration: isVideo ? $('durationRange').value + 's' : null, model: state.model,
     audio: isVideo ? state.audio === 'on' : false,
     audioDesc: isVideo && state.audio === 'on' ? $('audioDescInput').value.trim() : '',
-    style: state.style, strength,
-    parentId: null, editType: null,
+    style: state.style, strength, resolution: state.resolution, createdAt: new Date().toISOString(),
+    parentId: null, editType: null, views: 0,
     // Remember every reference image used (img2vid can be made from more than one), so the result
     // can show "Reference used" and be reloaded later via "Try this".
     refImages: needsUpload && state.uploadedImgs.length ? state.uploadedImgs.map(u => ({ src: u.src, isGradient: u.isGradient })) : null,
@@ -1388,7 +1456,6 @@ function makeAsset(prompt) {
   state.assets.unshift(asset);
   return asset;
 }
-function updateGalleryCount() { const el = $('galleryCount'); if (el) el.textContent = state.assets.length + ' ' + t('results'); }
 
 /* ---------------- shared thumb rendering: gradient, transparent (removebg), or composited raster (inpaint) ---------------- */
 function findParentAsset(id) {
@@ -1408,7 +1475,7 @@ function setThumbBackground(el, asset) {
 }
 
 /* ---------------- gallery card ---------------- */
-function buildCard(asset, { previewOnly = false, returnView = 'studio' } = {}) {
+function buildCard(asset, { previewOnly = false, returnView = 'studio', returnTo = 'discover' } = {}) {
   const card = document.createElement('div');
   card.className = 'card';
   const a = ASPECTS.find(x => x.id === asset.aspect) || ASPECTS[0];
@@ -1422,6 +1489,12 @@ function buildCard(asset, { previewOnly = false, returnView = 'studio' } = {}) {
   badge.className = 'badge';
   badge.textContent = asset.type === 'video' ? t('videoBadge') : t('imageBadge');
   card.appendChild(badge);
+  if (previewOnly) {
+    const views = document.createElement('div');
+    views.className = 'views-badge';
+    views.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><span>' + formatK(asset.views || 0) + '</span>';
+    card.appendChild(views);
+  }
   if (asset.parentId) {
     const lineageBadge = document.createElement('div');
     lineageBadge.className = 'lineage-badge';
@@ -1458,6 +1531,15 @@ function buildCard(asset, { previewOnly = false, returnView = 'studio' } = {}) {
   const actions = overlay.querySelector('.actions');
   actions.appendChild(iconBtn(t('tryThisCardTitle'), tryThisIcon(), () => tryThisAsset(asset)));
   actions.appendChild(iconBtn('download', downloadIcon(), () => toast(t('downloadedToast'))));
+  if (LIKES_ENABLED && previewOnly) {
+    const likeBtn = iconBtn(t('likeCardTitle'), heartIcon(), () => {
+      toggleLike(asset);
+      likeBtn.classList.toggle('liked', state.likedIds.has(asset.id));
+      if (returnTo === 'liked' && !state.likedIds.has(asset.id)) card.remove();
+    });
+    likeBtn.classList.toggle('liked', state.likedIds.has(asset.id));
+    actions.appendChild(likeBtn);
+  }
   if (!previewOnly) {
     actions.appendChild(iconBtn('edit', editIcon(), () => enterEditMode(asset, { returnView })));
     if (asset.type === 'image') {
@@ -1467,12 +1549,12 @@ function buildCard(asset, { previewOnly = false, returnView = 'studio' } = {}) {
       actions.appendChild(iconBtn('delete', trashIcon(), () => {
         card.remove();
         state.assets = state.assets.filter(a2 => a2.id !== asset.id);
-        updateGalleryCount();
+        state.likedIds.delete(asset.id);
       }));
     }
   }
   card.appendChild(overlay);
-  card.addEventListener('click', () => previewOnly ? showMaterialPreview(asset) : enterEditMode(asset, { returnView }));
+  card.addEventListener('click', () => previewOnly ? showMaterialPreview(asset, { returnTo }) : showMaterialPreview(asset, { returnTo: 'mine', editable: true }));
   return card;
 }
 function jumpToImageToVideo(asset) {
@@ -1499,8 +1581,33 @@ function downloadIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="cur
 function editIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';}
 function tryThisIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/></svg>';}
 function filmIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>';}
+function heartIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-10-9.28C.5 8.5 2 5 5.5 5c2 0 3.5 1 4.5 2.5C11 6 12.5 5 14.5 5 18 5 19.5 8.5 22 11.72 19 16.65 12 21 12 21z"/></svg>';}
 function trashIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>';}
 function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function calendarIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>';}
+function eyeIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';}
+function resolutionIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>';}
+function durationIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';}
+
+/* ---------------- shared metadata badges: date, views, resolution/aspect, duration ---------------- */
+function formatDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+}
+function resolutionLabelFor(asset) {
+  if (asset.upscaled && asset.resolutionLabel) return asset.resolutionLabel;
+  const r = RES_OPTIONS.find(x => x.key === asset.resolution) || RES_OPTIONS[1];
+  return r[uiLang === 'zh' ? 'shortZh' : 'shortEn'];
+}
+function buildMetaBadgesHTML(asset) {
+  const items = [];
+  if (asset.createdAt) items.push('<span class="meta-badge">' + calendarIcon() + '<span>' + formatDate(asset.createdAt) + '</span></span>');
+  items.push('<span class="meta-badge">' + eyeIcon() + '<span>' + formatK(asset.views || 0) + '</span></span>');
+  items.push('<span class="meta-badge">' + resolutionIcon() + '<span>' + resolutionLabelFor(asset) + ' · ' + asset.aspect + '</span></span>');
+  if (asset.type === 'video' && asset.duration) items.push('<span class="meta-badge">' + durationIcon() + '<span>' + asset.duration + '</span></span>');
+  return items.join('');
+}
 
 /* ---------------- My Creations ---------------- */
 function renderCreationsGrid(filter) {
@@ -1508,7 +1615,6 @@ function renderCreationsGrid(filter) {
   filter = filter || (activeChip ? activeChip.dataset.filter : 'all');
   if (!$('creationsGrid')) {
     $('creationsCanvas').innerHTML = `
-      <div class="view-title" id="creationsTitle"></div>
       <div class="filter-row">
         <button class="chip active" data-filter="all"></button>
         <button class="chip" data-filter="image"></button>
@@ -1524,7 +1630,6 @@ function renderCreationsGrid(filter) {
       });
     });
   }
-  $('creationsTitle').textContent = t('myCreationsTitle');
   const chips = $('creationsCanvas').querySelectorAll('.filter-row .chip');
   chips[0].textContent = t('filterAll'); chips[1].textContent = t('filterImages'); chips[2].textContent = t('filterVideos');
   const grid = $('creationsGrid');
@@ -1534,52 +1639,87 @@ function renderCreationsGrid(filter) {
     grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted-2);font-size:13px;padding:40px 0;text-align:center;">' + t('emptyCreations') + '</div>';
     return;
   }
-  list.forEach(a => grid.appendChild(buildCard(a, { returnView: 'creations' })));
+  list.forEach(a => grid.appendChild(buildCard(a, { returnView: 'assets' })));
 }
 
-/* ---------------- Assets: user-uploaded materials — usable as a prompt reference, and directly editable ---------------- */
+/* ---------------- Liked: assets (own or community) the user has saved from Discover ---------------- */
+function renderLikedGrid(filter) {
+  const activeChip = document.querySelector('#likedCanvas .filter-row .chip.active');
+  filter = filter || (activeChip ? activeChip.dataset.filter : 'all');
+  if (!$('likedGrid')) {
+    $('likedCanvas').innerHTML = `
+      <div class="filter-row">
+        <button class="chip active" data-filter="all"></button>
+        <button class="chip" data-filter="image"></button>
+        <button class="chip" data-filter="video"></button>
+      </div>
+      <div class="gallery-grid" id="likedGrid"></div>
+    `;
+    $('likedCanvas').querySelectorAll('.filter-row .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        $('likedCanvas').querySelectorAll('.filter-row .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        renderLikedGrid(chip.dataset.filter);
+      });
+    });
+  }
+  const chips = $('likedCanvas').querySelectorAll('.filter-row .chip');
+  chips[0].textContent = t('filterAll'); chips[1].textContent = t('filterImages'); chips[2].textContent = t('filterVideos');
+  const grid = $('likedGrid');
+  grid.innerHTML = '';
+  const list = assetPool().filter(a => state.likedIds.has(a.id)).filter(a => filter === 'all' || a.type === filter);
+  if (!list.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted-2);font-size:13px;padding:40px 0;text-align:center;">' + t('emptyLiked') + '</div>';
+    return;
+  }
+  list.forEach(a => grid.appendChild(buildCard(a, { previewOnly: true, returnTo: 'liked' })));
+}
+
+/* ---------------- Assets: My Creations and Liked, switched by sub-tab ---------------- */
+function renderAssetsView() {
+  if (!LIKES_ENABLED) state.assetsTab = 'mine';
+  if (!$('assetSubtabs')) {
+    $('assetsCanvas').innerHTML = `
+      <div class="asset-subtabs" id="assetSubtabs">
+        <button class="asset-subtab active" data-atab="mine"></button>
+        <button class="asset-subtab" data-atab="liked" style="${LIKES_ENABLED ? '' : 'display:none'}"></button>
+      </div>
+      <div id="assetsMineWrap"><div class="studio-canvas" id="creationsCanvas"></div></div>
+      <div id="assetsLikedWrap" style="display:none"><div class="studio-canvas" id="likedCanvas"></div></div>
+    `;
+    $('assetsCanvas').querySelectorAll('.asset-subtab').forEach(b => {
+      b.addEventListener('click', () => { state.assetsTab = b.dataset.atab; renderAssetsView(); });
+    });
+  }
+  $('assetsCanvas').querySelectorAll('.asset-subtab').forEach(b => {
+    b.classList.toggle('active', b.dataset.atab === state.assetsTab);
+    b.textContent = b.dataset.atab === 'mine' ? t('myCreationsTitle') : t('likedTitle');
+  });
+  $('assetsMineWrap').style.display = state.assetsTab === 'mine' ? '' : 'none';
+  $('assetsLikedWrap').style.display = state.assetsTab === 'liked' ? '' : 'none';
+  if (state.assetsTab === 'mine') renderCreationsGrid();
+  else renderLikedGrid();
+}
+
+/* ---------------- Discover: everything anyone has published, ranked by popularity ---------------- */
+function assetPool() {
+  // Discover and Liked share one flat stream — everyone's published work, the current user's
+  // included, ranked by view count so the most-seen work surfaces first.
+  return state.assets.concat(COMMUNITY_ASSETS).slice().sort((a, b) => (b.views || 0) - (a.views || 0));
+}
 function renderMaterialsGrid(filter) {
   const activeChip = document.querySelector('#materialsCanvas .filter-row .chip.active');
   filter = filter || (activeChip ? activeChip.dataset.filter : 'all');
   if (!$('materialsGrid')) {
     $('materialsCanvas').innerHTML = `
-      <div id="materialsList">
-        <div class="view-title" id="materialsTitleEl"></div>
-        <div class="materials-subtitle" id="materialsSubtitleEl"></div>
-        <div class="filter-row">
-          <button class="chip active" data-filter="all"></button>
-          <button class="chip" data-filter="image"></button>
-          <button class="chip" data-filter="video"></button>
-        </div>
-        <div class="gallery-grid" id="materialsGrid"></div>
+      <div class="view-title" id="materialsTitleEl"></div>
+      <div class="materials-subtitle" id="materialsSubtitleEl"></div>
+      <div class="filter-row">
+        <button class="chip active" data-filter="all"></button>
+        <button class="chip" data-filter="image"></button>
+        <button class="chip" data-filter="video"></button>
       </div>
-      <div class="material-preview" id="materialPreview" style="display:none">
-        <div class="edit-bar show">
-          <button class="edit-exit-btn" id="materialPreviewBack">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-            <span data-key="backLabel">Back</span>
-          </button>
-          <div class="edit-bar-title" id="materialPreviewTitle"></div>
-          <div class="edit-bar-actions">
-            <button class="edit-try-btn" id="materialPreviewTryBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/></svg>
-              <span data-key="tryThisLabel">Try this</span>
-            </button>
-            <button class="edit-icon-btn" id="materialPreviewDownloadBtn" title="Download">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg>
-            </button>
-          </div>
-        </div>
-        <div class="edit-reference-row" id="materialPreviewRefRow">
-          <div class="ref-thumbs" id="materialPreviewRefThumbs"></div>
-          <span data-key="referenceUsedLabel">Reference used</span>
-        </div>
-        <div class="edit-preview-wrap show">
-          <div class="edit-preview" id="materialPreviewSurf"></div>
-        </div>
-        <div class="material-preview-prompt-label" data-key="promptLabel">Prompt</div>
-        <div class="material-preview-prompt-text" id="materialPreviewPromptText"></div>
-      </div>
+      <div class="gallery-grid" id="materialsGrid"></div>
     `;
     $('materialsCanvas').querySelectorAll('.filter-row .chip').forEach(chip => {
       chip.addEventListener('click', () => {
@@ -1588,11 +1728,6 @@ function renderMaterialsGrid(filter) {
         renderMaterialsGrid(chip.dataset.filter);
       });
     });
-    $('materialPreviewBack').addEventListener('click', () => {
-      previewingMaterial = null;
-      $('materialPreview').style.display = 'none';
-      $('materialsList').style.display = '';
-    });
   }
   $('materialsTitleEl').textContent = t('materialsTitle');
   $('materialsSubtitleEl').textContent = t('materialsSubtitle');
@@ -1600,31 +1735,34 @@ function renderMaterialsGrid(filter) {
   chips[0].textContent = t('filterAll'); chips[1].textContent = t('filterImages'); chips[2].textContent = t('filterVideos');
   const grid = $('materialsGrid');
   grid.innerHTML = '';
-  // Assets is one flat community stream — everything anyone has published, yours included,
-  // with no "mine vs. theirs" filter. Every item already carries its own prompt (and reference
-  // image, if it was made from one), so selecting it surfaces exactly that recipe.
-  const pool = state.assets.concat(COMMUNITY_ASSETS);
-  const list = pool.filter(a => filter === 'all' || a.type === filter);
+  const list = assetPool().filter(a => filter === 'all' || a.type === filter);
   if (!list.length) {
     grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted-2);font-size:13px;padding:40px 0;text-align:center;">' + t('emptyMaterials') + '</div>';
     return;
   }
-  // Assets is a browsing/reference stream, not an editing surface — no edit tools, no animate shortcut,
-  // no delete, regardless of who made it. Clicking a card opens a self-contained preview (image/video +
-  // prompt + "Try this") right here, without leaving Assets or touching the Studio composer.
-  list.forEach(a => grid.appendChild(buildCard(a, { previewOnly: true })));
+  // Discover is a browsing/reference stream, not an editing surface — no edit tools, no animate
+  // shortcut, no delete, regardless of who made it. Clicking a card opens a self-contained preview
+  // (image/video + prompt + "Try this"), which lives in its own view so both Discover and
+  // Assets > Liked can open it and return to wherever the user came from.
+  list.forEach(a => grid.appendChild(buildCard(a, { previewOnly: true, returnTo: 'discover' })));
 }
 let previewingMaterial = null;
-function showMaterialPreview(asset) {
+let previewReturnTo = 'discover';
+let previewEditable = false;
+function showMaterialPreview(asset, { returnTo = 'discover', editable = false } = {}) {
   previewingMaterial = asset;
-  $('materialsList').style.display = 'none';
-  $('materialPreview').style.display = '';
+  previewReturnTo = returnTo;
+  previewEditable = editable;
+  const navTarget = returnTo === 'discover' ? 'studio' : 'assets';
+  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === navTarget));
+  SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'preview'));
+  $('gwModelSelect').style.display = 'none';
 
   const isVideo = asset.type === 'video';
-  const metaParts = [isVideo ? t('videoResultTitle') : t('imageResultTitle'), asset.model, asset.aspect];
-  if (asset.duration) metaParts.push(asset.duration);
+  const metaParts = [isVideo ? t('videoResultTitle') : t('imageResultTitle'), asset.model];
   if (asset.creator) metaParts.push(t('byCreatorLabel') + ' ' + asset.creator);
   $('materialPreviewTitle').textContent = metaParts.filter(Boolean).join('  ·  ');
+  $('materialPreviewMetaBadges').innerHTML = buildMetaBadgesHTML(asset);
 
   if (asset.refImages && asset.refImages.length) {
     $('materialPreviewRefRow').classList.add('show');
@@ -1643,19 +1781,61 @@ function showMaterialPreview(asset) {
 
   const surf = $('materialPreviewSurf');
   const a = ASPECTS.find(x => x.id === asset.aspect) || ASPECTS[0];
-  const maxDim = 260;
+  const maxDim = 520;
   let w, h;
   if (a.w >= a.h) { w = maxDim; h = Math.round(maxDim * a.h / a.w); } else { h = maxDim; w = Math.round(maxDim * a.w / a.h); }
   surf.style.width = w + 'px'; surf.style.height = h + 'px';
   surf.style.backgroundImage = ''; surf.style.background = '';
   setThumbBackground(surf, asset);
   surf.style.display = 'flex'; surf.style.alignItems = 'center'; surf.style.justifyContent = 'center';
-  surf.innerHTML = isVideo ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg>' : '';
+  // Videos have no real file to play in this prototype, so we simulate autoplay with the same
+  // subtle pulse the grid cards use on hover — the preview should feel alive the moment it opens,
+  // not sit there as a static thumbnail waiting to be clicked.
+  surf.classList.toggle('playing', isVideo);
+  surf.innerHTML = '';
 
   $('materialPreviewPromptText').textContent = asset.prompt || '';
   $('materialPreviewTryBtn').onclick = () => { previewingMaterial = null; tryThisAsset(asset); };
   $('materialPreviewDownloadBtn').onclick = () => toast(t('downloadedToast'));
+  $('materialPreviewLikeBtn').style.display = LIKES_ENABLED ? '' : 'none';
+  if (LIKES_ENABLED) {
+    $('materialPreviewLikeBtn').classList.toggle('liked', state.likedIds.has(asset.id));
+    $('materialPreviewLikeBtn').onclick = () => {
+      toggleLike(asset);
+      $('materialPreviewLikeBtn').classList.toggle('liked', state.likedIds.has(asset.id));
+    };
+  }
+
+  // Editable is only true for the current user's own My Creations items — Discover/Liked stay
+  // reuse-only (no edit, animate, or delete), matching how the grid cards already gate those actions.
+  $('materialPreviewEditBtn').style.display = editable ? '' : 'none';
+  $('materialPreviewAnimateBtn').style.display = editable && asset.type === 'image' ? '' : 'none';
+  $('materialPreviewDeleteBtn').style.display = editable && !asset.creator ? '' : 'none';
+  if (editable) {
+    $('materialPreviewEditBtn').onclick = () => { previewingMaterial = null; enterEditMode(asset, { returnView: 'assets' }); };
+    $('materialPreviewAnimateBtn').onclick = () => { previewingMaterial = null; jumpToImageToVideo(asset); };
+    $('materialPreviewDeleteBtn').onclick = () => {
+      state.assets = state.assets.filter(a => a.id !== asset.id);
+      state.likedIds.delete(asset.id);
+      previewingMaterial = null;
+      document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
+      SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
+      renderAssetsView();
+      toast(t('deletedToast'));
+    };
+  }
 }
+function toggleLike(asset) {
+  if (state.likedIds.has(asset.id)) state.likedIds.delete(asset.id); else state.likedIds.add(asset.id);
+  if (state.assetsTab === 'liked' && $('likedGrid')) renderLikedGrid();
+}
+$('materialPreviewBack').addEventListener('click', () => {
+  previewingMaterial = null;
+  const target = previewReturnTo === 'discover' ? 'studio' : 'assets';
+  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === target));
+  SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== target));
+  if (target === 'studio') renderMaterialsGrid(); else renderAssetsView();
+});
 // Reload an asset's own recipe (its reference image + its prompt) into the composer, ready to tweak and regenerate —
 // for an image, the reference is the image itself; for a video, it's the first-frame reference it was made from (if any).
 function tryThisAsset(asset) {
@@ -1727,6 +1907,9 @@ function enterEditMode(asset, { returnView = 'studio' } = {}) {
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === returnView));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'studio'));
   $('gwModelSelect').style.display = 'none';
+  // Discover lives below the composer on the Studio page, but it has no place inside an editing
+  // view — hide it while editing so the tool panel isn't followed by an unrelated feed.
+  $('materialsCanvas').style.display = 'none';
 
   $('stTopbar').style.display = 'none';
   $('tabs').style.display = 'none';
@@ -1742,12 +1925,13 @@ function enterEditMode(asset, { returnView = 'studio' } = {}) {
   document.querySelectorAll('#editToolsRow .chip').forEach(c => c.classList.remove('active'));
   renderEditToolLabels();
 
-  const metaParts = [isVideo ? t('videoResultTitle') : t('imageResultTitle'), asset.model, asset.aspect];
-  if (asset.duration) metaParts.push(asset.duration);
+  const metaParts = [isVideo ? t('videoResultTitle') : t('imageResultTitle'), asset.model];
   const styleObj = STYLES.find(s => s.key === asset.style);
   if (styleObj && styleObj.key !== 'none') metaParts.push(styleObj[uiLang]);
   if (asset.strength != null) metaParts.push(t('strength') + ' ' + asset.strength + '%');
   $('editBarTitle').textContent = metaParts.filter(Boolean).join('  ·  ');
+  $('editMetaBadges').innerHTML = buildMetaBadgesHTML(asset);
+  $('editMetaBadges').classList.add('show');
   $('editExitLabel').textContent = t('backLabel');
   $('editDeleteBtn').style.display = '';
 
@@ -1792,11 +1976,13 @@ function exitEditMode() {
   state.editing = null;
   state.editingReturnView = 'studio';
   $('editBar').classList.remove('show');
+  $('editMetaBadges').classList.remove('show');
   $('editLineage').classList.remove('show');
   $('editPreviewWrap').classList.remove('show');
   $('editToolsRow').classList.remove('show');
   $('editTrimBlock').classList.remove('show');
   $('editBrushRow').classList.remove('show');
+  $('materialsCanvas').style.display = '';
   $('stTopbar').style.display = '';
   $('tabs').style.display = '';
   $('genPills').style.display = 'contents';
@@ -1805,10 +1991,11 @@ function exitEditMode() {
   updateComposerForTab();
   $('generateBtn').classList.toggle('video-mode', state.mode === 'video');
 
-  if (returnView === 'creations') {
-    document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'creations'));
-    SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'creations'));
-    renderCreationsGrid();
+  if (returnView === 'assets') {
+    document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
+    SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
+    state.assetsTab = 'mine';
+    renderAssetsView();
   }
 }
 
@@ -1851,12 +2038,6 @@ function renderEditToolLabels() {
 function runInstantEdit(asset, tool) {
   const cost = tool === 'removebg' ? REMOVEBG_COST : UPSCALE_COST;
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
-  const sk = document.createElement('div');
-  sk.className = 'card skeleton';
-  const a0 = ASPECTS.find(x => x.id === asset.aspect) || ASPECTS[0];
-  sk.style.aspectRatio = a0.w + ' / ' + a0.h;
-  $('galleryGrid').prepend(sk);
-  updateGalleryCount();
   exitEditMode();
 
   setTimeout(() => {
@@ -1865,7 +2046,7 @@ function runInstantEdit(asset, tool) {
     const newAsset = {
       id: assetSeq++, type: 'image', gradient: asset.gradient,
       aspect: asset.aspect, prompt: asset.prompt || '', duration: null, model: asset.model, audio: false, audioDesc: '',
-      style: asset.style, strength: asset.strength,
+      style: asset.style, strength: asset.strength, resolution: asset.resolution, createdAt: new Date().toISOString(), views: 0,
       parentId: asset.id, editType: tool,
     };
     let msg;
@@ -1878,9 +2059,7 @@ function runInstantEdit(asset, tool) {
       msg = t('upscaledToast') + ' ' + newAsset.resolutionLabel;
     }
     state.assets.unshift(newAsset);
-    const card = buildCard(newAsset);
-    sk.replaceWith(card);
-    updateGalleryCount();
+    if ($('materialsGrid')) renderMaterialsGrid();
     toast(msg + ' — ' + formatK(cost) + ' ' + t('creditsWord'));
   }, 1200 + Math.random() * 400);
 }
@@ -1892,8 +2071,8 @@ $('editDeleteBtn').addEventListener('click', () => {
   const asset = state.editing;
   if (asset.creator) return;
   state.assets = state.assets.filter(a => a.id !== asset.id);
+  state.likedIds.delete(asset.id);
   document.querySelectorAll('.card').forEach(c => { if (String(c.dataset.id) === String(asset.id)) c.remove(); });
-  updateGalleryCount();
   if ($('materialsGrid')) renderMaterialsGrid();
   exitEditMode();
   toast(t('deletedToast'));
@@ -2011,12 +2190,6 @@ function handleEditApply() {
 
   const btn = $('generateBtn');
   btn.disabled = true;
-  const sk = document.createElement('div');
-  sk.className = 'card skeleton';
-  const a0 = ASPECTS.find(x => x.id === asset.aspect) || ASPECTS[0];
-  sk.style.aspectRatio = a0.w + ' / ' + a0.h;
-  $('galleryGrid').prepend(sk);
-  updateGalleryCount();
 
   let clipLen, useGeneratedAudio, inpaintThumb;
   if (isVideo) {
@@ -2038,20 +2211,20 @@ function handleEditApply() {
         aspect: asset.aspect, prompt: desc, duration: newDuration + 's', model: asset.model,
         audio: useGeneratedAudio ? true : asset.audio,
         audioDesc: useGeneratedAudio ? desc : asset.audioDesc,
-        style: asset.style, strength: asset.strength, parentId: asset.id, editType: 'extend',
+        style: asset.style, strength: asset.strength, resolution: asset.resolution, createdAt: new Date().toISOString(), views: 0,
+        parentId: asset.id, editType: 'extend',
       };
     } else {
       newAsset = {
         id: assetSeq++, type: 'image', gradient: pickStyleGradient(asset.style),
         aspect: asset.aspect, prompt: desc, duration: null, model: asset.model, audio: false, audioDesc: '',
-        style: asset.style, strength: asset.strength, parentId: asset.id, editType: isInpaint ? 'inpaint' : 'editimg',
+        style: asset.style, strength: asset.strength, resolution: asset.resolution, createdAt: new Date().toISOString(), views: 0,
+        parentId: asset.id, editType: isInpaint ? 'inpaint' : 'editimg',
       };
       if (isInpaint) newAsset.thumbDataUrl = inpaintThumb;
     }
     state.assets.unshift(newAsset);
-    const card = buildCard(newAsset);
-    sk.replaceWith(card);
-    updateGalleryCount();
+    if ($('materialsGrid')) renderMaterialsGrid();
     btn.disabled = false;
     toast((isVideo ? t('extendAppliedToast') : t('editAppliedToast')) + ' — ' + formatK(cost) + ' ' + t('creditsWord'));
   }, 1400 + Math.random() * 500);
@@ -2077,11 +2250,10 @@ function initStudio() {
     state.mode = i === 2 ? 'video' : 'image';
     const a = makeAsset(p);
     if (i === 2) a.duration = '6s';
-    $('galleryGrid').appendChild(buildCard(a));
   });
   state.mode = 'image';
-  updateGalleryCount();
   updateShellCredits();
+  renderMaterialsGrid();
 }
 initStudio();
 
@@ -2098,14 +2270,9 @@ function applyStudioLang() {
   renderAudioOptions();
   if (state.editing) enterEditMode(state.editing, { returnView: state.editingReturnView });
   else { renderTabs(); updateComposerForTab(); }
-  $('galleryTitle').textContent = t('recentGenerations');
-  updateGalleryCount();
-  const galleryGrid = $('galleryGrid');
-  galleryGrid.innerHTML = '';
-  state.assets.forEach(a => galleryGrid.appendChild(buildCard(a)));
-  if ($('creationsGrid')) renderCreationsGrid();
+  if ($('assetSubtabs')) renderAssetsView();
   if ($('materialsGrid')) renderMaterialsGrid();
-  if (previewingMaterial) showMaterialPreview(previewingMaterial);
+  if (previewingMaterial) showMaterialPreview(previewingMaterial, { returnTo: previewReturnTo, editable: previewEditable });
 }
 $('gwLangEn').addEventListener('click', () => {
   $('gwLangEn').classList.add('active'); $('gwLangZh').classList.remove('active');
