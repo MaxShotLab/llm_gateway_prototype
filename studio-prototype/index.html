@@ -300,6 +300,9 @@
   .studio-canvas .view-title:has(+ .materials-subtitle) { margin-bottom: 2px; }
   .studio-canvas .materials-subtitle { font-size: 12.5px; color: var(--muted); margin: 0 auto 16px; max-width: 900px; }
   .studio-canvas .filter-row { display: flex; gap: 8px; margin: 0 auto 16px; max-width: 900px; }
+  .studio-canvas .materials-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; max-width: 900px; margin: 0 auto 16px; }
+  .studio-canvas .materials-toolbar .filter-row { margin: 0; }
+  .studio-canvas .sort-row { display: flex; gap: 8px; }
 
   /* Inline editing — editing happens in the same composer card used for generation, no popup */
   .studio-canvas .edit-bar { display: none; align-items: center; gap: 10px; margin-bottom: 16px; }
@@ -821,7 +824,7 @@ document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
 let uiLang = 'en';
 const state = {
   mode: 'image', tab: 'txt2img', uploadedImgs: [], model: '', resolution: 'hd', aspect: '1:1', style: 'none', assets: [],
-  audio: 'on', editing: null, assetsTab: 'mine', likedIds: new Set()
+  audio: 'on', editing: null, assetsTab: 'mine', likedIds: new Set(), discoverSort: 'recent'
 };
 const TABS = {
   image: [{ id: 'txt2img', en: 'Text to Image', zh: '文生图' }, { id: 'img2img', en: 'Image to Image', zh: '图生图' }],
@@ -901,7 +904,8 @@ const I18N = {
   needInpaintMaskToast: { en: 'Paint over the area you want to redo first', zh: '请先在图片上涂抹需要重绘的区域' },
   inpaintPlaceholder: { en: 'Describe what the painted area should become...', zh: '描述涂抹区域应该变成什么样...' },
   materialsTitle: { en: 'Discover', zh: '发现' },
-  materialsSubtitle: { en: "Everyone's published work, ranked by popularity — every item carries its prompt, ready to reuse or modify.", zh: '所有人发布的作品，按热度排序 — 每一项都带着它的 Prompt，可直接复用或修改。' },
+  materialsSubtitle: { en: "Everyone's published work — every item carries its prompt, ready to reuse or modify.", zh: '所有人发布的作品 — 每一项都带着它的 Prompt，可直接复用或修改。' },
+  sortRecent: { en: 'Most recent', zh: '最新' }, sortViewed: { en: 'Most viewed', zh: '最热' },
   byCreatorLabel: { en: 'by', zh: '来自' },
   tryThisCardTitle: { en: 'Try this', zh: '再次生成' },
   emptyMaterials: { en: 'Nothing here yet — try Studio first', zh: '还没有内容，先去 Studio 生成吧' },
@@ -1595,6 +1599,7 @@ function formatDate(iso) {
   if (isNaN(d.getTime())) return '';
   return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
 }
+function recordView(asset) { asset.views = (asset.views || 0) + 1; }
 function resolutionLabelFor(asset) {
   if (asset.upscaled && asset.resolutionLabel) return asset.resolutionLabel;
   const r = RES_OPTIONS.find(x => x.key === asset.resolution) || RES_OPTIONS[1];
@@ -1704,8 +1709,10 @@ function renderAssetsView() {
 /* ---------------- Discover: everything anyone has published, ranked by popularity ---------------- */
 function assetPool() {
   // Discover and Liked share one flat stream — everyone's published work, the current user's
-  // included, ranked by view count so the most-seen work surfaces first.
-  return state.assets.concat(COMMUNITY_ASSETS).slice().sort((a, b) => (b.views || 0) - (a.views || 0));
+  // included. Sortable by Most recent (creation date) or Most viewed (view count).
+  const pool = state.assets.concat(COMMUNITY_ASSETS).slice();
+  if (state.discoverSort === 'views') return pool.sort((a, b) => (b.views || 0) - (a.views || 0));
+  return pool.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 }
 function renderMaterialsGrid(filter) {
   const activeChip = document.querySelector('#materialsCanvas .filter-row .chip.active');
@@ -1714,10 +1721,16 @@ function renderMaterialsGrid(filter) {
     $('materialsCanvas').innerHTML = `
       <div class="view-title" id="materialsTitleEl"></div>
       <div class="materials-subtitle" id="materialsSubtitleEl"></div>
-      <div class="filter-row">
-        <button class="chip active" data-filter="all"></button>
-        <button class="chip" data-filter="image"></button>
-        <button class="chip" data-filter="video"></button>
+      <div class="materials-toolbar">
+        <div class="filter-row">
+          <button class="chip active" data-filter="all"></button>
+          <button class="chip" data-filter="image"></button>
+          <button class="chip" data-filter="video"></button>
+        </div>
+        <div class="sort-row">
+          <button class="chip active" data-sort="recent"></button>
+          <button class="chip" data-sort="views"></button>
+        </div>
       </div>
       <div class="gallery-grid" id="materialsGrid"></div>
     `;
@@ -1728,11 +1741,21 @@ function renderMaterialsGrid(filter) {
         renderMaterialsGrid(chip.dataset.filter);
       });
     });
+    $('materialsCanvas').querySelectorAll('.sort-row .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        $('materialsCanvas').querySelectorAll('.sort-row .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state.discoverSort = chip.dataset.sort;
+        renderMaterialsGrid(filter);
+      });
+    });
   }
   $('materialsTitleEl').textContent = t('materialsTitle');
   $('materialsSubtitleEl').textContent = t('materialsSubtitle');
   const chips = $('materialsCanvas').querySelectorAll('.filter-row .chip');
   chips[0].textContent = t('filterAll'); chips[1].textContent = t('filterImages'); chips[2].textContent = t('filterVideos');
+  const sortChips = $('materialsCanvas').querySelectorAll('.sort-row .chip');
+  sortChips[0].textContent = t('sortRecent'); sortChips[1].textContent = t('sortViewed');
   const grid = $('materialsGrid');
   grid.innerHTML = '';
   const list = assetPool().filter(a => filter === 'all' || a.type === filter);
@@ -1749,10 +1772,11 @@ function renderMaterialsGrid(filter) {
 let previewingMaterial = null;
 let previewReturnTo = 'discover';
 let previewEditable = false;
-function showMaterialPreview(asset, { returnTo = 'discover', editable = false } = {}) {
+function showMaterialPreview(asset, { returnTo = 'discover', editable = false, countView = true } = {}) {
   previewingMaterial = asset;
   previewReturnTo = returnTo;
   previewEditable = editable;
+  if (countView) recordView(asset);
   const navTarget = returnTo === 'discover' ? 'studio' : 'assets';
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === navTarget));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'preview'));
@@ -1812,7 +1836,7 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false } 
   $('materialPreviewAnimateBtn').style.display = editable && asset.type === 'image' ? '' : 'none';
   $('materialPreviewDeleteBtn').style.display = editable && !asset.creator ? '' : 'none';
   if (editable) {
-    $('materialPreviewEditBtn').onclick = () => { previewingMaterial = null; enterEditMode(asset, { returnView: 'assets' }); };
+    $('materialPreviewEditBtn').onclick = () => { previewingMaterial = null; enterEditMode(asset, { returnView: 'assets', countView: false }); };
     $('materialPreviewAnimateBtn').onclick = () => { previewingMaterial = null; jumpToImageToVideo(asset); };
     $('materialPreviewDeleteBtn').onclick = () => {
       state.assets = state.assets.filter(a => a.id !== asset.id);
@@ -1894,9 +1918,10 @@ $('assetPickerOverlay').addEventListener('click', e => { if (e.target === $('ass
 /* ---------------- inline editing: editing happens in the same composer used for generation ---------------- */
 let editDrawing = false, editImageTool = null;
 
-function enterEditMode(asset, { returnView = 'studio' } = {}) {
+function enterEditMode(asset, { returnView = 'studio', countView = true } = {}) {
   state.editing = asset;
   state.editingReturnView = returnView;
+  if (countView) recordView(asset);
   editImageTool = null;
   comparingOriginal = false;
   closeAllPopovers();
@@ -2268,11 +2293,11 @@ function applyStudioLang() {
   renderAR();
   renderStyles();
   renderAudioOptions();
-  if (state.editing) enterEditMode(state.editing, { returnView: state.editingReturnView });
+  if (state.editing) enterEditMode(state.editing, { returnView: state.editingReturnView, countView: false });
   else { renderTabs(); updateComposerForTab(); }
   if ($('assetSubtabs')) renderAssetsView();
   if ($('materialsGrid')) renderMaterialsGrid();
-  if (previewingMaterial) showMaterialPreview(previewingMaterial, { returnTo: previewReturnTo, editable: previewEditable });
+  if (previewingMaterial) showMaterialPreview(previewingMaterial, { returnTo: previewReturnTo, editable: previewEditable, countView: false });
 }
 $('gwLangEn').addEventListener('click', () => {
   $('gwLangEn').classList.add('active'); $('gwLangZh').classList.remove('active');

@@ -258,7 +258,8 @@ Acceptance:
 ### P0.2 My Creations
 
 - A private, filterable-by-type (all/image/video) gallery of the current
-  user's own generations.
+  user's own generations, listed newest first by creation date. There is no
+  view-count signal to sort by yet — that arrives with Discover (P1.3).
 - Opening an item shows a read-only preview: the media, its prompt, its
   reference image(s) if any, and its metadata (P0.4).
 - Per-item actions, both as a direct shortcut on the gallery card and inside
@@ -296,7 +297,8 @@ Acceptance:
 - Resolution and aspect ratio are shown together as a compact, scannable
   summary, not as exact pixel dimensions.
 - View count joins this display once Discover ships (P1.3) — Phase 1 has no
-  popularity signal to show yet.
+  popularity signal to show yet. See P1.3 for its definition (incremented once
+  per open) and how it's used.
 
 Acceptance:
 
@@ -330,6 +332,9 @@ Discover (P1.3), so it needs Discover live first.
   full extent of video "editing" (see §3); it is not a general trim tool.
 - Each edit action shows its own configured credit cost before applying.
 - An edit produces a new asset; it never overwrites the source.
+- Entering the editing view hides the Discover feed (P1.3) below the
+  composer — a user editing a result isn't also scrolling past unrelated
+  published work. Discover reappears once editing exits.
 - Exiting editing returns the composer to its prior generation state.
 
 Acceptance:
@@ -338,6 +343,7 @@ Acceptance:
   results.
 - The source asset is unchanged and still present after an edit.
 - Inpaint requires a painted mask and a description before it can be applied.
+- Discover is not visible anywhere on screen while the editing view is open.
 
 ### P1.2 Asset Lineage
 
@@ -365,12 +371,16 @@ Acceptance:
   and Maxshot-published examples — no "mine vs. theirs" filter, only a type
   filter (all/image/video).
 - Every generation is included automatically the moment it's created — there
-  is no publish step, review queue, or opt-out (see §3, §9). This is what
-  gives view count (P0.4) something to do: once Discover ships, it becomes
-  the feed's ranking signal.
-- Ranked by view count, most-viewed first. View count is a simple popularity
-  signal recorded per asset; it is not the same as Liked (P1.6), which is
-  private and does not affect ranking.
+  is no publish step, review queue, or opt-out (see §3, §9).
+- Two sort modes: Most recent (by creation date) and Most viewed (by view
+  count). Most recent ships first — it needs nothing beyond the creation date
+  Phase 1 already records. Most viewed follows as a fast-follow once view
+  tracking is live; both then coexist as user-facing sort options. This
+  staged rollout is sequencing within Phase 2, not a third phase (§6).
+- View count is a simple popularity signal recorded per asset, incremented by
+  exactly one each time a user opens that asset's detail view (My Creations,
+  Discover, or Liked — any surface counts). It is not the same as Liked
+  (P1.6), which is private and does not affect either sort mode.
 - Opening any item — regardless of source, including the current user's own
   work — shows a read-only preview: the media, its reference image(s), and
   its prompt as plain text, not an editable field.
@@ -391,7 +401,10 @@ Acceptance:
 - Opening a Discover item and returning ("Back") returns to the Studio page
   with Discover still visible below the composer; the sidebar highlight
   stays on Studio throughout, since Discover has no separate route.
-- The feed re-sorts correctly as view counts change (highest first).
+- Most recent sorts correctly by creation date; once Most viewed ships, the
+  feed re-sorts correctly as view counts change (highest first).
+- Opening any asset's detail view increments its view count by exactly one,
+  regardless of which surface it was opened from.
 - Every result a user generates appears in Discover without any action from
   them.
 
@@ -527,17 +540,27 @@ make.
   Liked (saved Discover items, read-only). Introduced in Phase 1 as My
   Creations only; the Liked tab is a Phase 2 addition.
 - **Discover:** The public feed combining every user's published generations
-  with community- and Maxshot-published examples, ranked by view count.
-  Read-only — no edit, delete, or "mine vs. theirs" filter. Lives embedded
-  below the Studio composer rather than as its own routed page.
+  with community- and Maxshot-published examples, sortable by Most recent or
+  Most viewed. Read-only — no edit, delete, or "mine vs. theirs" filter.
+  Lives embedded below the Studio composer rather than as its own routed
+  page.
 - **Liked:** A user's private, per-item save list, toggled from a Discover
   card or preview. Shown as a tab on Assets. Not visible to other users and
-  does not affect Discover's ranking.
-- **View count:** A simple popularity signal recorded per asset, used to
-  order the Discover feed (highest first). Distinct from Liked, which is
-  private and does not factor into ranking.
+  does not affect either Discover sort mode.
+- **View count:** A simple popularity signal recorded per asset, incremented
+  by exactly one each time a user opens that asset's detail view, on any
+  surface. Powers Discover's Most viewed sort (P1.3). Distinct from Liked,
+  which is private and does not factor into either sort mode.
 - **Creator attribution:** The name or label shown on a published,
-  non-owned Discover item identifying who made it.
+  non-owned Discover item identifying who made it — an individual creator's
+  name, or "Maxshot Team" for the platform's own examples. Both are shown
+  with the same badge treatment; there is no separate "verified" or
+  "official" visual style.
+- **Configured model catalog:** The per-mode set of generation models a user
+  picks from (P0.1). Illustrative example, matching the current prototype,
+  not a commitment to these specific providers: Image — Seedream 4.0,
+  FLUX.1.1 Pro, Midjourney v7, GPT Image 1, Ideogram 3.0, Qwen-Image. Video —
+  Kling 2.1, Sora 2, Seedance 1.0 Pro, Wan 2.2, Runway Gen-4, Hailuo 2.3.
 
 ## 12. Prototype Migration
 
@@ -560,8 +583,9 @@ Migration order:
 5. Ship the generation composer, My Creations, and result metadata against
    persisted data (Phase 1) — this alone is a releasable product.
 6. Add inline editing and asset lineage against real accounts (Phase 2).
-7. Launch Discover — automatically published, ranked by view count — plus
-   Try this and multi-image reference against real accounts (Phase 2).
+7. Launch Discover — automatically published, sorted Most recent — plus Try
+   this and multi-image reference against real accounts (Phase 2); add
+   Most viewed once per-open view tracking is live.
 8. Enable Liked once prioritized; it ships code-complete alongside Discover
    but flagged off, so this step needs no engineering lead time (Phase 2).
 
@@ -573,8 +597,9 @@ into production.
 
 | Date | Version | Changes |
 |---|---|---|
-| 2026-08-13 | Initial PRD | Defined Studio's four generation paths, inline editing, asset lineage, credit integration, and the Assets community library, based on the HTML prototype and its live-demo proof of concept. |
-| 2026-08-14 | Assets scope refinement | Scoped Assets to reuse-only: opening any item — including the current user's own published work — shows a read-only preview (media, references, plain-text prompt) with Try this/download only; edit and delete are exclusive to My Creations (P0.4), and returning from either surface's detail view stays on that surface. |
-| 2026-08-17 | Discover, Liked, and scope corrections | Split the former Assets library into a public Discover feed (P1.1, ranked by view count) and a private Assets surface with My Creations and a new Liked tab (P1.5) for personal saves — Liked is explicitly not a public/social feature (§3, §9). Documented Animate as a Phase 1 image-asset shortcut into Image-to-Video (P0.2, P0.4, §11). Scoped the reference-strength control and style picker to the modes they actually apply to (Image-to-Image only, and image generation only — P0.1, §11). Reworded the video-editing non-goal so it no longer contradicts the clip-window "extend" requirement it was meant to bound (§3, P0.2). |
-| 2026-08-17 | Discover placement, view-first My Creations, result metadata | Moved Discover from its own routed page to embedded placement below the Studio composer (§5.1, P1.1, §10, §11) — a product-layout decision, not a phase change; it remains a P1/Phase 2 requirement. Changed My Creations so opening an item shows a read-only preview first, with Edit/Animate/delete as explicit owner-only actions rather than the default click behavior (§4 Creator (edit), P0.2, P0.4). Added P0.6 Result Metadata Display, requiring creation date, view count, resolution+aspect, and (video) duration on every detail view; view count is now a Phase 1 asset field that defaults to zero, while Discover's ranking behavior built on it stays Phase 2. Documented that reference thumbnails in the composer open an enlarged preview on click (P0.1). Noted that Liked (P1.5) is fully built in the prototype but disabled by default behind a flag pending a product decision. |
-| 2026-08-17 | Phase re-scoping, decided auto-publish, Liked framed as ship-dark | Re-scoped Phase 1 down to the minimum that ships fast: generate (P0.1), a view/download/delete-only My Creations (P0.2), credit metering (P0.3), and basic result metadata without view count (P0.4). Moved inline editing, asset lineage, Discover, Try this, and multi-image reference into Phase 2 as P1.1–P1.5, renumbering all cross-references accordingly. Replaced the former P1.4 "Community Publishing (design pending)" with a decided behavior: every result is automatically public in Discover once Phase 2 ships, with no publish step, opt-out, or per-item privacy state (§3, §5.2, §9, P1.3) — a future privacy control is no longer framed as an open design question, just an unscheduled possibility. Reframed Liked (now P1.6) as intentionally shippable dark: fully built, disabled by default, independent of the rest of Phase 2, and re-enabled with a single flag whenever it's prioritized — noted in P1.6, §10, and the Phase 2 migration steps (§12). |
+| 2026-08-13 | Initial PRD | Defined the four generation paths, inline editing, lineage, credits, and the Assets library. |
+| 2026-08-14 | Assets → reuse-only | Assets opens a read-only preview (Try this/download); edit and delete live only in My Creations. |
+| 2026-08-17 | Discover + Liked split | Split Assets into a public Discover feed and a private Assets surface (My Creations + Liked). |
+| 2026-08-17 | Discover embedded, metadata added | Moved Discover under the Studio composer; added result metadata (date, views, resolution+aspect, duration); My Creations opens a read-only preview first. |
+| 2026-08-17 | Phase re-scope | Trimmed Phase 1 to generate + view-only My Creations + credits; moved editing/Discover/Try this/multi-ref to Phase 2; decided auto-publish; Liked ships disabled by default. |
+| 2026-08-18 | Consistency pass | Added the configured model catalog (fixing a dangling §11 reference); defined view count as one increment per open; split Discover sort into Most recent (first) and Most viewed (fast-follow); documented that Discover hides while editing. |
