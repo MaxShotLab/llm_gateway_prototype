@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** August 17, 2026
+**Updated:** September 8, 2026
 
 ## 1. Purpose
 
@@ -245,6 +245,17 @@ Nothing here depends on anything in §8.
 - Prompt-enhance action.
 - Visible credit cost before generating, matching the amount actually
   deducted.
+- Generating shows an in-progress state for the whole request — the Generate
+  control becomes indeterminate and its cost readout reads "Generating…" —
+  without resetting or navigating away from the composer. A real model can
+  take several seconds or more; the user always has visible confirmation that
+  the request is running, not silence.
+- A completed generation opens directly into the new result's read-only
+  preview (P0.2) — the user isn't left looking at the composer they just
+  generated from and required to go find the result themselves. Returning
+  ("Back") from that preview clears the composer's prompt and any reference
+  image(s), so it starts blank rather than showing the input that was just
+  used.
 
 Acceptance:
 
@@ -254,6 +265,12 @@ Acceptance:
 - The upload limit appears for both Image-to-\* tabs; the reference-strength
   control and the style picker appear only where §11 defines them (strength:
   Image-to-Image only; style: image modes only).
+- The Generate control is disabled and shows its in-progress state for the
+  entire duration of a request; nothing else on screen changes until the
+  result is ready.
+- After a successful generation, the user lands on the new result's preview
+  without any extra action; the composer is empty — no prompt text, no
+  reference images — when they return to it.
 
 ### P0.2 My Creations
 
@@ -264,6 +281,10 @@ Acceptance:
   reference image(s) if any, and its metadata (P0.4).
 - Per-item actions, both as a direct shortcut on the gallery card and inside
   the preview: download, delete.
+- Delete asks for confirmation — a Cancel/Delete prompt — before removing
+  anything; there is no one-click, no-confirm delete anywhere delete appears
+  (My Creations card or preview, and the editing view's delete once P1.1
+  ships). Canceling, or dismissing the prompt, leaves the asset untouched.
 - Phase 1 is view, download, and delete only. Editing, Animate, asset
   lineage, and Try this are Phase 2 (P1.1, P1.2, P1.4) — a Phase 1 result is
   a finished thing to keep or discard, not yet something to remix.
@@ -274,6 +295,8 @@ Acceptance:
 - Opening an item shows the read-only preview; there is no edit, Animate, or
   Try this control anywhere in Phase 1.
 - Deletion only affects the deleted asset and its own gallery entry.
+- Clicking delete shows a confirm/cancel prompt first; the asset is only
+  removed after the user explicitly confirms.
 
 ### P0.3 Credit Integration
 
@@ -319,31 +342,64 @@ Discover (P1.3), so it needs Discover live first.
   via the gallery card's edit shortcut — switches the composer into an
   editing view in place — no modal — showing the result, its prompt, and its
   metadata. Merely opening/previewing a result does not enter editing.
-- Image tools: remove background, upscale, inpaint (brush-selected mask),
-  text-guided edit.
-- Animate (image assets only): a one-click shortcut, available from the
-  gallery card or the editing view, that jumps into a new Image-to-Video
-  generation with this image pre-filled as the reference. Animate does not
-  transform the source image — it starts a new generation from it, the way
-  Try this reuses a video's own reference — so it is not metered as an edit
-  action; it is billed as a normal video generation (P0.3).
+- The image tools — remove background, upscale, and inpaint (brush-selected
+  mask) — plus Animate are one mutually exclusive selection, alongside
+  leaving none selected for a plain text-guided edit. Selecting a tool only
+  arms it; it does not apply anything by itself. The user optionally adjusts
+  the description, then Generate applies whichever tool is currently
+  selected (or performs a plain text-guided edit if none is).
+- Remove background and upscale apply with no description required — there's
+  nothing for one to add. Inpaint requires a painted mask and a description;
+  text-guided edit and video extend require a description.
+- Animate (image assets only): jumps into a new Image-to-Video generation
+  with this image pre-filled as the reference (and, if selected from inside
+  the editing view, with whatever the user typed there carried over as the
+  motion description). Triggered directly from the gallery card or the
+  read-only preview, it's a one-click shortcut with no intermediate step;
+  triggered from inside the editing view, it fires on Generate like the
+  other tools. Either way, Animate does not transform the source image — it
+  starts a new generation from it, the way Try this reuses a video's own
+  reference — so it is not metered as an edit action; it is billed as a
+  normal video generation (P0.3) once the user actually generates.
 - Video tool: extend — pick a bounded window of the existing clip, choose
   original or newly generated audio, describe how it continues. This is the
   full extent of video "editing" (see §3); it is not a general trim tool.
-- Each edit action shows its own configured credit cost before applying.
+- Each edit action shows its own configured credit cost before applying,
+  reflected live as the user changes which tool is selected.
 - An edit produces a new asset; it never overwrites the source.
 - Entering the editing view hides the Discover feed (P1.3) below the
   composer — a user editing a result isn't also scrolling past unrelated
   published work. Discover reappears once editing exits.
-- Exiting editing returns the composer to its prior generation state.
+- Applying an edit shows the same in-progress state as generating (P0.1) —
+  but the editing view itself (the result, the tool selection, the mask, the
+  typed description) stays exactly as the user left it, locked against
+  further input, for the whole request. Nothing is reset, and the user is
+  never shown a blank composer mid-request; the editing view only tears down
+  once the result exists, in the same step as opening its preview.
+- A completed edit opens directly into the new result's read-only preview,
+  the same as a fresh generation (P0.1). Returning ("Back") from that preview
+  goes back to wherever the edit was opened from — My Creations if that's
+  where the gallery card or preview's edit shortcut was — not always to the
+  Studio composer.
+- Deleting the currently-edited result (P0.2) asks for confirmation first,
+  the same as everywhere else delete appears.
+- Exiting editing without generating returns the composer to its prior
+  generation state.
 
 Acceptance:
 
 - A user can complete the full Creator (edit) path for both image and video
   results.
 - The source asset is unchanged and still present after an edit.
-- Inpaint requires a painted mask and a description before it can be applied.
+- Inpaint requires a painted mask and a description before it can be applied;
+  remove background and upscale apply with no description required.
 - Discover is not visible anywhere on screen while the editing view is open.
+- The Generate control is disabled and shows its in-progress state for the
+  duration of an edit request, while the rest of the editing view (image,
+  tool chips, prompt) stays visible and unchanged until the result is ready.
+- After a successful edit, the user lands on the new result's preview
+  automatically, and its "Back" returns to the surface the edit was opened
+  from.
 
 ### P1.2 Asset Lineage
 
@@ -530,9 +586,11 @@ make.
   was derived from.
 - **Try this:** Reloading an asset's own reference image(s) and prompt into
   the composer to generate a new result from the same recipe.
-- **Animate:** A one-click shortcut on an image asset that jumps into a new
-  Image-to-Video generation with that image pre-filled as the reference. Not
-  an edit — it starts a new generation, billed as a normal video generation.
+- **Animate:** A shortcut on an image asset that jumps into a new
+  Image-to-Video generation with that image pre-filled as the reference —
+  one click from the gallery card or read-only preview, or a Generate click
+  if selected from inside the editing view (P1.1). Not an edit — it starts a
+  new generation, billed as a normal video generation.
 - **My Creations:** The current user's private gallery of their own assets;
   one of the two tabs on Assets, and the only one available in Phase 1.
 - **Assets:** The private surface for a user's own saved and created content,
@@ -603,3 +661,4 @@ into production.
 | 2026-08-17 | Discover embedded, metadata added | Moved Discover under the Studio composer; added result metadata (date, views, resolution+aspect, duration); My Creations opens a read-only preview first. |
 | 2026-08-17 | Phase re-scope | Trimmed Phase 1 to generate + view-only My Creations + credits; moved editing/Discover/Try this/multi-ref to Phase 2; decided auto-publish; Liked ships disabled by default. |
 | 2026-08-18 | Consistency pass | Added the configured model catalog (fixing a dangling §11 reference); defined view count as one increment per open; split Discover sort into Most recent (first) and Most viewed (fast-follow); documented that Discover hides while editing. |
+| 2026-09-08 | In-progress state, direct-to-preview, confirm delete | Generating and editing now show an in-progress state (indeterminate Generate control, "Generating…") without resetting or leaving the composer/editing view until the result exists (P0.1, P1.1). A completed generation or edit opens straight into the result's preview, returning to wherever it was opened from; the composer clears on return instead of keeping the just-used input (P0.1, P1.1). Unified the four edit tools into one selection applied by Generate, rather than remove background/upscale/Animate firing immediately on click (P1.1, §11). Delete now requires an explicit confirm/cancel step everywhere it appears (P0.2, P1.1). |

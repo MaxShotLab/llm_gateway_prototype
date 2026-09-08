@@ -287,6 +287,13 @@
   .studio-canvas .card.is-video:hover .play { opacity: 0; }
   .studio-canvas .card.is-video:hover .thumb { animation: st-video-preview 1.8s ease-in-out infinite; }
   @keyframes st-video-preview { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.06); filter: brightness(1.15); } }
+  .studio-canvas .sound-badge { position: absolute; bottom: 10px; right: 10px; display: flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 20px; background: rgba(10,10,15,0.65); color: #fff; font-size: 10.5px; }
+  .studio-canvas .sound-badge svg { width: 12px; height: 12px; flex-shrink: 0; }
+  @keyframes st-spin { to { transform: rotate(360deg); } }
+  .studio-canvas .send-btn { position: relative; }
+  .studio-canvas .send-btn.loading { cursor: default; opacity: 0.85; }
+  .studio-canvas .send-btn.loading svg { visibility: hidden; }
+  .studio-canvas .send-btn.loading::after { content: ''; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border: 2px solid rgba(10,10,15,0.3); border-top-color: #0a0a0f; border-radius: 50%; animation: st-spin 0.7s linear infinite; }
   .studio-canvas .card .overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%); opacity: 0; transition: opacity .15s; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; }
   .studio-canvas .card:hover .overlay { opacity: 1; }
   .studio-canvas .card .actions { display: flex; gap: 5px; }
@@ -426,6 +433,14 @@
   .picker-empty { grid-column: 1 / -1; color: var(--muted-2); font-size: 13px; padding: 40px 0; text-align: center; }
   .close-modal { position: absolute; top: 16px; right: 16px; width: 38px; height: 38px; border-radius: 50%; background: rgba(10,10,15,0.6); border: none; color: #fff; cursor: pointer; z-index: 5; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .close-modal:hover { background: rgba(10,10,15,0.85); }
+  .confirm-modal { width: min(360px, 90vw); background: var(--panel); border: 1px solid var(--border-2); border-radius: 16px; padding: 20px; }
+  .confirm-modal h3 { margin: 0 0 8px; font-size: 15px; color: var(--text); font-weight: 600; }
+  .confirm-modal p { margin: 0 0 18px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .confirm-cancel-btn { padding: 9px 16px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--panel-2); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .confirm-cancel-btn:hover { border-color: var(--muted-2); }
+  .confirm-delete-btn { padding: 9px 16px; border-radius: 10px; border: none; background: var(--danger); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .confirm-delete-btn:hover { opacity: 0.9; }
 
   .toast-wrap { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .toast { background: #1c1c26; border: 1px solid #34343f; color: #eceef2; font-size: 13px; padding: 10px 16px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: toast-in .18s ease-out; }
@@ -723,6 +738,18 @@
   <div class="ref-lightbox-img" id="refLightboxImg"></div>
 </div>
 
+<!-- Delete confirmation: shared by the gallery card, the read-only preview, and the full editor -->
+<div class="modal-overlay" id="deleteConfirmOverlay">
+  <div class="confirm-modal">
+    <h3 data-key="deleteConfirmTitle">Delete this?</h3>
+    <p data-key="deleteConfirmBody">This can't be undone. Results made from it won't be affected.</p>
+    <div class="confirm-actions">
+      <button class="confirm-cancel-btn" id="deleteConfirmCancel" data-key="cancelLabel">Cancel</button>
+      <button class="confirm-delete-btn" id="deleteConfirmOk" data-key="deleteLabel">Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -735,6 +762,15 @@ function toast(msg) {
   setTimeout(() => el.remove(), 2400);
 }
 function formatK(n) { return n >= 1000 ? Math.round(n / 1000) + 'K' : String(n); }
+
+// Shared delete-confirmation modal — the card icon, the read-only preview, and the full editor all
+// route through this instead of deleting on click, so an accidental click never loses work.
+function confirmDelete(onConfirm) {
+  $('deleteConfirmOverlay').classList.add('show');
+  $('deleteConfirmOk').onclick = () => { $('deleteConfirmOverlay').classList.remove('show'); onConfirm(); };
+  $('deleteConfirmCancel').onclick = () => { $('deleteConfirmOverlay').classList.remove('show'); };
+}
+$('deleteConfirmOverlay').addEventListener('click', e => { if (e.target === $('deleteConfirmOverlay')) $('deleteConfirmOverlay').classList.remove('show'); });
 
 /* ---------------- shell: theme toggle ---------------- */
 document.documentElement.dataset.shellTheme = document.querySelector('.gw-theme-toggle button.active').dataset.shellTheme;
@@ -887,6 +923,10 @@ const I18N = {
   usedToast: { en: 'used', zh: '消耗' }, creditsWord: { en: 'credits', zh: '积分' }, costPerGen: { en: 'credits / generation', zh: '积分 / 次' },
   downloadedToast: { en: 'Downloaded', zh: '已下载' }, setAsVideoRefToast: { en: 'Set as video reference image', zh: '已将该图片设为视频参考图' },
   switchedToImg2VidToast: { en: 'Switched to Image to Video', zh: '已切换到图生视频' }, deletedToast: { en: 'Deleted', zh: '已删除' },
+  deleteConfirmTitle: { en: 'Delete this?', zh: '确定删除吗？' },
+  deleteConfirmBody: { en: "This can't be undone. Results made from it won't be affected.", zh: '删除后无法恢复，但由它生成的其他结果不会受影响。' },
+  cancelLabel: { en: 'Cancel', zh: '取消' },
+  deleteLabel: { en: 'Delete', zh: '删除' },
   bgRemovedToast: { en: 'Background removed', zh: '背景已移除' }, upscaledToast: { en: 'Upscaled to', zh: '已放大至' },
   inpaintToast: { en: 'Paint over the area you want to redo', zh: '在图上涂抹以标记重绘区域' },
   imageResultTitle: { en: 'Image result', zh: '图像结果' }, videoResultTitle: { en: 'Video result', zh: '视频结果' },
@@ -903,6 +943,11 @@ const I18N = {
   showEdited: { en: 'Show edited', zh: '显示编辑后' },
   needInpaintMaskToast: { en: 'Paint over the area you want to redo first', zh: '请先在图片上涂抹需要重绘的区域' },
   inpaintPlaceholder: { en: 'Describe what the painted area should become...', zh: '描述涂抹区域应该变成什么样...' },
+  removeBgPlaceholder: { en: 'Optional note — no description needed to remove the background', zh: '可选备注 — 移除背景无需填写文字也可生成' },
+  upscalePlaceholder: { en: 'Optional note — no description needed to upscale', zh: '可选备注 — 高清放大无需填写文字也可生成' },
+  animatePlaceholder: { en: 'Describe how this image should move (optional)', zh: '描述这张图片应该如何动起来（可选）' },
+  generatingHint: { en: 'Generating…', zh: '生成中…' },
+  playingWithSoundLabel: { en: 'Sound on', zh: '有声播放' },
   materialsTitle: { en: 'Discover', zh: '发现' },
   materialsSubtitle: { en: "Everyone's published work — every item carries its prompt, ready to reuse or modify.", zh: '所有人发布的作品 — 每一项都带着它的 Prompt，可直接复用或修改。' },
   sortRecent: { en: 'Most recent', zh: '最新' }, sortViewed: { en: 'Most viewed', zh: '最热' },
@@ -1388,7 +1433,8 @@ $('durationRange').addEventListener('input', () => { $('durationVal').textConten
 $('strengthRange').addEventListener('input', () => { $('strengthVal').textContent = $('strengthRange').value + '%'; $('strengthPillLabel').textContent = $('strengthRange').value + '%'; });
 
 /* ---------------- generate ---------------- */
-function costFor() { return state.mode === 'video' ? 8000 : 2000; }
+const IMAGE_GEN_COST = 2000, VIDEO_GEN_COST = 8000;
+function costFor() { return state.mode === 'video' ? VIDEO_GEN_COST : IMAGE_GEN_COST; }
 const EDIT_COST = 2000, EXTEND_COST = 4000;
 function costBadgeHTML(cost) {
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.3c0-1.3-1.3-2.3-3-2.3s-3 .9-3 2c0 2.8 6 1.3 6 4.1 0 1.1-1.3 2-3 2s-3-1-3-2.3"/></svg>' +
@@ -1396,8 +1442,33 @@ function costBadgeHTML(cost) {
 }
 function updateCostHint() {
   const el = $('costHint'); if (!el) return;
-  const cost = state.editing ? (state.editing.type === 'video' ? EXTEND_COST : EDIT_COST) : costFor();
+  let cost;
+  if (state.editing) {
+    if (state.editing.type === 'video') cost = EXTEND_COST;
+    else if (editImageTool === 'removebg') cost = REMOVEBG_COST;
+    else if (editImageTool === 'upscale') cost = UPSCALE_COST;
+    else if (editImageTool === 'animate') cost = VIDEO_GEN_COST;
+    else cost = EDIT_COST;
+  } else {
+    cost = costFor();
+  }
   el.innerHTML = costBadgeHTML(cost);
+}
+// Generating and editing take a moment (5s+ for a real model) — swap the Generate button for a
+// spinner and the cost hint for a "Generating…" label so the wait is never silent.
+function setComposerBusy(busy) {
+  const btn = $('generateBtn');
+  btn.disabled = busy;
+  btn.classList.toggle('loading', busy);
+  // The edit view (tool chips, prompt) stays fully visible and in place during the wait — so lock it
+  // down rather than tearing it apart, both to signal "in progress" and because a chip click here
+  // would otherwise call updateCostHint() and stomp the "Generating…" hint right back off.
+  $('promptInput').disabled = busy;
+  document.querySelectorAll('#editToolsRow .chip').forEach(c => { c.disabled = busy; });
+  const hint = $('costHint');
+  if (!hint) return;
+  if (busy) hint.textContent = t('generatingHint');
+  else updateCostHint();
 }
 
 $('generateBtn').addEventListener('click', e => {
@@ -1407,6 +1478,17 @@ $('generateBtn').addEventListener('click', e => {
   handleGenerate();
 });
 
+// A finished result now opens straight into its own preview (showMaterialPreview), so the composer
+// underneath is only ever seen again once the user hits Back — clear it then, not while it's still
+// visible, so Back always lands on a blank slate instead of the exact input that was just used.
+function resetComposer() {
+  $('promptInput').value = '';
+  state.uploadedImgs = [];
+  if ($('audioDescInput')) $('audioDescInput').value = '';
+  renderUploadThumbs();
+  updateComposerForTab();
+}
+
 function handleGenerate() {
   const prompt = $('promptInput').value.trim();
   const needsUpload = state.tab === 'img2img' || state.tab === 'img2vid';
@@ -1415,17 +1497,18 @@ function handleGenerate() {
   const cost = costFor();
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
 
-  const btn = $('generateBtn');
-  btn.disabled = true;
+  setComposerBusy(true);
 
   setTimeout(() => {
     shell.credits -= cost;
     updateShellCredits();
-    makeAsset(prompt);
+    const asset = makeAsset(prompt);
     if ($('materialsGrid')) renderMaterialsGrid();
-    btn.disabled = false;
+    resetComposer();
+    setComposerBusy(false);
     toast(t('generateCompleteToast') + ' — ' + t('usedToast') + ' ' + formatK(cost) + ' ' + t('creditsWord'));
-  }, 1400 + Math.random() * 500);
+    showMaterialPreview(asset, { returnTo: 'studio', editable: true });
+  }, 3000 + Math.random() * 2000);
 }
 
 let assetSeq = 1;
@@ -1551,9 +1634,11 @@ function buildCard(asset, { previewOnly = false, returnView = 'studio', returnTo
     }
     if (!asset.creator) {
       actions.appendChild(iconBtn('delete', trashIcon(), () => {
-        card.remove();
-        state.assets = state.assets.filter(a2 => a2.id !== asset.id);
-        state.likedIds.delete(asset.id);
+        confirmDelete(() => {
+          card.remove();
+          state.assets = state.assets.filter(a2 => a2.id !== asset.id);
+          state.likedIds.delete(asset.id);
+        });
       }));
     }
   }
@@ -1561,7 +1646,7 @@ function buildCard(asset, { previewOnly = false, returnView = 'studio', returnTo
   card.addEventListener('click', () => previewOnly ? showMaterialPreview(asset, { returnTo }) : showMaterialPreview(asset, { returnTo: 'mine', editable: true }));
   return card;
 }
-function jumpToImageToVideo(asset) {
+function jumpToImageToVideo(asset, promptOverride) {
   if (state.editing) exitEditMode();
   state.mode = 'video'; state.tab = 'img2vid';
   state.uploadedImgs = [asset.thumbDataUrl ? { src: asset.thumbDataUrl, isGradient: false } : { src: asset.gradient, isGradient: true }];
@@ -1570,8 +1655,11 @@ function jumpToImageToVideo(asset) {
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'studio'));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'studio'));
   $('gwModelSelect').style.display = 'none';
-  // Reusing a prior creation: bring its original prompt along too, like "Try this" — same recipe, ready to tweak.
-  if (asset.prompt) $('promptInput').value = asset.prompt;
+  // Reusing a prior creation: bring its original prompt along too, like "Try this" — same recipe,
+  // ready to tweak. If the Animate chip was selected in the edit view, whatever the user typed there
+  // (how the image should move) takes priority over the source asset's own prompt.
+  const nextPrompt = promptOverride || asset.prompt;
+  if (nextPrompt) $('promptInput').value = nextPrompt;
   toast(t('setAsVideoRefToast'));
   $('view-studio').scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1769,6 +1857,21 @@ function renderMaterialsGrid(filter) {
   // Assets > Liked can open it and return to wherever the user came from.
   list.forEach(a => grid.appendChild(buildCard(a, { previewOnly: true, returnTo: 'discover' })));
 }
+// Videos have no real file to play in this prototype, so we simulate "now playing" with the same
+// subtle pulse the grid cards use on hover — opening a video should feel alive immediately, not sit
+// there as a static thumbnail waiting to be clicked — and flag when it would be playing with sound.
+function applyVideoPlayState(surf, asset) {
+  const isVideo = asset.type === 'video';
+  surf.classList.toggle('playing', isVideo);
+  const existing = surf.querySelector('.sound-badge');
+  if (existing) existing.remove();
+  if (isVideo && asset.audio) {
+    const badge = document.createElement('div');
+    badge.className = 'sound-badge';
+    badge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18 5.5a9 9 0 010 13"/></svg><span>' + t('playingWithSoundLabel') + '</span>';
+    surf.appendChild(badge);
+  }
+}
 let previewingMaterial = null;
 let previewReturnTo = 'discover';
 let previewEditable = false;
@@ -1777,7 +1880,7 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false, c
   previewReturnTo = returnTo;
   previewEditable = editable;
   if (countView) recordView(asset);
-  const navTarget = returnTo === 'discover' ? 'studio' : 'assets';
+  const navTarget = (returnTo === 'discover' || returnTo === 'studio') ? 'studio' : 'assets';
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === navTarget));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'preview'));
   $('gwModelSelect').style.display = 'none';
@@ -1812,11 +1915,8 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false, c
   surf.style.backgroundImage = ''; surf.style.background = '';
   setThumbBackground(surf, asset);
   surf.style.display = 'flex'; surf.style.alignItems = 'center'; surf.style.justifyContent = 'center';
-  // Videos have no real file to play in this prototype, so we simulate autoplay with the same
-  // subtle pulse the grid cards use on hover — the preview should feel alive the moment it opens,
-  // not sit there as a static thumbnail waiting to be clicked.
-  surf.classList.toggle('playing', isVideo);
   surf.innerHTML = '';
+  applyVideoPlayState(surf, asset);
 
   $('materialPreviewPromptText').textContent = asset.prompt || '';
   $('materialPreviewTryBtn').onclick = () => { previewingMaterial = null; tryThisAsset(asset); };
@@ -1839,13 +1939,15 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false, c
     $('materialPreviewEditBtn').onclick = () => { previewingMaterial = null; enterEditMode(asset, { returnView: 'assets', countView: false }); };
     $('materialPreviewAnimateBtn').onclick = () => { previewingMaterial = null; jumpToImageToVideo(asset); };
     $('materialPreviewDeleteBtn').onclick = () => {
-      state.assets = state.assets.filter(a => a.id !== asset.id);
-      state.likedIds.delete(asset.id);
-      previewingMaterial = null;
-      document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
-      SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
-      renderAssetsView();
-      toast(t('deletedToast'));
+      confirmDelete(() => {
+        state.assets = state.assets.filter(a => a.id !== asset.id);
+        state.likedIds.delete(asset.id);
+        previewingMaterial = null;
+        document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
+        SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
+        renderAssetsView();
+        toast(t('deletedToast'));
+      });
     };
   }
 }
@@ -1855,7 +1957,7 @@ function toggleLike(asset) {
 }
 $('materialPreviewBack').addEventListener('click', () => {
   previewingMaterial = null;
-  const target = previewReturnTo === 'discover' ? 'studio' : 'assets';
+  const target = (previewReturnTo === 'discover' || previewReturnTo === 'studio') ? 'studio' : 'assets';
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === target));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== target));
   if (target === 'studio') renderMaterialsGrid(); else renderAssetsView();
@@ -1996,10 +2098,14 @@ function enterEditMode(asset, { returnView = 'studio', countView = true } = {}) 
   $('view-studio').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function exitEditMode() {
+// navigate=false only resets the edit-mode UI back to a plain composer without leaving the Studio
+// view — used while a generation is in flight, so the loading state (still part of view-studio) stays
+// visible instead of being hidden behind whatever view the user edited from (e.g. Assets).
+function exitEditMode(navigate = true) {
   const returnView = state.editingReturnView || 'studio';
   state.editing = null;
   state.editingReturnView = 'studio';
+  editImageTool = null;
   $('editBar').classList.remove('show');
   $('editMetaBadges').classList.remove('show');
   $('editLineage').classList.remove('show');
@@ -2016,11 +2122,15 @@ function exitEditMode() {
   updateComposerForTab();
   $('generateBtn').classList.toggle('video-mode', state.mode === 'video');
 
-  if (returnView === 'assets') {
+  if (navigate && returnView === 'assets') {
     document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
     SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
     state.assetsTab = 'mine';
     renderAssetsView();
+  } else if (!navigate) {
+    // We're staying on Studio (already the visible view) rather than jumping to the return view —
+    // keep the sidebar highlight in sync with what's actually on screen during the wait.
+    document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'studio'));
   }
 }
 
@@ -2034,7 +2144,10 @@ function renderEditPreview(asset) {
   surf.style.backgroundImage = ''; surf.style.background = '';
   setThumbBackground(surf, asset);
   surf.style.display = 'flex'; surf.style.alignItems = 'center'; surf.style.justifyContent = 'center';
-  surf.innerHTML = asset.type === 'video' ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg>' : '';
+  surf.innerHTML = '';
+  // The animation/sound-badge target the outer .edit-preview wrapper (#editPreview), not this inner
+  // .surf background layer, since that's the element the matching CSS class lives on.
+  applyVideoPlayState($('editPreview'), asset);
   const mask = $('editMaskLayer');
   mask.width = w; mask.height = h; mask.style.width = w + 'px'; mask.style.height = h + 'px';
   mask.getContext('2d').clearRect(0, 0, w, h);
@@ -2060,47 +2173,20 @@ function renderEditToolLabels() {
   document.querySelector('[data-tool="animate"]').textContent = t('toolAnimate');
 }
 
-function runInstantEdit(asset, tool) {
-  const cost = tool === 'removebg' ? REMOVEBG_COST : UPSCALE_COST;
-  if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
-  exitEditMode();
-
-  setTimeout(() => {
-    shell.credits -= cost;
-    updateShellCredits();
-    const newAsset = {
-      id: assetSeq++, type: 'image', gradient: asset.gradient,
-      aspect: asset.aspect, prompt: asset.prompt || '', duration: null, model: asset.model, audio: false, audioDesc: '',
-      style: asset.style, strength: asset.strength, resolution: asset.resolution, createdAt: new Date().toISOString(), views: 0,
-      parentId: asset.id, editType: tool,
-    };
-    let msg;
-    if (tool === 'removebg') {
-      newAsset.transparent = true;
-      msg = t('bgRemovedToast');
-    } else {
-      newAsset.upscaled = true;
-      newAsset.resolutionLabel = state.resolution === '2k' ? '4K' : '2K';
-      msg = t('upscaledToast') + ' ' + newAsset.resolutionLabel;
-    }
-    state.assets.unshift(newAsset);
-    if ($('materialsGrid')) renderMaterialsGrid();
-    toast(msg + ' — ' + formatK(cost) + ' ' + t('creditsWord'));
-  }, 1200 + Math.random() * 400);
-}
-
 $('editExitBtn').addEventListener('click', () => exitEditMode());
 $('editTryThisBtn').addEventListener('click', () => tryThisAsset(state.editing));
 $('editDownloadBtn').addEventListener('click', () => toast(t('downloadedToast')));
 $('editDeleteBtn').addEventListener('click', () => {
   const asset = state.editing;
   if (asset.creator) return;
-  state.assets = state.assets.filter(a => a.id !== asset.id);
-  state.likedIds.delete(asset.id);
-  document.querySelectorAll('.card').forEach(c => { if (String(c.dataset.id) === String(asset.id)) c.remove(); });
-  if ($('materialsGrid')) renderMaterialsGrid();
-  exitEditMode();
-  toast(t('deletedToast'));
+  confirmDelete(() => {
+    state.assets = state.assets.filter(a => a.id !== asset.id);
+    state.likedIds.delete(asset.id);
+    document.querySelectorAll('.card').forEach(c => { if (String(c.dataset.id) === String(asset.id)) c.remove(); });
+    if ($('materialsGrid')) renderMaterialsGrid();
+    exitEditMode();
+    toast(t('deletedToast'));
+  });
 });
 $('editLineageLink').addEventListener('click', () => {
   const asset = state.editing;
@@ -2109,22 +2195,26 @@ $('editLineageLink').addEventListener('click', () => {
 });
 $('editCompareBtn').addEventListener('click', () => toggleCompareOriginal());
 
+// All four tools are just a selection — pick one, optionally add/adjust the text, then the shared
+// Generate button (handleEditApply) applies whichever tool is currently selected. None of them fire
+// on click by themselves anymore, so the four chips behave consistently as a single-select group.
 document.querySelectorAll('#editToolsRow .chip').forEach(btn => {
   btn.addEventListener('click', () => {
     const tool = btn.dataset.tool;
-    const asset = state.editing;
-    if (tool === 'animate') { jumpToImageToVideo(asset); return; }
-    if (tool === 'removebg' || tool === 'upscale') { runInstantEdit(asset, tool); return; }
-
-    // inpaint: toggle paint mode — the mask is applied when the Generate button is clicked
     const turningOn = editImageTool !== tool;
     editImageTool = turningOn ? tool : null;
     document.querySelectorAll('#editToolsRow .chip').forEach(c => c.classList.remove('active'));
     if (turningOn) btn.classList.add('active');
     $('editMaskLayer').classList.toggle('active', editImageTool === 'inpaint');
     $('editBrushRow').classList.toggle('show', editImageTool === 'inpaint');
-    $('promptInput').placeholder = editImageTool === 'inpaint' ? t('inpaintPlaceholder') : t('editImgPlaceholder');
+    $('promptInput').placeholder =
+      editImageTool === 'inpaint' ? t('inpaintPlaceholder') :
+      editImageTool === 'removebg' ? t('removeBgPlaceholder') :
+      editImageTool === 'upscale' ? t('upscalePlaceholder') :
+      editImageTool === 'animate' ? t('animatePlaceholder') :
+      t('editImgPlaceholder');
     if (tool === 'inpaint' && turningOn) toast(t('inpaintToast'));
+    updateCostHint();
   });
 });
 
@@ -2206,15 +2296,25 @@ function handleEditApply() {
   const asset = state.editing;
   const isVideo = asset.type === 'video';
   const desc = $('promptInput').value.trim();
+
+  // Animate isn't an in-place edit — selecting it and hitting Generate jumps into a fresh
+  // Image-to-Video generation instead, carrying over whatever the user typed here as the motion
+  // description. It's billed as a normal video generation when they actually generate there, not here.
+  if (!isVideo && editImageTool === 'animate') {
+    jumpToImageToVideo(asset, desc);
+    return;
+  }
+
   const isInpaint = !isVideo && editImageTool === 'inpaint';
+  const isRemoveBg = !isVideo && editImageTool === 'removebg';
+  const isUpscale = !isVideo && editImageTool === 'upscale';
 
   if (isInpaint && !maskHasPaint()) { toast(t('needInpaintMaskToast')); return; }
-  if (!desc) { toast(isVideo ? t('needContinueDescToast') : t('needEditDescToast')); return; }
-  const cost = isVideo ? EXTEND_COST : EDIT_COST;
+  // Remove background and upscale don't need a text description — a mask or a prompt has nothing to
+  // add there — so only inpaint, text-guided edit, and video extend require one.
+  if (!desc && !isRemoveBg && !isUpscale) { toast(isVideo ? t('needContinueDescToast') : t('needEditDescToast')); return; }
+  const cost = isVideo ? EXTEND_COST : isRemoveBg ? REMOVEBG_COST : isUpscale ? UPSCALE_COST : EDIT_COST;
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
-
-  const btn = $('generateBtn');
-  btn.disabled = true;
 
   let clipLen, useGeneratedAudio, inpaintThumb;
   if (isVideo) {
@@ -2223,12 +2323,19 @@ function handleEditApply() {
   } else if (isInpaint) {
     inpaintThumb = compositeInpaintResult(asset);
   }
-  exitEditMode();
+  // Capture where this edit was opened from — read now, before exitEditMode() (deferred below)
+  // resets it — so the finished result can return there, same as it always did.
+  const editOrigin = state.editingReturnView || 'studio';
+  // Stay on the edit view itself for the wait — no exitEditMode() here — so the image, tool chips,
+  // mask, and typed prompt all stay exactly as the user left them; only the Generate button changes,
+  // in place, to a spinner + "Generating…". The edit UI only gets torn down once the result is ready,
+  // in the same tick as showing it, so there's no visible blank-composer flash in between.
+  setComposerBusy(true);
 
   setTimeout(() => {
     shell.credits -= cost;
     updateShellCredits();
-    let newAsset;
+    let newAsset, msg;
     if (isVideo) {
       const newDuration = Math.round((clipLen + 4) * 10) / 10;
       newAsset = {
@@ -2239,6 +2346,16 @@ function handleEditApply() {
         style: asset.style, strength: asset.strength, resolution: asset.resolution, createdAt: new Date().toISOString(), views: 0,
         parentId: asset.id, editType: 'extend',
       };
+      msg = t('extendAppliedToast');
+    } else if (isRemoveBg || isUpscale) {
+      newAsset = {
+        id: assetSeq++, type: 'image', gradient: asset.gradient,
+        aspect: asset.aspect, prompt: desc || asset.prompt || '', duration: null, model: asset.model, audio: false, audioDesc: '',
+        style: asset.style, strength: asset.strength, resolution: asset.resolution, createdAt: new Date().toISOString(), views: 0,
+        parentId: asset.id, editType: isRemoveBg ? 'removebg' : 'upscale',
+      };
+      if (isRemoveBg) { newAsset.transparent = true; msg = t('bgRemovedToast'); }
+      else { newAsset.upscaled = true; newAsset.resolutionLabel = state.resolution === '2k' ? '4K' : '2K'; msg = t('upscaledToast') + ' ' + newAsset.resolutionLabel; }
     } else {
       newAsset = {
         id: assetSeq++, type: 'image', gradient: pickStyleGradient(asset.style),
@@ -2247,12 +2364,18 @@ function handleEditApply() {
         parentId: asset.id, editType: isInpaint ? 'inpaint' : 'editimg',
       };
       if (isInpaint) newAsset.thumbDataUrl = inpaintThumb;
+      msg = t('editAppliedToast');
     }
     state.assets.unshift(newAsset);
     if ($('materialsGrid')) renderMaterialsGrid();
-    btn.disabled = false;
-    toast((isVideo ? t('extendAppliedToast') : t('editAppliedToast')) + ' — ' + formatK(cost) + ' ' + t('creditsWord'));
-  }, 1400 + Math.random() * 500);
+    // Now that the result exists, tear down the edit UI and hand off straight to the preview — both
+    // happen in this same synchronous block, so the plain composer underneath is never actually seen.
+    exitEditMode(false);
+    resetComposer();
+    setComposerBusy(false);
+    toast(msg + ' — ' + formatK(cost) + ' ' + t('creditsWord'));
+    showMaterialPreview(newAsset, { returnTo: editOrigin === 'assets' ? 'mine' : 'studio', editable: true });
+  }, 3000 + Math.random() * 2000);
 }
 
 const editMaskCanvas = $('editMaskLayer');
