@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** September 8, 2026
+**Updated:** September 11, 2026
 
 ## 1. Purpose
 
@@ -64,7 +64,9 @@ Phase 1 is live.
 - Let a user save any Discover item to a personal Liked list for later reuse,
   without leaving a public trace on the item itself.
 - Support multi-image reference generation — more than one reference image
-  tied to a single result, most commonly image-to-video.
+  tied to a single result, most commonly image-to-video — including a
+  dedicated First & last frame mode for the common case of anchoring exactly
+  where a clip opens and closes.
 - Add lightweight creator attribution for published community content.
 
 ## 3. Non-Goals
@@ -236,7 +238,14 @@ Nothing here depends on anything in §8.
 - Style picker — image generation only; hidden in Video mode.
 - Reference-image upload for Image-to-\* — local file or picked from My
   Creations (P0.2) — up to 9 images. Clicking an uploaded thumbnail opens an
-  enlarged preview of that reference.
+  enlarged preview of that reference. Uploaded thumbnails can be reordered by
+  dragging — order matters for multi-image reference generation (P1.5), so
+  fixing a mis-ordered upload doesn't mean starting over.
+- The prompt field has a 2,500 character limit, shown as a live counter next
+  to it. Exceeding the limit doesn't stop the user from typing, but flags it
+  in place (the counter reads as a warning) and blocks Generate with a clear
+  message until the prompt is back under the limit. The same field and limit
+  are shared by every edit description (P1.1).
 - Reference-strength control — Image-to-Image only (see §11); Image-to-Video
   uses the reference as-is, with no strength control, since it is not a
   blend-toward-prompt operation.
@@ -271,6 +280,10 @@ Acceptance:
 - After a successful generation, the user lands on the new result's preview
   without any extra action; the composer is empty — no prompt text, no
   reference images — when they return to it.
+- Dragging a reference thumbnail to a new position reorders it without
+  re-uploading.
+- Typing past 2,500 characters turns the counter into a warning; Generate is
+  blocked with a message until the prompt is back under the limit.
 
 ### P0.2 My Creations
 
@@ -400,6 +413,9 @@ Acceptance:
 - After a successful edit, the user lands on the new result's preview
   automatically, and its "Back" returns to the surface the edit was opened
   from.
+- The same prompt character limit and Generate-blocking behavior (P0.1)
+  applies to every edit description — text-guided edit, inpaint, and video
+  extend.
 
 ### P1.2 Asset Lineage
 
@@ -486,11 +502,30 @@ Acceptance:
 - The resulting asset records every reference used, in order.
 - The editing view's "reference used" row and Try this both reproduce the
   full set.
+- Image-to-Video offers a mode toggle, not a separate tab: Reference images
+  (the general, order-sensitive list above) or First & last frame — a
+  dedicated pair of upload slots for the frame the clip should open on and
+  the frame it should close on, plus an optional description of what happens
+  between them. An info affordance next to the toggle explains the mode
+  before the user turns it on.
+- Switching the toggle doesn't discard either side's uploads — Reference
+  images and First & last frame each keep their own images independently, so
+  flipping back and forth never loses work already done in the other mode.
+- A First & last frame result records both references with their role
+  (first vs. last), not as an unordered pair — "Reference used" and Try this
+  both show which image opens the clip and which one closes it.
 
 Acceptance:
 
 - A result made from two reference images shows two reference thumbnails and
   reloads both via Try this.
+- Generating in First & last frame mode requires both a first frame and a
+  last frame; the description is optional.
+- Toggling from First & last frame to Reference images and back preserves
+  whatever was uploaded on both sides.
+- A First & last frame result's reference thumbnails are visibly
+  distinguished as first vs. last in the preview, the editing view, and
+  after Try this.
 
 ### P1.6 Liked
 
@@ -614,6 +649,11 @@ make.
   name, or "Maxshot Team" for the platform's own examples. Both are shown
   with the same badge treatment; there is no separate "verified" or
   "official" visual style.
+- **First & last frame:** An Image-to-Video mode where the user supplies
+  exactly two reference images — the frame the clip opens on and the frame
+  it closes on — instead of the general, unordered reference-image list
+  (P1.5). A toggle within Image-to-Video switches between the two modes;
+  each keeps its own uploaded images independently.
 - **Configured model catalog:** The per-mode set of generation models a user
   picks from (P0.1). Illustrative example, matching the current prototype,
   not a commitment to these specific providers: Image — Seedream 4.0,
@@ -662,3 +702,4 @@ into production.
 | 2026-08-17 | Phase re-scope | Trimmed Phase 1 to generate + view-only My Creations + credits; moved editing/Discover/Try this/multi-ref to Phase 2; decided auto-publish; Liked ships disabled by default. |
 | 2026-08-18 | Consistency pass | Added the configured model catalog (fixing a dangling §11 reference); defined view count as one increment per open; split Discover sort into Most recent (first) and Most viewed (fast-follow); documented that Discover hides while editing. |
 | 2026-09-08 | In-progress state, direct-to-preview, confirm delete | Generating and editing now show an in-progress state (indeterminate Generate control, "Generating…") without resetting or leaving the composer/editing view until the result exists (P0.1, P1.1). A completed generation or edit opens straight into the result's preview, returning to wherever it was opened from; the composer clears on return instead of keeping the just-used input (P0.1, P1.1). Unified the four edit tools into one selection applied by Generate, rather than remove background/upscale/Animate firing immediately on click (P1.1, §11). Delete now requires an explicit confirm/cancel step everywhere it appears (P0.2, P1.1). |
+| 2026-09-11 | First & last frame, draggable references, prompt limit | Added First & last frame as a mode toggle inside Image-to-Video (not a separate tab), with its own info affordance and role-tagged references ("first" vs. "last") in Reference used/Try this; toggling it preserves both modes' uploads independently (P1.5, §11). Reference-image thumbnails can now be reordered by dragging (P0.1). Added a shared 2,500-character prompt limit with a live counter that blocks Generate/Apply until the prompt is shortened, covering both generation and every edit description (P0.1, P1.1). |

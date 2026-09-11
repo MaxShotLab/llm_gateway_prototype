@@ -211,13 +211,17 @@
   .studio-canvas .upload-row.show { display: flex; }
   .studio-canvas .upload-box { width: 96px; height: 96px; border-radius: 12px; border: 1.5px dashed var(--border-2); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted-2); font-size: 11px; cursor: pointer; flex-shrink: 0; position: relative; background: var(--bg); text-align: center; gap: 4px; overflow: hidden; }
   .studio-canvas .upload-box:hover { border-color: var(--accent); color: var(--accent-ink); }
-  .studio-canvas .upload-thumb { width: 96px; height: 96px; border-radius: 12px; flex-shrink: 0; position: relative; overflow: hidden; border: 1px solid var(--border-2); background: var(--bg); cursor: default; }
+  .studio-canvas .upload-thumb { width: 96px; height: 96px; border-radius: 12px; flex-shrink: 0; position: relative; overflow: hidden; border: 1px solid var(--border-2); background: var(--bg); cursor: grab; transition: opacity 0.15s ease, outline-color 0.1s ease; outline: 2px solid transparent; outline-offset: 2px; }
+  .studio-canvas .upload-thumb.dragging { opacity: 0.35; cursor: grabbing; }
+  .studio-canvas .upload-thumb.drag-over { outline-color: var(--accent); }
   .studio-canvas .upload-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .studio-canvas .upload-thumb .thumb-remove { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--danger); color: #fff; border: 2px solid var(--panel); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
   .studio-canvas .upload-thumb .thumb-settings { position: absolute; bottom: 6px; left: 6px; width: 22px; height: 22px; border-radius: 50%; background: rgba(10,10,15,0.65); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .studio-canvas .upload-thumb .thumb-settings svg { width: 13px; height: 13px; }
   .studio-canvas .upload-count { font-size: 11.5px; color: var(--muted-2); }
   .studio-canvas .upload-hint { font-size: 12px; color: var(--muted-2); align-self: center; max-width: 320px; }
+  .studio-canvas .flf-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .studio-canvas .flf-slot-label { font-size: 11px; color: var(--muted-2); }
   .studio-canvas #audioDescRow label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
 
   .studio-canvas .chip { font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-2); background: var(--bg); color: var(--muted); cursor: pointer; }
@@ -231,6 +235,9 @@
 
   .studio-canvas textarea.prompt { width: 100%; min-height: 60px; resize: vertical; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 12px 14px; font-size: 14px; line-height: 1.5; outline: none; font-family: inherit; }
   .studio-canvas textarea.prompt:focus { border-color: var(--accent); }
+  .studio-canvas .prompt-wrap { position: relative; }
+  .studio-canvas .prompt-counter { position: absolute; right: 12px; bottom: 8px; font-size: 11px; color: var(--muted-2); background: var(--bg); padding: 1px 4px; border-radius: 4px; pointer-events: none; font-variant-numeric: tabular-nums; }
+  .studio-canvas .prompt-counter.over { color: var(--danger); font-weight: 700; }
 
   .studio-canvas .toolbar { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   .studio-canvas .toolbar-spacer { flex: 1; }
@@ -340,7 +347,8 @@
   .studio-canvas .edit-reference-row { display: none; align-items: center; gap: 8px; margin: -6px 0 14px; font-size: 12px; color: var(--muted); }
   .studio-canvas .edit-reference-row.show { display: flex; }
   .studio-canvas .edit-reference-row .ref-thumbs { display: flex; gap: 4px; flex-shrink: 0; }
-  .studio-canvas .edit-reference-row .ref-thumb { width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--border-2); }
+  .studio-canvas .edit-reference-row .ref-thumb { width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--border-2); position: relative; }
+  .studio-canvas .ref-thumb-tag { position: absolute; bottom: 0; right: 0; font-size: 7px; line-height: 1; padding: 1.5px 2.5px; background: rgba(10,10,15,0.75); color: #fff; border-radius: 3px 0 3px 0; font-weight: 700; }
 
   .studio-canvas .edit-preview-wrap { display: none; justify-content: center; margin-bottom: 16px; overflow: hidden; border-radius: 12px; }
   .studio-canvas .edit-preview-wrap.show { display: flex; }
@@ -398,6 +406,23 @@
   .audio-src-btn { flex: 1; font-size: 12.5px; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border-2); background: var(--panel-2); color: var(--muted); cursor: pointer; }
   .audio-src-btn:hover { color: var(--text); border-color: var(--accent); }
   .audio-src-btn.active { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+  .img2vid-ref-toggle { display: none; align-items: center; gap: 6px; margin-bottom: 10px; }
+  .img2vid-ref-toggle.show { display: flex; }
+  .img2vid-ref-toggle .ref-switch { display: flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
+  .img2vid-ref-toggle input { display: none; }
+  .img2vid-ref-toggle .switch-track { width: 32px; height: 19px; border-radius: 999px; background: var(--border-2); position: relative; flex-shrink: 0; transition: background 0.15s ease; }
+  .img2vid-ref-toggle .switch-thumb { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--panel); box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: transform 0.15s ease; }
+  .img2vid-ref-toggle input:checked ~ .switch-track { background: var(--accent); }
+  .img2vid-ref-toggle input:checked ~ .switch-track .switch-thumb { transform: translateX(13px); }
+  .img2vid-ref-toggle .switch-label { font-size: 12.5px; color: var(--muted); }
+  .img2vid-ref-toggle input:checked ~ .switch-label { color: var(--text); font-weight: 600; }
+  .ref-info-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; color: var(--muted-2); cursor: help; flex-shrink: 0; }
+  .ref-info-icon svg { width: 100%; height: 100%; }
+  .ref-info-icon:hover, .ref-info-icon:focus-visible { color: var(--muted); }
+  /* Custom tooltip instead of the native title attribute — a browser tooltip's built-in show delay
+     (~1s) reads as sluggish for something meant to answer "what does this do?" on first glance. */
+  .ref-info-tooltip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--border-2); border-radius: 8px; padding: 8px 10px; font-size: 11.5px; line-height: 1.5; font-weight: 400; text-align: left; box-shadow: 0 4px 14px rgba(0,0,0,0.18); opacity: 0; visibility: hidden; pointer-events: none; z-index: 20; }
+  .ref-info-icon:hover .ref-info-tooltip, .ref-info-icon:focus-visible .ref-info-tooltip { opacity: 1; visibility: visible; }
 
   /* Unified "+" picker: upload from device or select from My Creations — used by both generation and editing */
   .plus-wrap { position: relative; display: inline-block; }
@@ -859,7 +884,7 @@ document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
 /* ================= Studio module (ported from the standalone Studio prototype) ================= */
 let uiLang = 'en';
 const state = {
-  mode: 'image', tab: 'txt2img', uploadedImgs: [], model: '', resolution: 'hd', aspect: '1:1', style: 'none', assets: [],
+  mode: 'image', tab: 'txt2img', uploadedImgs: [], firstLastImgs: [null, null], img2vidRefMode: 'multi', model: '', resolution: 'hd', aspect: '1:1', style: 'none', assets: [],
   audio: 'on', editing: null, assetsTab: 'mine', likedIds: new Set(), discoverSort: 'recent'
 };
 const TABS = {
@@ -897,6 +922,11 @@ const I18N = {
   uploadHintDefault: { en: 'Drag & drop or click to upload reference images (up to 9)', zh: '拖拽或点击上传参考图（最多9张）' },
   placeholderImage: { en: 'Describe the image you want to create...', zh: '描述你想生成的图片...' },
   placeholderVideo: { en: 'Describe the video you want to create...', zh: '描述你想生成的视频...' },
+  placeholderFirstLast: { en: 'Describe what happens between the first and last frame (optional)...', zh: '描述首尾帧之间发生了什么（可选）...' },
+  refModeFirstLast: { en: 'First & last frame', zh: '首尾帧' },
+  firstLastHint: { en: 'Upload the frame the video should start on and the frame it should end on — the model fills in the motion between them.', zh: '上传视频开始的第一帧和结束的最后一帧，模型会自动生成中间的运动过程。' },
+  firstFrameLabel: { en: 'First frame', zh: '首帧' },
+  lastFrameLabel: { en: 'Last frame', zh: '尾帧' },
   extendPlaceholder: { en: 'Describe how the video continues, e.g. the car turns and drives into a tunnel', zh: '描述视频接下来如何延续，例如：汽车转弯并驶入隧道' },
   needContinueDescToast: { en: 'Describe how the video should continue first', zh: '请先描述视频延续内容' },
   backLabel: { en: 'Back', zh: '返回' },
@@ -915,6 +945,8 @@ const I18N = {
   maxUploadsToast: { en: 'Up to 9 reference images', zh: '最多支持 9 张参考图' },
   maxUploadsKeptToast: { en: 'Up to 9 reference images — kept the first', zh: '最多支持 9 张参考图，已保留前' },
   needUploadToast: { en: 'Upload a reference image first', zh: '请先上传参考图片' },
+  needFirstLastToast: { en: 'Upload both a first frame and a last frame', zh: '请上传首帧和尾帧图片' },
+  promptTooLongToast: { en: 'Prompt is over the 2,500 character limit — shorten it to generate.', zh: 'Prompt 超过 2,500 字符上限，请精简后再生成。' },
   needPromptToast: { en: 'Type a prompt first', zh: '请先输入提示词' },
   enhanceSuffix: { en: ', ultra detailed, soft lighting, professional composition', zh: '，超高细节，柔和光影，专业构图' },
   enhanceDoneToast: { en: 'Prompt enhanced', zh: '已优化提示词' },
@@ -1096,9 +1128,25 @@ $('studioCanvas').innerHTML = `
       </div>
     </div>
     <div class="tabs" id="tabs"></div>
+    <div class="img2vid-ref-toggle" id="img2vidRefToggle">
+      <label class="ref-switch">
+        <input type="checkbox" id="img2vidRefSwitch">
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <span class="switch-label" data-key="refModeFirstLast">First & last frame</span>
+      </label>
+      <span class="ref-info-icon" id="refInfoIcon" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></svg>
+        <span class="ref-info-tooltip" data-key="firstLastHint">Upload the frame the video should start on and the frame it should end on — the model fills in the motion between them.</span>
+      </span>
+    </div>
     <div class="upload-row" id="uploadRow"></div>
     <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
-    <textarea class="prompt" id="promptInput" placeholder="Describe the image you want to create..."></textarea>
+    <div class="upload-row" id="firstLastRow"></div>
+    <input type="file" id="flfFileInput" accept="image/*" style="display:none">
+    <div class="prompt-wrap">
+      <textarea class="prompt" id="promptInput" placeholder="Describe the image you want to create..."></textarea>
+      <div class="prompt-counter" id="promptCounter">0 / 2,500</div>
+    </div>
     <div class="toolbar" id="toolbar">
       <div id="genPills" style="display:contents">
       <div class="pill-wrap">
@@ -1219,6 +1267,8 @@ document.querySelectorAll('.mode-switch button').forEach(btn => {
     btn.classList.add('active');
     state.tab = TABS[state.mode][0].id;
     state.uploadedImgs = [];
+    state.firstLastImgs = [null, null];
+    state.img2vidRefMode = 'multi';
     renderTabs();
     populateModels();
     updateComposerForTab();
@@ -1235,24 +1285,52 @@ function renderTabs() {
     b.className = 'tab-btn' + (tb.id === state.tab ? ' active' : '');
     b.textContent = tb[uiLang];
     b.addEventListener('click', () => {
-      state.tab = tb.id; state.uploadedImgs = [];
+      state.tab = tb.id; state.uploadedImgs = []; state.firstLastImgs = [null, null]; state.img2vidRefMode = 'multi';
       renderTabs(); updateComposerForTab();
     });
     wrap.appendChild(b);
   });
 }
+$('img2vidRefSwitch').addEventListener('change', () => {
+  // Flipping this switch back and forth shouldn't lose what's already uploaded on either side — each
+  // mode keeps its own images (state.uploadedImgs vs. state.firstLastImgs) independently, so toggling
+  // off and back on restores exactly what was there before.
+  state.img2vidRefMode = $('img2vidRefSwitch').checked ? 'firstlast' : 'multi';
+  updateComposerForTab();
+});
+
+// The same textarea is reused as the prompt field for every mode/tab and for every edit
+// description, so one shared limit and counter covers all of them.
+const PROMPT_MAX = 2500;
+function updatePromptCounter() {
+  const len = $('promptInput').value.length;
+  const el = $('promptCounter');
+  el.textContent = len.toLocaleString() + ' / ' + PROMPT_MAX.toLocaleString();
+  el.classList.toggle('over', len > PROMPT_MAX);
+}
+$('promptInput').addEventListener('input', updatePromptCounter);
 
 function updateComposerForTab() {
-  const needsRefUpload = state.tab === 'img2img' || state.tab === 'img2vid';
+  const isImg2Vid = state.tab === 'img2vid';
+  // First & last frame is the same "give it images" idea as the plain reference-image list, just more
+  // direct about which image opens the clip and which one closes it — so it lives as a mode toggle
+  // inside Image to Video, not a separate tab.
+  const needsFirstLast = isImg2Vid && state.img2vidRefMode === 'firstlast';
+  const needsRefUpload = (state.tab === 'img2img' || isImg2Vid) && !needsFirstLast;
+  $('img2vidRefToggle').classList.toggle('show', isImg2Vid);
+  $('img2vidRefSwitch').checked = state.img2vidRefMode === 'firstlast';
   $('uploadRow').classList.toggle('show', needsRefUpload);
+  $('firstLastRow').classList.toggle('show', needsFirstLast);
   $('strengthWrap').classList.toggle('show', state.tab === 'img2img');
   $('durationWrap').classList.toggle('show', state.mode === 'video');
   $('audioWrap').classList.toggle('show', state.mode === 'video');
   $('styleWrap').classList.toggle('show', state.mode === 'image');
   if (needsRefUpload) renderUploadThumbs();
-  $('promptInput').placeholder = state.mode === 'video' ? t('placeholderVideo') : t('placeholderImage');
+  if (needsFirstLast) renderFirstLastThumbs();
+  $('promptInput').placeholder = needsFirstLast ? t('placeholderFirstLast') : state.mode === 'video' ? t('placeholderVideo') : t('placeholderImage');
   $('generateBtn').title = t('generateTitle');
   updateCostHint();
+  updatePromptCounter();
 }
 
 /* ---------------- audio (video generation) ---------------- */
@@ -1273,12 +1351,14 @@ function renderAudioOptions() {
 }
 
 /* ---------------- upload (multi-image, up to MAX_UPLOADS) ---------------- */
+let dragThumbIdx = null;
 function renderUploadThumbs() {
   const row = $('uploadRow');
   row.innerHTML = '';
   state.uploadedImgs.forEach((item, i) => {
     const thumb = document.createElement('div');
     thumb.className = 'upload-thumb';
+    thumb.draggable = true;
     const inner = item.isGradient ? '<div style="width:100%;height:100%;background:' + item.src + '"></div>' : '<img src="' + item.src + '">';
     thumb.innerHTML = inner +
       '<button class="thumb-remove" data-idx="' + i + '" title="' + t('removeTitle') + '">&times;</button>';
@@ -1311,7 +1391,7 @@ function renderUploadThumbs() {
         state.uploadedImgs.push(asset.thumbDataUrl ? { src: asset.thumbDataUrl, isGradient: false } : { src: asset.gradient, isGradient: true });
         renderUploadThumbs();
         // Reusing a prior creation: bring its original prompt along too, like "Try this" — same recipe, ready to tweak.
-        if (asset.prompt && !$('promptInput').value.trim()) $('promptInput').value = asset.prompt;
+        if (asset.prompt && !$('promptInput').value.trim()) { $('promptInput').value = asset.prompt; updatePromptCounter(); }
       });
     });
   }
@@ -1328,6 +1408,37 @@ function renderUploadThumbs() {
   }
   row.querySelectorAll('.thumb-remove').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); state.uploadedImgs.splice(parseInt(btn.dataset.idx, 10), 1); renderUploadThumbs(); }));
   row.querySelectorAll('.upload-thumb').forEach(thumb => thumb.addEventListener('click', () => openRefLightbox(state.uploadedImgs[parseInt(thumb.dataset.idx, 10)])));
+
+  // Drag to reorder — the order matters for how the model weighs multiple references, so users need
+  // to be able to fix a mis-ordered upload without re-uploading everything from scratch.
+  row.querySelectorAll('.upload-thumb').forEach(thumb => {
+    thumb.addEventListener('dragstart', e => {
+      dragThumbIdx = parseInt(thumb.dataset.idx, 10);
+      thumb.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    thumb.addEventListener('dragend', () => {
+      dragThumbIdx = null;
+      row.querySelectorAll('.upload-thumb').forEach(t => { t.classList.remove('dragging'); t.classList.remove('drag-over'); });
+    });
+    thumb.addEventListener('dragover', e => {
+      if (dragThumbIdx === null) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      thumb.classList.add('drag-over');
+    });
+    thumb.addEventListener('dragleave', () => thumb.classList.remove('drag-over'));
+    thumb.addEventListener('drop', e => {
+      e.preventDefault();
+      thumb.classList.remove('drag-over');
+      const targetIdx = parseInt(thumb.dataset.idx, 10);
+      if (dragThumbIdx === null || dragThumbIdx === targetIdx) return;
+      const [moved] = state.uploadedImgs.splice(dragThumbIdx, 1);
+      state.uploadedImgs.splice(targetIdx, 0, moved);
+      dragThumbIdx = null;
+      renderUploadThumbs();
+    });
+  });
 }
 
 /* ---------------- reference-thumbnail preview lightbox ---------------- */
@@ -1359,11 +1470,75 @@ $('fileInput').addEventListener('change', e => { handleFiles(e.target.files); e.
 ['dragover', 'dragleave'].forEach(evt => $('uploadRow').addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }));
 $('uploadRow').addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); });
 
+/* ---------------- upload (first & last frame — exactly two fixed, labeled slots) ---------------- */
+let flfPendingIdx = null;
+function renderFirstLastThumbs() {
+  const row = $('firstLastRow');
+  row.innerHTML = '';
+  const roles = [{ labelKey: 'firstFrameLabel' }, { labelKey: 'lastFrameLabel' }];
+  roles.forEach((r, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'flf-slot';
+    const item = state.firstLastImgs[i];
+    if (item) {
+      const thumb = document.createElement('div');
+      thumb.className = 'upload-thumb';
+      thumb.innerHTML = (item.isGradient ? '<div style="width:100%;height:100%;background:' + item.src + '"></div>' : '<img src="' + item.src + '">') +
+        '<button class="thumb-remove" title="' + t('removeTitle') + '">&times;</button>';
+      thumb.querySelector('.thumb-remove').addEventListener('click', e => { e.stopPropagation(); state.firstLastImgs[i] = null; renderFirstLastThumbs(); });
+      thumb.addEventListener('click', () => openRefLightbox(item));
+      slot.appendChild(thumb);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'plus-wrap';
+      wrap.innerHTML =
+        '<div class="upload-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg><span>' + t('uploadLabel') + '</span></div>' +
+        '<div class="plus-pop">' +
+        '<button class="plus-menu-item" data-action="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 9l5-5 5 5M12 4v12"/></svg><span>' + t('uploadFromDevice') + '</span></button>' +
+        '<button class="plus-menu-item" data-action="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>' + t('selectFromCreations') + '</span></button>' +
+        '</div>';
+      slot.appendChild(wrap);
+      const box = wrap.querySelector('.upload-box');
+      const pop = wrap.querySelector('.plus-pop');
+      box.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = pop.classList.contains('show');
+        closeAllPopovers();
+        if (!isOpen) pop.classList.add('show');
+      });
+      pop.addEventListener('click', e => e.stopPropagation());
+      pop.querySelector('[data-action="upload"]').addEventListener('click', () => { closeAllPopovers(); flfPendingIdx = i; $('flfFileInput').click(); });
+      pop.querySelector('[data-action="library"]').addEventListener('click', () => {
+        closeAllPopovers();
+        openAssetPicker('image', asset => {
+          state.firstLastImgs[i] = asset.thumbDataUrl ? { src: asset.thumbDataUrl, isGradient: false } : { src: asset.gradient, isGradient: true };
+          renderFirstLastThumbs();
+        });
+      });
+    }
+    const label = document.createElement('div');
+    label.className = 'flf-slot-label';
+    label.textContent = t(r.labelKey);
+    slot.appendChild(label);
+    row.appendChild(slot);
+  });
+}
+$('flfFileInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f || !f.type.startsWith('image/') || flfPendingIdx == null) return;
+  const idx = flfPendingIdx;
+  const reader = new FileReader();
+  reader.onload = ev => { state.firstLastImgs[idx] = { src: ev.target.result, isGradient: false }; renderFirstLastThumbs(); };
+  reader.readAsDataURL(f);
+});
+
 /* ---------------- enhance ---------------- */
 $('enhanceBtn').addEventListener('click', e => {
   e.stopPropagation();
   if (!$('promptInput').value.trim()) { toast(t('needPromptToast')); return; }
   $('promptInput').value += t('enhanceSuffix');
+  updatePromptCounter();
   toast(t('enhanceDoneToast'));
 });
 
@@ -1484,16 +1659,21 @@ $('generateBtn').addEventListener('click', e => {
 function resetComposer() {
   $('promptInput').value = '';
   state.uploadedImgs = [];
+  state.firstLastImgs = [null, null];
   if ($('audioDescInput')) $('audioDescInput').value = '';
   renderUploadThumbs();
+  renderFirstLastThumbs();
   updateComposerForTab();
 }
 
 function handleGenerate() {
   const prompt = $('promptInput').value.trim();
-  const needsUpload = state.tab === 'img2img' || state.tab === 'img2vid';
+  const needsFirstLast = state.tab === 'img2vid' && state.img2vidRefMode === 'firstlast';
+  const needsUpload = (state.tab === 'img2img' || state.tab === 'img2vid') && !needsFirstLast;
+  if ($('promptInput').value.length > PROMPT_MAX) { toast(t('promptTooLongToast')); return; }
   if (needsUpload && state.uploadedImgs.length === 0) { toast(t('needUploadToast')); return; }
-  if (!prompt && !needsUpload) { toast(t('needPromptToast')); return; }
+  if (needsFirstLast && (!state.firstLastImgs[0] || !state.firstLastImgs[1])) { toast(t('needFirstLastToast')); return; }
+  if (!prompt && !needsUpload && !needsFirstLast) { toast(t('needPromptToast')); return; }
   const cost = costFor();
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
 
@@ -1514,7 +1694,8 @@ function handleGenerate() {
 let assetSeq = 1;
 function makeAsset(prompt) {
   const isVideo = state.mode === 'video';
-  const needsUpload = state.tab === 'img2img' || state.tab === 'img2vid';
+  const isFirstLast = state.tab === 'img2vid' && state.img2vidRefMode === 'firstlast';
+  const needsUpload = (state.tab === 'img2img' || state.tab === 'img2vid') && !isFirstLast;
   let gradient = pickStyleGradient(state.style);
   let strength = null;
   if (needsUpload && !isVideo) {
@@ -1536,9 +1717,12 @@ function makeAsset(prompt) {
     audioDesc: isVideo && state.audio === 'on' ? $('audioDescInput').value.trim() : '',
     style: state.style, strength, resolution: state.resolution, createdAt: new Date().toISOString(),
     parentId: null, editType: null, views: 0,
-    // Remember every reference image used (img2vid can be made from more than one), so the result
-    // can show "Reference used" and be reloaded later via "Try this".
-    refImages: needsUpload && state.uploadedImgs.length ? state.uploadedImgs.map(u => ({ src: u.src, isGradient: u.isGradient })) : null,
+    // Remember every reference image used (img2vid can be made from more than one, first/last-frame
+    // always exactly two with a role each), so the result can show "Reference used" and be reloaded
+    // later via "Try this".
+    refImages: isFirstLast
+      ? state.firstLastImgs.map((u, i) => u ? { src: u.src, isGradient: u.isGradient, role: i === 0 ? 'first' : 'last' } : null).filter(Boolean)
+      : (needsUpload && state.uploadedImgs.length ? state.uploadedImgs.map(u => ({ src: u.src, isGradient: u.isGradient })) : null),
   };
   state.assets.unshift(asset);
   return asset;
@@ -1660,6 +1844,7 @@ function jumpToImageToVideo(asset, promptOverride) {
   // (how the image should move) takes priority over the source asset's own prompt.
   const nextPrompt = promptOverride || asset.prompt;
   if (nextPrompt) $('promptInput').value = nextPrompt;
+  updatePromptCounter();
   toast(t('setAsVideoRefToast'));
   $('view-studio').scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1872,6 +2057,26 @@ function applyVideoPlayState(surf, asset) {
     surf.appendChild(badge);
   }
 }
+// Shared by the read-only preview and the full editor — renders an asset's reference image(s),
+// tagging first/last-frame references with a small "F"/"L" corner badge so they read as roles, not
+// just an unordered reference pile like the plain multi-image-reference case.
+function renderRefThumbs(wrap, refImages) {
+  wrap.innerHTML = '';
+  refImages.forEach(ref => {
+    const thumb = document.createElement('div');
+    thumb.className = 'ref-thumb';
+    if (ref.isGradient) { thumb.style.background = ref.src; }
+    else { thumb.style.backgroundImage = 'url(' + ref.src + ')'; thumb.style.backgroundSize = 'cover'; }
+    if (ref.role === 'first' || ref.role === 'last') {
+      thumb.title = t(ref.role === 'first' ? 'firstFrameLabel' : 'lastFrameLabel');
+      const tag = document.createElement('span');
+      tag.className = 'ref-thumb-tag';
+      tag.textContent = ref.role === 'first' ? 'F' : 'L';
+      thumb.appendChild(tag);
+    }
+    wrap.appendChild(thumb);
+  });
+}
 let previewingMaterial = null;
 let previewReturnTo = 'discover';
 let previewEditable = false;
@@ -1893,15 +2098,7 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false, c
 
   if (asset.refImages && asset.refImages.length) {
     $('materialPreviewRefRow').classList.add('show');
-    const wrap = $('materialPreviewRefThumbs');
-    wrap.innerHTML = '';
-    asset.refImages.forEach(ref => {
-      const thumb = document.createElement('div');
-      thumb.className = 'ref-thumb';
-      if (ref.isGradient) { thumb.style.background = ref.src; }
-      else { thumb.style.backgroundImage = 'url(' + ref.src + ')'; thumb.style.backgroundSize = 'cover'; }
-      wrap.appendChild(thumb);
-    });
+    renderRefThumbs($('materialPreviewRefThumbs'), asset.refImages);
   } else {
     $('materialPreviewRefRow').classList.remove('show');
   }
@@ -1968,12 +2165,22 @@ function tryThisAsset(asset) {
   if (state.editing) exitEditMode();
   const isVideo = asset.type === 'video';
   state.mode = isVideo ? 'video' : 'image';
-  if (isVideo) {
+  const firstRef = isVideo && asset.refImages ? asset.refImages.find(r => r.role === 'first') : null;
+  const lastRef = isVideo && asset.refImages ? asset.refImages.find(r => r.role === 'last') : null;
+  if (isVideo && firstRef && lastRef) {
+    state.tab = 'img2vid';
+    state.img2vidRefMode = 'firstlast';
+    state.firstLastImgs = [{ src: firstRef.src, isGradient: firstRef.isGradient }, { src: lastRef.src, isGradient: lastRef.isGradient }];
+    state.uploadedImgs = [];
+  } else if (isVideo) {
     state.tab = asset.refImages && asset.refImages.length ? 'img2vid' : 'txt2vid';
+    state.img2vidRefMode = 'multi';
     state.uploadedImgs = asset.refImages ? asset.refImages.map(r => ({ src: r.src, isGradient: r.isGradient })) : [];
+    state.firstLastImgs = [null, null];
   } else {
     state.tab = 'img2img';
     state.uploadedImgs = [asset.thumbDataUrl ? { src: asset.thumbDataUrl, isGradient: false } : { src: asset.gradient, isGradient: true }];
+    state.firstLastImgs = [null, null];
   }
   document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === state.mode));
   renderTabs(); populateModels(); updateComposerForTab();
@@ -1981,6 +2188,7 @@ function tryThisAsset(asset) {
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'studio'));
   $('gwModelSelect').style.display = 'none';
   if (asset.prompt) $('promptInput').value = asset.prompt;
+  updatePromptCounter();
   toast(t('tryThisToast'));
   $('view-studio').scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2074,15 +2282,7 @@ function enterEditMode(asset, { returnView = 'studio', countView = true } = {}) 
 
   if (asset.refImages && asset.refImages.length) {
     $('editReferenceRow').classList.add('show');
-    const wrap = $('editReferenceThumbs');
-    wrap.innerHTML = '';
-    asset.refImages.forEach(ref => {
-      const thumb = document.createElement('div');
-      thumb.className = 'ref-thumb';
-      if (ref.isGradient) { thumb.style.background = ref.src; }
-      else { thumb.style.backgroundImage = 'url(' + ref.src + ')'; thumb.style.backgroundSize = 'cover'; }
-      wrap.appendChild(thumb);
-    });
+    renderRefThumbs($('editReferenceThumbs'), asset.refImages);
   } else {
     $('editReferenceRow').classList.remove('show');
   }
@@ -2090,6 +2290,7 @@ function enterEditMode(asset, { returnView = 'studio', countView = true } = {}) 
   renderEditPreview(asset);
 
   $('promptInput').value = asset.prompt || '';
+  updatePromptCounter();
   $('promptInput').placeholder = isVideo ? t('extendPlaceholder') : t('editImgPlaceholder');
   $('generateBtn').classList.toggle('video-mode', isVideo);
   if (isVideo) initTrim(parseInt(asset.duration, 10) || 6);
@@ -2296,6 +2497,8 @@ function handleEditApply() {
   const asset = state.editing;
   const isVideo = asset.type === 'video';
   const desc = $('promptInput').value.trim();
+
+  if ($('promptInput').value.length > PROMPT_MAX) { toast(t('promptTooLongToast')); return; }
 
   // Animate isn't an in-place edit — selecting it and hitting Generate jumps into a fresh
   // Image-to-Video generation instead, carrying over whatever the user typed here as the motion
