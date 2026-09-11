@@ -5,10 +5,10 @@ export const DEFAULT_STRATEGY = {
   quotas: {
     flagship: 8,
     reasoning: 4,
-    balanced: 8,
+    balanced: 6,
     economy: 4,
     code: 3,
-    free: 3,
+    free: 5,
   },
   weights: {
     weekly: 25,
@@ -83,10 +83,26 @@ export function strategyDataFingerprint(candidates) {
         healthyEndpointCount: model.health.healthyEndpointCount,
         uptime: Math.round(model.health.uptime * 100) / 100,
       } : null,
+      inferenceHealth: model.inferenceHealth ? {
+        available: model.inferenceHealth.available,
+        attempts: model.inferenceHealth.attempts,
+        successes: model.inferenceHealth.successes,
+      } : null,
       inputModalities: model.raw.architecture?.input_modalities ?? [],
       supportedParameters: model.raw.supported_parameters ?? [],
     }))
     .sort((left, right) => left.id.localeCompare(right.id)));
+}
+
+export function applyFreeInferenceHealth(candidates, inferenceHealth) {
+  return candidates.map((model) => {
+    if (!model.eligibility.free) return model;
+    const probe = inferenceHealth.get(model.id);
+    const hardGateReasons = [...model.hardGateReasons];
+    if (!probe?.verified) hardGateReasons.push("Inference not verified");
+    else if (!probe.available) hardGateReasons.push(probe.reason || "Inference unavailable");
+    return { ...model, inferenceHealth: probe ?? null, hardGateReasons };
+  });
 }
 
 export function compareSelectedModels(previous, next) {
@@ -363,6 +379,14 @@ export function buildChatModelsJson(selected) {
         monthlyRank: model.monthlyRank,
         newestRank: model.newestRank,
         intelligenceRank: model.intelligenceRank,
+        inferenceHealth: model.inferenceHealth ? {
+          available: model.inferenceHealth.available,
+          attempts: model.inferenceHealth.attempts,
+          successes: model.inferenceHealth.successes,
+          latencyMs: model.inferenceHealth.latencyMs,
+          provider: model.inferenceHealth.provider,
+          checkedAt: model.inferenceHealth.checkedAt,
+        } : null,
       },
     }];
   }));

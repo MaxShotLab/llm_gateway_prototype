@@ -35,10 +35,10 @@ The active list contains exactly 30 unique models.
 | --- | ---: | --- |
 | Flagship | 8 | Leading general-purpose models |
 | Reasoning | 4 | Models optimized for complex reasoning |
-| Balanced | 8 | Strong capability/cost tradeoff |
+| Balanced | 6 | Strong capability/cost tradeoff |
 | Economy | 4 | Low-cost everyday use |
 | Code | 3 | Software development tasks |
-| Free | 3 | Models with zero input and output price |
+| Free | 5 | Models with zero input and output price |
 
 Display order is the table order above. Models within a category are sorted alphabetically by model ID. They are not ranked within the category.
 
@@ -183,6 +183,24 @@ Model health is calculated as follows:
 - if none is healthy, use uptime 0 and reject the model.
 
 An individual endpoint-request failure marks that model verified but unavailable; it does not abort the whole source snapshot. The portfolio can still be produced if the remaining models fill every category quota. If they cannot, candidate validation fails and the active list remains unchanged.
+
+#### Free-model inference availability
+
+Endpoint metadata is not sufficient for Free models. After endpoint validation and initial scoring, take the top 10 Free candidates and issue a real streamed chat completion for each, with concurrency 2:
+
+```json
+{
+  "messages": [{ "role": "user", "content": "Reply with exactly OK." }],
+  "stream": true,
+  "temperature": 0,
+  "max_tokens": 256,
+  "reasoning": { "effort": "medium" }
+}
+```
+
+Use a 30-second timeout. Retry a failed probe once after one second. The probe passes only for an HTTP 2xx stream with non-empty assistant content, no stream error, and `finish_reason: stop`. HTTP 200 with empty content is a failure. Record verification state, attempts, successes, successful-response latency, provider, check time, rate-limit state, and the last failure reason.
+
+Apply successful inference as a hard gate for Free candidates before portfolio allocation. Unprobed and failed Free candidates cannot fill seats; paid categories are unaffected. If fewer than five verified Free candidates remain, reject the entire update and retain the previous snapshot. Also reject the update as systemically rate-limited when at least half of a probe pool of two or more candidates receives HTTP 429 on both attempts. These probes run only in the scheduled background update—manual Refresh and strategy recalculation reuse cached inference results.
 
 ### 3.7 Exact scoring formula
 

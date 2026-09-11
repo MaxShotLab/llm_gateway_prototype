@@ -377,6 +377,13 @@ function ModelDetail({ model }) {
         <div><span>OpenRouter endpoint</span><strong className={model.health?.available ? "is-valid" : "is-invalid"}>{model.health?.available ? "OK" : "Not verified"}</strong></div>
         <div><span>Healthy providers</span><strong>{model.health?.healthyEndpointCount ?? "—"}</strong></div>
         <div><span>Best 1d uptime</span><strong>{model.health?.verified ? `${model.health.uptime.toFixed(2)}%` : "—"}</strong></div>
+        {model.eligibility?.free ? (
+          <>
+            <div><span>Live inference</span><strong className={model.inferenceHealth?.available ? "is-valid" : "is-invalid"} title={model.inferenceHealth?.reason || undefined}>{model.inferenceHealth?.available ? "Usable" : model.inferenceHealth?.verified ? "Failed" : "Not checked"}</strong></div>
+            <div><span>Probe attempts</span><strong>{model.inferenceHealth ? `${model.inferenceHealth.successes}/${model.inferenceHealth.attempts}` : "—"}</strong></div>
+            <div><span>Probe latency</span><strong>{Number.isFinite(model.inferenceHealth?.latencyMs) ? formatDuration(model.inferenceHealth.latencyMs) : "—"}</strong></div>
+          </>
+        ) : null}
         <div><span>Context</span><strong>{Math.round(model.contextLength / 1000)}K</strong></div>
       </section>
 

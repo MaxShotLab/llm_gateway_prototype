@@ -4,7 +4,8 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-import { buildChatModelsJson, DEFAULT_STRATEGY, MODEL_COUNT, prepareCandidates, selectionRefreshFingerprint, selectPortfolio, strategyDataFingerprint, validateStrategy } from "./src/lib/strategy.js";
+import { hasSystemicRateLimit, parseInferenceResponse, summarizeInferenceAttempts } from "./src/lib/inference.js";
+import { applyFreeInferenceHealth, buildChatModelsJson, DEFAULT_STRATEGY, MODEL_COUNT, prepareCandidates, selectionRefreshFingerprint, selectPortfolio, strategyDataFingerprint, validateStrategy } from "./src/lib/strategy.js";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +33,7 @@ const isProduction = process.argv.includes("--production");
 const port = Number(process.env.PORT || 4175);
 const refreshIntervalMs = Math.max(60_000, Number(process.env.OPENROUTER_REFRESH_INTERVAL_MS || 300_000));
 const openRouterBaseUrl = "https://openrouter.ai/api/v1";
+const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
 let updatePromise = null;
 let updateTimer = null;
@@ -46,6 +48,9 @@ const updateStatus = {
   selectionChangedSincePrevious: null,
   lastChangedAt: null,
   unchangedUpdateCount: 0,
+  freeProbeCount: 0,
+  freeProbePassed: 0,
+  freeProbeFailed: 0,
 };
 
 function json(response, status, payload) {
@@ -143,6 +148,53 @@ async function fetchEndpointHealth(modelId) {
   }
 }
 
+async function probeFreeModelOnce(model) {
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(`${openRouterBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        accept: "text/event-stream",
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+        "HTTP-Referer": "http://127.0.0.1",
+        "X-Title": "Maxshot Free Model Availability Probe",
+      },
+      body: JSON.stringify({
+        model: model.id,
+        messages: [{ role: "user", content: "Reply with exactly OK." }],
+        stream: true,
+        temperature: 0,
+        max_tokens: 256,
+        ...(model.supportsReasoning ? { reasoning: { effort: "medium" } } : {}),
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    const raw = await response.text();
+    return parseInferenceResponse(response.status, raw, Date.now() - startedAt);
+  } catch (error) {
+    return {
+      success: false,
+      httpStatus: null,
+      latencyMs: Date.now() - startedAt,
+      provider: null,
+      finishReason: null,
+      errorCode: error.name,
+      reason: error.message,
+    };
+  }
+}
+
+async function probeFreeModel(model) {
+  const attempts = [await probeFreeModelOnce(model)];
+  if (!attempts[0].success) {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    attempts.push(await probeFreeModelOnce(model));
+  }
+  return summarizeInferenceAttempts(attempts);
+}
+
 async function mapWithConcurrency(items, limit, mapper) {
   const results = new Array(items.length);
   let cursor = 0;
@@ -180,15 +232,38 @@ async function refreshDataSnapshot() {
       const checks = await mapWithConcurrency(eligible, 5, async (model) => [model.id, await fetchEndpointHealth(model.id)]);
       const health = new Map(checks);
       const prepared = prepareCandidates(source, DEFAULT_STRATEGY, health);
-      const fingerprint = createHash("sha256").update(strategyDataFingerprint(prepared)).digest("hex");
-      const defaultSelection = selectPortfolio(prepared, DEFAULT_STRATEGY).selected;
+      const freeProbeCandidates = prepared
+        .filter((model) => model.hardGateReasons.length === 0 && model.eligibility.free)
+        .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
+        .slice(0, freeProbePoolSize);
+      const probeChecks = await mapWithConcurrency(freeProbeCandidates, 2, async (model) => [model.id, await probeFreeModel(model)]);
+      const inferenceHealth = new Map(probeChecks);
+      const probeResults = [...inferenceHealth.values()];
+      updateStatus.freeProbeCount = probeResults.length;
+      updateStatus.freeProbePassed = probeResults.filter((result) => result.available).length;
+      updateStatus.freeProbeFailed = probeResults.length - updateStatus.freeProbePassed;
+      if (hasSystemicRateLimit(probeResults)) {
+        const error = new Error("Free-model inference probes were rate limited; keeping the previous snapshot.");
+        error.code = "FREE_PROBE_RATE_LIMITED";
+        throw error;
+      }
+      const verified = applyFreeInferenceHealth(prepared, inferenceHealth);
+      const defaultResult = selectPortfolio(verified, DEFAULT_STRATEGY);
+      if (defaultResult.shortages.length > 0 || defaultResult.selected.length !== MODEL_COUNT) {
+        const shortage = defaultResult.shortages.map((item) => `${item.category}: ${item.found}/${item.target}`).join(", ");
+        const error = new Error(`Could not fill all ${MODEL_COUNT} verified seats (${shortage || `${defaultResult.selected.length}/${MODEL_COUNT}`}).`);
+        error.code = "PORTFOLIO_INCOMPLETE";
+        throw error;
+      }
+      const fingerprint = createHash("sha256").update(strategyDataFingerprint(verified)).digest("hex");
+      const defaultSelection = defaultResult.selected;
       const selectionFingerprint = createHash("sha256").update(selectionRefreshFingerprint(defaultSelection)).digest("hex");
       const previousFingerprint = dataSnapshot?.fingerprint ?? null;
       const previousSelectionFingerprint = dataSnapshot?.selectionFingerprint ?? null;
       const changedSincePrevious = previousFingerprint === null ? null : previousFingerprint !== fingerprint;
       const selectionChangedSincePrevious = previousSelectionFingerprint === null ? null : previousSelectionFingerprint !== selectionFingerprint;
       const updatedAt = new Date().toISOString();
-      dataSnapshot = { source, health, updatedAt, fingerprint, selectionFingerprint };
+      dataSnapshot = { source, health, inferenceHealth, updatedAt, fingerprint, selectionFingerprint };
       updateStatus.lastUpdatedAt = updatedAt;
       updateStatus.lastDurationMs = Date.now() - startedAt;
       updateStatus.dataChangedSincePrevious = changedSincePrevious;
@@ -222,8 +297,8 @@ function buildLiveStrategy(config) {
     error.code = "DATA_NOT_READY";
     throw error;
   }
-  const { source, health, updatedAt } = dataSnapshot;
-  const candidates = prepareCandidates(source, config, health);
+  const { source, health, inferenceHealth, updatedAt } = dataSnapshot;
+  const candidates = applyFreeInferenceHealth(prepareCandidates(source, config, health), inferenceHealth);
   const result = selectPortfolio(candidates, config);
   const unverified = result.selected.filter((model) => !model.health?.verified || !model.health.available);
   if (result.shortages.length > 0 || result.selected.length !== MODEL_COUNT || unverified.length > 0) {
