@@ -9,30 +9,33 @@ import { applyFreeInferenceHealth, buildChatModelsJson, DEFAULT_STRATEGY, MODEL_
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
-async function loadLocalEnv() {
-  try {
-    const content = await fs.readFile(path.join(rootDir, ".env.local"), "utf8");
-    for (const line of content.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const separator = trimmed.indexOf("=");
-      if (separator < 1) continue;
-      const key = trimmed.slice(0, separator).trim();
-      const rawValue = trimmed.slice(separator + 1).trim();
-      const value = rawValue.replace(/^(["'])(.*)\1$/, "$2");
-      if (process.env[key] === undefined) process.env[key] = value;
+async function loadEnvironment() {
+  for (const filename of [".env.local", ".env"]) {
+    try {
+      const content = await fs.readFile(path.join(rootDir, filename), "utf8");
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const separator = trimmed.indexOf("=");
+        if (separator < 1) continue;
+        const key = trimmed.slice(0, separator).trim();
+        const rawValue = trimmed.slice(separator + 1).trim();
+        const value = rawValue.replace(/^(["'])(.*)\1$/, "$2");
+        if (process.env[key] === undefined) process.env[key] = value;
+      }
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
     }
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
   }
 }
 
-await loadLocalEnv();
+await loadEnvironment();
 
 const isProduction = process.argv.includes("--production");
 const port = Number(process.env.PORT || 4175);
 const refreshIntervalMs = Math.max(60_000, Number(process.env.OPENROUTER_REFRESH_INTERVAL_MS || 300_000));
 const openRouterBaseUrl = "https://openrouter.ai/api/v1";
+const maxshotGatewayBaseUrl = "https://api.maxshot.ai/v1";
 const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
 let updatePromise = null;
@@ -92,6 +95,29 @@ async function openRouterFetch(pathname) {
   if (!response.ok) {
     const error = new Error(body?.error?.message || `OpenRouter request failed with ${response.status}`);
     error.code = `OPENROUTER_${response.status}`;
+    throw error;
+  }
+  return body;
+}
+
+async function fetchGatewayModels() {
+  const apiKey = process.env.MAXSHOT_API_KEY?.trim();
+  if (!apiKey) {
+    const error = new Error("Set MAXSHOT_API_KEY in model-strategy/.env, then restart the server.");
+    error.code = "MAXSHOT_API_KEY_MISSING";
+    throw error;
+  }
+  const response = await fetch(`${maxshotGatewayBaseUrl}/models`, {
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${apiKey}`,
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.error?.message || body?.message || `Maxshot Gateway returned HTTP ${response.status}`);
+    error.code = `MAXSHOT_GATEWAY_${response.status}`;
     throw error;
   }
   return body;
@@ -355,6 +381,15 @@ async function handleApi(request, response, url) {
       refreshIntervalMs,
       ...updateStatus,
     });
+    return true;
+  }
+  if (request.method === "GET" && url.pathname === "/api/gateway-models") {
+    try {
+      json(response, 200, await fetchGatewayModels());
+    } catch (error) {
+      const status = error.code === "MAXSHOT_API_KEY_MISSING" ? 503 : 502;
+      json(response, status, { error: { code: error.code || "GATEWAY_MODELS_FAILED", message: error.message } });
+    }
     return true;
   }
   if (request.method === "POST" && url.pathname === "/api/strategy") {

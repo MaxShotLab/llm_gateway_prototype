@@ -8,7 +8,7 @@ A standalone dashboard that demonstrates the Maxshot model-selection strategy wi
 cp .env.example .env.local
 ```
 
-Set `OPENROUTER_API_KEY` in `.env.local`, then run:
+Set `OPENROUTER_API_KEY` in `.env.local`. To use the **All Models** page, set `MAXSHOT_API_KEY` in the ignored `.env` file. Then run:
 
 ```bash
 npm install

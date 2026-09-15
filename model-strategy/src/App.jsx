@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import GatewayModelsPage from "./GatewayModelsPage.jsx";
 import { CATEGORY_ORDER, compareSelectedModels, DEFAULT_STRATEGY, MODEL_COUNT, totalValues, validateStrategy } from "./lib/strategy.js";
 
 const CATEGORY_LABELS = {
@@ -432,7 +433,7 @@ function CheckIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12 3 3 7-7" /><circle cx="12" cy="12" r="9" /></svg>;
 }
 
-export default function App() {
+function ModelStrategyPage() {
   const [config, setConfig] = useState(DEFAULT_STRATEGY);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -539,6 +540,26 @@ export default function App() {
         </main>
         <ModelDetail model={selectedModel} />
       </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [page, setPage] = useState(() => window.location.hash === "#all-models" ? "models" : "strategy");
+
+  const navigate = (nextPage) => {
+    window.location.hash = nextPage === "models" ? "all-models" : "model-strategy";
+    setPage(nextPage);
+  };
+
+  return (
+    <div className="app-root">
+      <nav className="product-nav" aria-label="Prototype pages">
+        <strong>Maxshot Gateway</strong>
+        <button type="button" aria-current={page === "strategy" ? "page" : undefined} onClick={() => navigate("strategy")}>Model Strategy</button>
+        <button type="button" aria-current={page === "models" ? "page" : undefined} onClick={() => navigate("models")}>All Models</button>
+      </nav>
+      {page === "models" ? <GatewayModelsPage /> : <ModelStrategyPage />}
     </div>
   );
 }
