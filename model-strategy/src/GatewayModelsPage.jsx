@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { modelId, modelProvider, paginateModels, readGatewayModels, searchableModelText } from "./lib/gateway-models.js";
+import { modelId, modelProvider, paginateModels, readGatewayModels, readStrategyScore, searchableModelText } from "./lib/gateway-models.js";
 
 const PAGE_SIZES = [25, 50, 100];
 
@@ -25,7 +25,7 @@ function formatCreated(value) {
   return new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" }).format(new Date(numeric * 1000));
 }
 
-function GatewayModelDetail({ model }) {
+function GatewayModelDetail({ model, strategyScore }) {
   if (!model) return <aside className="gateway-detail detail-empty">Select a model to inspect every returned parameter.</aside>;
   return (
     <aside className="gateway-detail">
@@ -36,6 +36,10 @@ function GatewayModelDetail({ model }) {
       {model.description ? <p className="gateway-description">{model.description}</p> : null}
       <section className="detail-section facts gateway-parameter-list">
         <h3>All returned parameters</h3>
+        <div>
+          <span>strategy_score</span>
+          <strong title="Derived with the default Model Strategy algorithm">{strategyScore === null ? "—" : strategyScore.toFixed(1)}</strong>
+        </div>
         {Object.entries(model).map(([key, value]) => (
           <div key={key}>
             <span>{key}</span>
@@ -128,11 +132,12 @@ export default function GatewayModelsPage() {
               {loading && !payload ? <div className="loading-state">Loading live Gateway models…</div> : (
                 <div className="gateway-table-scroll">
                   <table className="gateway-model-table">
-                    <thead><tr><th>Model ID</th><th>Object</th><th>Created</th><th>Owned by</th><th>Supported endpoints</th></tr></thead>
+                    <thead><tr><th>Model ID</th><th>Score</th><th>Object</th><th>Created</th><th>Owned by</th><th>Supported endpoints</th></tr></thead>
                     <tbody>
                       {paginated.items.map((model) => (
                         <tr key={modelId(model)} data-selected={modelId(selectedModel) === modelId(model)} tabIndex={0} onClick={() => setSelectedModel(model)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedModel(model); }}>
                           <td><span className="model-id">{modelId(model)}</span></td>
+                          <td className="numeric score-cell">{readStrategyScore(payload, model)?.toFixed(1) ?? "—"}</td>
                           <td>{displayValue(model.object)}</td>
                           <td className="numeric">{formatCreated(model.created)}</td>
                           <td>{modelProvider(model)}</td>
@@ -156,7 +161,7 @@ export default function GatewayModelsPage() {
             </>
           )}
         </main>
-        <GatewayModelDetail model={selectedModel} />
+        <GatewayModelDetail model={selectedModel} strategyScore={readStrategyScore(payload, selectedModel)} />
       </div>
     </div>
   );

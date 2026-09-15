@@ -38,6 +38,7 @@ const openRouterBaseUrl = "https://openrouter.ai/api/v1";
 const maxshotGatewayBaseUrl = "https://api.maxshot.ai/v1";
 const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
+let scoringSnapshot = null;
 let updatePromise = null;
 let updateTimer = null;
 const updateStatus = {
@@ -254,6 +255,10 @@ async function refreshDataSnapshot() {
     try {
       const source = await fetchSources();
       const baseCandidates = prepareCandidates(source, DEFAULT_STRATEGY);
+      scoringSnapshot = {
+        candidates: baseCandidates,
+        updatedAt: new Date().toISOString(),
+      };
       const eligible = baseCandidates.filter((model) => model.hardGateReasons.length === 0);
       const checks = await mapWithConcurrency(eligible, 5, async (model) => [model.id, await fetchEndpointHealth(model.id)]);
       const health = new Map(checks);
@@ -362,6 +367,15 @@ function buildLiveStrategy(config) {
   };
 }
 
+function buildStrategyScores() {
+  if (!scoringSnapshot) return { dataUpdatedAt: null, scores: {} };
+  const { candidates, updatedAt } = scoringSnapshot;
+  return {
+    dataUpdatedAt: updatedAt,
+    scores: Object.fromEntries(candidates.map((model) => [model.id, model.score])),
+  };
+}
+
 async function readRequestBody(request) {
   const chunks = [];
   let size = 0;
@@ -385,7 +399,8 @@ async function handleApi(request, response, url) {
   }
   if (request.method === "GET" && url.pathname === "/api/gateway-models") {
     try {
-      json(response, 200, await fetchGatewayModels());
+      const payload = await fetchGatewayModels();
+      json(response, 200, { ...payload, strategy: buildStrategyScores() });
     } catch (error) {
       const status = error.code === "MAXSHOT_API_KEY_MISSING" ? 503 : 502;
       json(response, status, { error: { code: error.code || "GATEWAY_MODELS_FAILED", message: error.message } });

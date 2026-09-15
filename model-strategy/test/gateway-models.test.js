@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { modelId, modelProvider, paginateModels, readGatewayModels, searchableModelText } from "../src/lib/gateway-models.js";
+import { modelId, modelProvider, paginateModels, readGatewayModels, readStrategyScore, searchableModelText } from "../src/lib/gateway-models.js";
 
 test("gateway models normalize documented and internal list envelopes", () => {
   assert.deepEqual(readGatewayModels({ data: [{ id: "openai/gpt" }] }), [{ id: "openai/gpt" }]);
@@ -20,4 +20,10 @@ test("gateway pagination clamps page boundaries", () => {
   const models = Array.from({ length: 51 }, (_, index) => ({ id: String(index + 1) }));
   assert.deepEqual(paginateModels(models, 3, 25), { page: 3, pageCount: 3, items: [{ id: "51" }] });
   assert.equal(paginateModels(models, 9, 25).page, 3);
+});
+
+test("gateway models read scores derived by Model Strategy", () => {
+  const payload = { strategy: { scores: { "openai/gpt": 72.345 } } };
+  assert.equal(readStrategyScore(payload, { id: "openai/gpt" }), 72.345);
+  assert.equal(readStrategyScore(payload, { id: "missing/model" }), null);
 });

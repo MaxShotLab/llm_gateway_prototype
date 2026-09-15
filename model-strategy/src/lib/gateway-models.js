@@ -24,6 +24,11 @@ export function searchableModelText(model) {
   ].filter(Boolean).map((value) => typeof value === "object" ? JSON.stringify(value) : String(value)).join(" ").toLowerCase();
 }
 
+export function readStrategyScore(payload, model) {
+  const value = payload?.strategy?.scores?.[modelId(model)];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 export function paginateModels(models, page, pageSize) {
   const pageCount = Math.max(1, Math.ceil(models.length / pageSize));
   const safePage = Math.min(Math.max(1, page), pageCount);
