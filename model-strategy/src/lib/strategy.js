@@ -94,7 +94,8 @@ export function strategyDataFingerprint(candidates) {
     .sort((left, right) => left.id.localeCompare(right.id)));
 }
 
-export function applyFreeInferenceHealth(candidates, inferenceHealth) {
+export function applyFreeInferenceHealth(candidates, inferenceHealth, skip = false) {
+  if (skip) return candidates;
   return candidates.map((model) => {
     if (!model.eligibility.free) return model;
     const probe = inferenceHealth.get(model.id);

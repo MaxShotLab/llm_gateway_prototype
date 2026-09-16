@@ -129,12 +129,15 @@ function DataFreshness({ resultDataUpdatedAt }) {
       <span>{status?.updating ? `Updating · ${formatDuration(elapsed)}` : `Next data update · ${formatCountdown(status?.nextUpdateAt, now)}`}</span>
       <small>Data {formatDate(status?.lastUpdatedAt)} · last took {formatDuration(status?.lastDurationMs)}</small>
       <small className={showingLatestSnapshot || changeState === false || status?.selectionChangedSincePrevious === false ? "snapshot-unchanged" : status?.selectionChangedSincePrevious === true ? "snapshot-changed" : ""}>{changeLabel}</small>
+      <small>Free check {status?.freeProbeRunning ? `running · ${formatDuration(status.freeProbeStartedAt ? now - Date.parse(status.freeProbeStartedAt) : null)}` : `last ran ${formatDate(status?.freeProbeLastRunAt)}`}{status?.freeProbeLastRunAt ? ` · ${status.freeProbePassed}/${status.freeProbeCount} passed · took ${formatDuration(status.freeProbeLastDurationMs)}` : ""}</small>
+      {status?.freeProbesSkipped ? <small className="is-invalid">No availability probes on free models in previous round</small> : null}
+      {status?.freeProbeLastError ? <small className="is-invalid">{status.freeProbeLastError}</small> : null}
       {status?.lastError ? <small className="is-invalid">Last update failed · using previous data</small> : null}
     </div>
   );
 }
 
-function AppHeader({ data, loading, onRefresh }) {
+function AppHeader({ data, loading, checkingFree, onRefresh, onCheckFree }) {
   return (
     <header className="app-header">
       <div>
@@ -149,10 +152,13 @@ function AppHeader({ data, loading, onRefresh }) {
       </div>
       <div className="header-actions">
         <DataFreshness resultDataUpdatedAt={data?.source.dataUpdatedAt} />
-        <button className="button button-primary" type="button" onClick={onRefresh} disabled={loading} title="Recalculate using the latest completed data snapshot">
-          <RefreshIcon />
-          {loading ? "Recalculating…" : "Refresh"}
-        </button>
+        <div className="header-buttons">
+          <button className="button" type="button" onClick={onCheckFree} disabled={!data || checkingFree} title="Run live inference checks for free-model candidates">{checkingFree ? "Checking Free…" : "Check Free"}</button>
+          <button className="button button-primary" type="button" onClick={onRefresh} disabled={loading} title="Recalculate using the latest completed data snapshot">
+            <RefreshIcon />
+            {loading ? "Recalculating…" : "Refresh"}
+          </button>
+        </div>
       </div>
     </header>
   );
@@ -380,7 +386,7 @@ function ModelDetail({ model }) {
         <div><span>Best 1d uptime</span><strong>{model.health?.verified ? `${model.health.uptime.toFixed(2)}%` : "—"}</strong></div>
         {model.eligibility?.free ? (
           <>
-            <div><span>Live inference</span><strong className={model.inferenceHealth?.available ? "is-valid" : "is-invalid"} title={model.inferenceHealth?.reason || undefined}>{model.inferenceHealth?.available ? "Usable" : model.inferenceHealth?.verified ? "Failed" : "Not checked"}</strong></div>
+            <div><span>Live inference</span><strong className={model.inferenceHealth?.verified ? model.inferenceHealth.available ? "is-valid" : "is-invalid" : ""} title={model.inferenceHealth?.reason || undefined}>{model.inferenceHealth?.available ? "Usable" : model.inferenceHealth?.verified ? "Failed" : "Not checked"}</strong></div>
             <div><span>Probe attempts</span><strong>{model.inferenceHealth ? `${model.inferenceHealth.successes}/${model.inferenceHealth.attempts}` : "—"}</strong></div>
             <div><span>Probe latency</span><strong>{Number.isFinite(model.inferenceHealth?.latencyMs) ? formatDuration(model.inferenceHealth.latencyMs) : "—"}</strong></div>
           </>
@@ -438,6 +444,7 @@ function ModelStrategyPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [checkingFree, setCheckingFree] = useState(false);
   const [mode, setMode] = useState("selected");
   const [query, setQuery] = useState("");
   const [selectedModel, setSelectedModel] = useState(null);
@@ -468,6 +475,21 @@ function ModelStrategyPage() {
     }
   }, [config, data]);
 
+  const checkFreeModels = async () => {
+    setCheckingFree(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/free-probes", { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw payload.error || new Error("Free-model check failed.");
+      await runStrategy();
+    } catch (nextError) {
+      setError(nextError);
+    } finally {
+      setCheckingFree(false);
+    }
+  };
+
   useEffect(() => {
     if (initialLoadStarted.current) return;
     initialLoadStarted.current = true;
@@ -497,7 +519,7 @@ function ModelStrategyPage() {
 
   return (
     <div className="app-shell">
-      <AppHeader data={data} loading={loading} onRefresh={runStrategy} />
+      <AppHeader data={data} loading={loading} checkingFree={checkingFree} onRefresh={runStrategy} onCheckFree={checkFreeModels} />
       <div className="workspace">
         <StrategyPanel
           config={config}
@@ -546,10 +568,12 @@ function ModelStrategyPage() {
 
 export default function App() {
   const [page, setPage] = useState(() => window.location.hash === "#all-models" ? "models" : "strategy");
+  const [modelsVisited, setModelsVisited] = useState(page === "models");
 
   const navigate = (nextPage) => {
     window.location.hash = nextPage === "models" ? "all-models" : "model-strategy";
     setPage(nextPage);
+    if (nextPage === "models") setModelsVisited(true);
   };
 
   return (
@@ -559,7 +583,8 @@ export default function App() {
         <button type="button" aria-current={page === "strategy" ? "page" : undefined} onClick={() => navigate("strategy")}>Model Strategy</button>
         <button type="button" aria-current={page === "models" ? "page" : undefined} onClick={() => navigate("models")}>All Models</button>
       </nav>
-      {page === "models" ? <GatewayModelsPage /> : <ModelStrategyPage />}
+      {page === "strategy" ? <ModelStrategyPage /> : null}
+      {modelsVisited ? <div hidden={page !== "models"}><GatewayModelsPage /></div> : null}
     </div>
   );
 }

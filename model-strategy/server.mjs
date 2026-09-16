@@ -40,6 +40,7 @@ const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
 let scoringSnapshot = null;
 let updatePromise = null;
+let freeProbePromise = null;
 let updateTimer = null;
 const updateStatus = {
   updating: false,
@@ -55,6 +56,12 @@ const updateStatus = {
   freeProbeCount: 0,
   freeProbePassed: 0,
   freeProbeFailed: 0,
+  freeProbesSkipped: true,
+  freeProbeRunning: false,
+  freeProbeStartedAt: null,
+  freeProbeLastRunAt: null,
+  freeProbeLastDurationMs: null,
+  freeProbeLastError: null,
 };
 
 function json(response, status, payload) {
@@ -263,30 +270,14 @@ async function refreshDataSnapshot() {
       const checks = await mapWithConcurrency(eligible, 5, async (model) => [model.id, await fetchEndpointHealth(model.id)]);
       const health = new Map(checks);
       const prepared = prepareCandidates(source, DEFAULT_STRATEGY, health);
-      const freeProbeCandidates = prepared
-        .filter((model) => model.hardGateReasons.length === 0 && model.eligibility.free)
-        .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
-        .slice(0, freeProbePoolSize);
-      const probeChecks = await mapWithConcurrency(freeProbeCandidates, 2, async (model) => [model.id, await probeFreeModel(model)]);
-      const inferenceHealth = new Map(probeChecks);
-      const probeResults = [...inferenceHealth.values()];
-      updateStatus.freeProbeCount = probeResults.length;
-      updateStatus.freeProbePassed = probeResults.filter((result) => result.available).length;
-      updateStatus.freeProbeFailed = probeResults.length - updateStatus.freeProbePassed;
-      if (hasSystemicRateLimit(probeResults)) {
-        const error = new Error("Free-model inference probes were rate limited; keeping the previous snapshot.");
-        error.code = "FREE_PROBE_RATE_LIMITED";
-        throw error;
-      }
-      const verified = applyFreeInferenceHealth(prepared, inferenceHealth);
-      const defaultResult = selectPortfolio(verified, DEFAULT_STRATEGY);
+      const defaultResult = selectPortfolio(prepared, DEFAULT_STRATEGY);
       if (defaultResult.shortages.length > 0 || defaultResult.selected.length !== MODEL_COUNT) {
         const shortage = defaultResult.shortages.map((item) => `${item.category}: ${item.found}/${item.target}`).join(", ");
         const error = new Error(`Could not fill all ${MODEL_COUNT} verified seats (${shortage || `${defaultResult.selected.length}/${MODEL_COUNT}`}).`);
         error.code = "PORTFOLIO_INCOMPLETE";
         throw error;
       }
-      const fingerprint = createHash("sha256").update(strategyDataFingerprint(verified)).digest("hex");
+      const fingerprint = createHash("sha256").update(strategyDataFingerprint(prepared)).digest("hex");
       const defaultSelection = defaultResult.selected;
       const selectionFingerprint = createHash("sha256").update(selectionRefreshFingerprint(defaultSelection)).digest("hex");
       const previousFingerprint = dataSnapshot?.fingerprint ?? null;
@@ -294,8 +285,9 @@ async function refreshDataSnapshot() {
       const changedSincePrevious = previousFingerprint === null ? null : previousFingerprint !== fingerprint;
       const selectionChangedSincePrevious = previousSelectionFingerprint === null ? null : previousSelectionFingerprint !== selectionFingerprint;
       const updatedAt = new Date().toISOString();
-      dataSnapshot = { source, health, inferenceHealth, updatedAt, fingerprint, selectionFingerprint };
+      dataSnapshot = { source, health, inferenceHealth: new Map(), freeProbesSkipped: true, updatedAt, fingerprint, selectionFingerprint };
       updateStatus.lastUpdatedAt = updatedAt;
+      updateStatus.freeProbesSkipped = true;
       updateStatus.lastDurationMs = Date.now() - startedAt;
       updateStatus.dataChangedSincePrevious = changedSincePrevious;
       updateStatus.selectionChangedSincePrevious = selectionChangedSincePrevious;
@@ -322,14 +314,82 @@ async function refreshDataSnapshot() {
   }
 }
 
+async function runFreeProbes() {
+  if (freeProbePromise) {
+    await freeProbePromise;
+    return { ...updateStatus };
+  }
+  freeProbePromise = (async () => {
+    if (updatePromise) await updatePromise;
+    if (!dataSnapshot) {
+      const error = new Error("OpenRouter data is still loading. Please try again shortly.");
+      error.code = "DATA_NOT_READY";
+      throw error;
+    }
+    const snapshot = dataSnapshot;
+    const startedAt = Date.now();
+    updateStatus.freeProbeRunning = true;
+    updateStatus.freeProbeStartedAt = new Date(startedAt).toISOString();
+    updateStatus.freeProbeLastError = null;
+    try {
+      const prepared = prepareCandidates(snapshot.source, DEFAULT_STRATEGY, snapshot.health);
+      const pool = prepared
+        .filter((model) => model.hardGateReasons.length === 0 && model.eligibility.free)
+        .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
+        .slice(0, freeProbePoolSize);
+      const checks = await mapWithConcurrency(pool, 2, async (model) => [model.id, await probeFreeModel(model)]);
+      const inferenceHealth = new Map(checks);
+      const results = [...inferenceHealth.values()];
+      updateStatus.freeProbeCount = results.length;
+      updateStatus.freeProbePassed = results.filter((result) => result.available).length;
+      updateStatus.freeProbeFailed = results.length - updateStatus.freeProbePassed;
+      if (hasSystemicRateLimit(results)) {
+        updateStatus.freeProbeLastError = "Free-model inference probes were rate limited; the current selection was kept.";
+      } else {
+        const verified = applyFreeInferenceHealth(prepared, inferenceHealth);
+        const selection = selectPortfolio(verified, DEFAULT_STRATEGY);
+        if (selection.shortages.length || selection.selected.length !== MODEL_COUNT) {
+          updateStatus.freeProbeLastError = `Only ${updateStatus.freeProbePassed} free models passed; the current selection was kept.`;
+        } else if (dataSnapshot !== snapshot) {
+          updateStatus.freeProbeLastError = "Model data changed during the check; run it again.";
+        } else {
+          dataSnapshot = {
+            ...snapshot,
+            inferenceHealth,
+            freeProbesSkipped: false,
+            fingerprint: createHash("sha256").update(strategyDataFingerprint(verified)).digest("hex"),
+            selectionFingerprint: createHash("sha256").update(selectionRefreshFingerprint(selection.selected)).digest("hex"),
+          };
+          updateStatus.freeProbesSkipped = false;
+          updateStatus.selectionChangedSincePrevious = snapshot.selectionFingerprint !== dataSnapshot.selectionFingerprint;
+        }
+      }
+    } catch (error) {
+      updateStatus.freeProbeLastError = error.message;
+      throw error;
+    } finally {
+      updateStatus.freeProbeLastRunAt = new Date().toISOString();
+      updateStatus.freeProbeLastDurationMs = Date.now() - startedAt;
+      updateStatus.freeProbeRunning = false;
+      updateStatus.freeProbeStartedAt = null;
+    }
+  })();
+  try {
+    await freeProbePromise;
+    return { ...updateStatus };
+  } finally {
+    freeProbePromise = null;
+  }
+}
+
 function buildLiveStrategy(config) {
   if (!dataSnapshot) {
     const error = new Error("OpenRouter data is still loading. Please try again shortly.");
     error.code = "DATA_NOT_READY";
     throw error;
   }
-  const { source, health, inferenceHealth, updatedAt } = dataSnapshot;
-  const candidates = applyFreeInferenceHealth(prepareCandidates(source, config, health), inferenceHealth);
+  const { source, health, inferenceHealth, freeProbesSkipped, updatedAt } = dataSnapshot;
+  const candidates = applyFreeInferenceHealth(prepareCandidates(source, config, health), inferenceHealth, freeProbesSkipped);
   const result = selectPortfolio(candidates, config);
   const unverified = result.selected.filter((model) => !model.health?.verified || !model.health.available);
   if (result.shortages.length > 0 || result.selected.length !== MODEL_COUNT || unverified.length > 0) {
@@ -353,6 +413,7 @@ function buildLiveStrategy(config) {
         end: source.monthly.meta?.end_date ?? null,
       },
       dataUpdatedAt: updatedAt,
+      freeProbesSkipped,
     },
     summary: {
       selected: result.selected.length,
@@ -373,6 +434,27 @@ function buildStrategyScores() {
   return {
     dataUpdatedAt: updatedAt,
     scores: Object.fromEntries(candidates.map((model) => [model.id, model.score])),
+  };
+}
+
+function buildOpenRouterReference() {
+  if (!scoringSnapshot) return { dataUpdatedAt: null, models: {} };
+  const { candidates, updatedAt } = scoringSnapshot;
+  return {
+    dataUpdatedAt: updatedAt,
+    models: Object.fromEntries(candidates.map(({ id, raw }) => [id, {
+      name: raw.name ?? null,
+      description: raw.description ?? null,
+      contextLength: raw.context_length ?? null,
+      maxOutputTokens: raw.top_provider?.max_completion_tokens ?? null,
+      inputModalities: raw.architecture?.input_modalities ?? [],
+      outputModalities: raw.architecture?.output_modalities ?? [],
+      supportedParameters: raw.supported_parameters ?? [],
+      pricing: { input: raw.pricing?.prompt ?? null, output: raw.pricing?.completion ?? null },
+      created: raw.created ?? null,
+      expirationDate: raw.expiration_date ?? null,
+      canonicalSlug: raw.canonical_slug ?? null,
+    }])),
   };
 }
 
@@ -400,10 +482,18 @@ async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/gateway-models") {
     try {
       const payload = await fetchGatewayModels();
-      json(response, 200, { ...payload, strategy: buildStrategyScores() });
+      json(response, 200, { ...payload, strategy: buildStrategyScores(), reference: buildOpenRouterReference() });
     } catch (error) {
       const status = error.code === "MAXSHOT_API_KEY_MISSING" ? 503 : 502;
       json(response, status, { error: { code: error.code || "GATEWAY_MODELS_FAILED", message: error.message } });
+    }
+    return true;
+  }
+  if (request.method === "POST" && url.pathname === "/api/free-probes") {
+    try {
+      json(response, 200, await runFreeProbes());
+    } catch (error) {
+      json(response, 502, { error: { code: error.code || "FREE_PROBES_FAILED", message: error.message } });
     }
     return true;
   }

@@ -190,7 +190,8 @@ function applySupportedModelGate(candidates, supportedModelIds) {
     : { ...model, hardGateReasons: [...model.hardGateReasons, "Unavailable in new-api"] });
 }
 
-export function applyFreeInferenceGate(candidates, inferenceHealth) {
+export function applyFreeInferenceGate(candidates, inferenceHealth, skip = false) {
+  if (skip) return candidates;
   return candidates.map((model) => {
     if (!model.eligibility.free) return model;
     const probe = inferenceHealth.get(model.id);
@@ -391,6 +392,7 @@ export async function buildModelPortfolio({
   apiKey,
   supportedModelIds,
   config = DEFAULT_STRATEGY,
+  probeFree = false,
   fetchImpl = fetch,
   now = new Date(),
 }) {
@@ -412,17 +414,15 @@ export async function buildModelPortfolio({
     .filter((model) => model.hardGateReasons.length === 0 && model.eligibility.free)
     .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
     .slice(0, config.quotas.free * 2);
-  const probeEntries = await mapWithConcurrency(freeProbePool, 2, async (model) => [
+  const probeEntries = probeFree ? await mapWithConcurrency(freeProbePool, 2, async (model) => [
     model.id,
     await probeFreeModel(fetchImpl, apiKey, model),
-  ]);
+  ]) : [];
   const inferenceHealth = new Map(probeEntries);
   const probeResults = [...inferenceHealth.values()];
-  if (probeResults.length >= 2 && probeResults.filter((result) => result.rateLimited).length >= Math.ceil(probeResults.length / 2)) {
-    throw new Error("Free-model inference probes were systemically rate limited.");
-  }
+  const freeProbesSkipped = !probeFree || (probeResults.length >= 2 && probeResults.filter((result) => result.rateLimited).length >= Math.ceil(probeResults.length / 2));
 
-  const candidates = applyFreeInferenceGate(scored, inferenceHealth);
+  const candidates = applyFreeInferenceGate(scored, inferenceHealth, freeProbesSkipped);
   const portfolio = selectPortfolio(candidates, config);
   if (portfolio.shortages.length || portfolio.selected.length !== MODEL_COUNT) {
     throw new Error(`Incomplete portfolio: ${portfolio.shortages.map(({ category, found, target }) => `${category} ${found}/${target}`).join(", ")}`);
@@ -431,7 +431,8 @@ export async function buildModelPortfolio({
   return {
     ...portfolio,
     selectionFingerprint: selectionFingerprint(portfolio.selected),
-    inferenceHealth,
+    inferenceHealth: freeProbesSkipped ? new Map() : inferenceHealth,
+    freeProbesSkipped,
     probeSummary: {
       checked: probeResults.length,
       passed: probeResults.filter((result) => result.available).length,

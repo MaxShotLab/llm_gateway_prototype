@@ -36,6 +36,7 @@ test("reference Free inference check is a hard gate", () => {
   const model = { id: "vendor/free", eligibility: { free: true }, hardGateReasons: [] };
   const failed = applyFreeInferenceGate([model], new Map([[model.id, { verified: true, available: false, reason: "Failed" }]]));
   assert.deepEqual(failed[0].hardGateReasons, ["Failed"]);
+  assert.deepEqual(applyFreeInferenceGate([model], new Map(), true), [model]);
 });
 
 test("reference refresh fingerprint ignores order and score", () => {

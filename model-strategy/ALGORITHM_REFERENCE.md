@@ -120,6 +120,10 @@ score =
 ## Free inference gate
 
 ```text
+Invocation: manual "Check Free" only; never in the 5-minute data update
+Each new data round starts with Free inference unverified and can still publish 30 models
+Show the timestamp and outcome of the previous manual execution
+
 Probe top 10 scored Free candidates
 Concurrency: 2
 Timeout: 30 seconds
@@ -135,9 +139,13 @@ Pass:
   AND no stream error
   AND finish_reason = stop
 
-Unprobed/failed Free candidate => rejected
-Passing Free candidates < 5 => reject snapshot
->= 50% probe pool receives 429 twice => reject snapshot
+When a manual check has at least 5 passing Free candidates:
+  unprobed/failed Free candidate => rejected in the checked selection
+Passing Free candidates < 5 => keep the current selection and report the shortage
+>= 50% probe pool receives 429 twice => ignore Free inference results for this round;
+  select from otherwise eligible Free models, mark them unverified, and display
+  "No availability probes on free models in previous round"
+  (pricing and endpoint hard gates still apply)
 ```
 
 ## Allocation

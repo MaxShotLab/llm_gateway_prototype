@@ -154,6 +154,10 @@ test("free inference health is a hard gate without affecting paid models", () =>
   assert.deepEqual(unavailable.hardGateReasons, ["No assistant content returned"]);
   assert.deepEqual(unchecked.hardGateReasons, ["Inference not verified"]);
   assert.equal(unchangedPaid, paid);
+  assert.deepEqual(
+    applyFreeInferenceHealth([freeAvailable, freeUnavailable, freeUnchecked, paid], health, true),
+    [freeAvailable, freeUnavailable, freeUnchecked, paid],
+  );
 });
 
 test("export creates exactly one default and preserves all selected model IDs", () => {
