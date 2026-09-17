@@ -38,7 +38,8 @@ const openRouterBaseUrl = "https://openrouter.ai/api/v1";
 const maxshotGatewayBaseUrl = "https://api.maxshot.ai/v1";
 const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
-let scoringSnapshot = null;
+let allModelsReference = null;
+let allModelsReferencePromise = null;
 let updatePromise = null;
 let freeProbePromise = null;
 let updateTimer = null;
@@ -83,10 +84,10 @@ function rankingsWindow(now = new Date()) {
   return { start: toDateString(start), end: toDateString(end) };
 }
 
-async function openRouterFetch(pathname) {
+async function openRouterFetch(pathname, timeoutMs = 20_000) {
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
-    const error = new Error("OPENROUTER_API_KEY is required for live monthly rankings.");
+    const error = new Error("OPENROUTER_API_KEY is required for OpenRouter data.");
     error.code = "OPENROUTER_API_KEY_MISSING";
     throw error;
   }
@@ -97,7 +98,7 @@ async function openRouterFetch(pathname) {
       "HTTP-Referer": "http://127.0.0.1",
       "X-Title": "Maxshot Model Strategy",
     },
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -262,10 +263,6 @@ async function refreshDataSnapshot() {
     try {
       const source = await fetchSources();
       const baseCandidates = prepareCandidates(source, DEFAULT_STRATEGY);
-      scoringSnapshot = {
-        candidates: baseCandidates,
-        updatedAt: new Date().toISOString(),
-      };
       const eligible = baseCandidates.filter((model) => model.hardGateReasons.length === 0);
       const checks = await mapWithConcurrency(eligible, 5, async (model) => [model.id, await fetchEndpointHealth(model.id)]);
       const health = new Map(checks);
@@ -428,34 +425,37 @@ function buildLiveStrategy(config) {
   };
 }
 
-function buildStrategyScores() {
-  if (!scoringSnapshot) return { dataUpdatedAt: null, scores: {} };
-  const { candidates, updatedAt } = scoringSnapshot;
-  return {
-    dataUpdatedAt: updatedAt,
-    scores: Object.fromEntries(candidates.map((model) => [model.id, model.score])),
-  };
-}
-
-function buildOpenRouterReference() {
-  if (!scoringSnapshot) return { dataUpdatedAt: null, models: {} };
-  const { candidates, updatedAt } = scoringSnapshot;
-  return {
-    dataUpdatedAt: updatedAt,
-    models: Object.fromEntries(candidates.map(({ id, raw }) => [id, {
-      name: raw.name ?? null,
-      description: raw.description ?? null,
-      contextLength: raw.context_length ?? null,
-      maxOutputTokens: raw.top_provider?.max_completion_tokens ?? null,
-      inputModalities: raw.architecture?.input_modalities ?? [],
-      outputModalities: raw.architecture?.output_modalities ?? [],
-      supportedParameters: raw.supported_parameters ?? [],
-      pricing: { input: raw.pricing?.prompt ?? null, output: raw.pricing?.completion ?? null },
-      created: raw.created ?? null,
-      expirationDate: raw.expiration_date ?? null,
-      canonicalSlug: raw.canonical_slug ?? null,
-    }])),
-  };
+async function getAllModelsReference() {
+  if (allModelsReference && Date.now() - Date.parse(allModelsReference.dataUpdatedAt) < refreshIntervalMs) return allModelsReference;
+  if (!allModelsReferencePromise) {
+    allModelsReferencePromise = (async () => {
+      const payload = await openRouterFetch("/models?output_modalities=all", 45_000);
+      if (!Array.isArray(payload?.data)) throw new Error("OpenRouter model list did not contain a data array.");
+      const reference = {
+        dataUpdatedAt: new Date().toISOString(),
+        models: Object.fromEntries(payload.data.map((raw) => [raw.id, {
+          name: raw.name ?? null,
+          description: raw.description ?? null,
+          contextLength: raw.context_length ?? null,
+          maxOutputTokens: raw.top_provider?.max_completion_tokens ?? null,
+          inputModalities: raw.architecture?.input_modalities ?? [],
+          outputModalities: raw.architecture?.output_modalities ?? [],
+          supportedParameters: raw.supported_parameters ?? [],
+          pricing: { input: raw.pricing?.prompt ?? null, output: raw.pricing?.completion ?? null },
+          created: raw.created ?? null,
+          expirationDate: raw.expiration_date ?? null,
+          canonicalSlug: raw.canonical_slug ?? null,
+        }])),
+      };
+      allModelsReference = reference;
+      return reference;
+    })().finally(() => { allModelsReferencePromise = null; });
+  }
+  try {
+    return await allModelsReferencePromise;
+  } catch (error) {
+    return { ...(allModelsReference ?? { dataUpdatedAt: null, models: {} }), error: error.message };
+  }
 }
 
 async function readRequestBody(request) {
@@ -482,7 +482,7 @@ async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/gateway-models") {
     try {
       const payload = await fetchGatewayModels();
-      json(response, 200, { ...payload, strategy: buildStrategyScores(), reference: buildOpenRouterReference() });
+      json(response, 200, { ...payload, reference: await getAllModelsReference() });
     } catch (error) {
       const status = error.code === "MAXSHOT_API_KEY_MISSING" ? 503 : 502;
       json(response, status, { error: { code: error.code || "GATEWAY_MODELS_FAILED", message: error.message } });
