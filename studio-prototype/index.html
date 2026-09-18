@@ -310,6 +310,7 @@
   .studio-canvas .icon-btn.liked svg { fill: #f43f5e; stroke: #f43f5e; }
 
   .studio-canvas #materialsCanvas { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
+  .studio-canvas #assetsCanvas { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
   .studio-canvas .view-title { font-size: 18px; font-weight: 600; margin: 4px auto 18px; max-width: 900px; }
   .studio-canvas .view-title:has(+ .materials-subtitle) { margin-bottom: 2px; }
   .studio-canvas .materials-subtitle { font-size: 12.5px; color: var(--muted); margin: 0 auto 16px; max-width: 900px; }
@@ -490,10 +491,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
         Studio
       </button>
-      <button class="gw-nav-item" data-view="assets">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        Assets
-      </button>
 
       <div class="gw-nav-divider"></div>
 
@@ -592,11 +589,6 @@
       <!-- STUDIO (placeholder here — full composer inserted next step) -->
       <section class="gw-view hidden" id="view-studio">
         <div class="studio-canvas" id="studioCanvas"></div>
-      </section>
-
-      <!-- ASSETS (My Creations + Liked) -->
-      <section class="gw-view hidden" id="view-assets">
-        <div class="studio-canvas" id="assetsCanvas"></div>
       </section>
 
       <!-- Shared read-only preview, opened from Discover or Assets > Liked -->
@@ -866,7 +858,9 @@ document.querySelectorAll('#creditsAmountGrid button[data-amount]').forEach(btn 
 $('creditsContinueBtn').addEventListener('click', () => toast('Mock checkout — no funds transmitted (prototype only)'));
 
 /* ---------------- shell: sidebar nav / view switching ---------------- */
-const SHELL_VIEWS = ['chat', 'studio', 'assets', 'credits', 'preview'];
+// Assets isn't its own routed view — it's a section embedded inside Studio, below Discover — so it's
+// deliberately not listed here; "assets" only ever appears as a nav-highlight / returnView value.
+const SHELL_VIEWS = ['chat', 'studio', 'credits', 'preview'];
 document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     if (state.editing) exitEditMode();
@@ -875,8 +869,7 @@ document.querySelectorAll('.gw-nav-item[data-view]').forEach(btn => {
     btn.classList.add('active');
     SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== btn.dataset.view));
     $('gwModelSelect').style.display = btn.dataset.view === 'chat' ? 'flex' : 'none';
-    if (btn.dataset.view === 'assets') renderAssetsView();
-    if (btn.dataset.view === 'studio') renderMaterialsGrid();
+    if (btn.dataset.view === 'studio') { renderMaterialsGrid(); renderAssetsView(); }
     if (btn.dataset.view === 'credits') updateShellCredits();
   });
 });
@@ -1220,6 +1213,7 @@ $('studioCanvas').innerHTML = `
       </button>
     </div>
   </div>
+  <div id="assetsCanvas"></div>
   <div id="materialsCanvas"></div>
 `;
 
@@ -1962,8 +1956,8 @@ function renderAssetsView() {
         <button class="asset-subtab active" data-atab="mine"></button>
         <button class="asset-subtab" data-atab="liked" style="${LIKES_ENABLED ? '' : 'display:none'}"></button>
       </div>
-      <div id="assetsMineWrap"><div class="studio-canvas" id="creationsCanvas"></div></div>
-      <div id="assetsLikedWrap" style="display:none"><div class="studio-canvas" id="likedCanvas"></div></div>
+      <div id="assetsMineWrap"><div id="creationsCanvas"></div></div>
+      <div id="assetsLikedWrap" style="display:none"><div id="likedCanvas"></div></div>
     `;
     $('assetsCanvas').querySelectorAll('.asset-subtab').forEach(b => {
       b.addEventListener('click', () => { state.assetsTab = b.dataset.atab; renderAssetsView(); });
@@ -1977,6 +1971,17 @@ function renderAssetsView() {
   $('assetsLikedWrap').style.display = state.assetsTab === 'liked' ? '' : 'none';
   if (state.assetsTab === 'mine') renderCreationsGrid();
   else renderLikedGrid();
+}
+// Assets lives inside the Studio page (below Discover), not as its own route — "showing" it means
+// showing Studio and scrolling down to this section, while the Assets nav item still gets its own
+// distinct highlight and a fresh render, same as a real page switch would.
+function showAssetsSection() {
+  // There's no separate "Assets" nav item — Studio is the only relevant highlight now.
+  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'studio'));
+  SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'studio'));
+  $('gwModelSelect').style.display = 'none';
+  renderAssetsView();
+  $('assetsCanvas').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /* ---------------- Discover: everything anyone has published, ranked by popularity ---------------- */
@@ -2085,8 +2090,9 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false, c
   previewReturnTo = returnTo;
   previewEditable = editable;
   if (countView) recordView(asset);
-  const navTarget = (returnTo === 'discover' || returnTo === 'studio') ? 'studio' : 'assets';
-  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === navTarget));
+  // There's no separate "Assets" nav item — Studio is the only relevant highlight, regardless of
+  // where this preview will return to (see previewReturnTo / the Back handler below).
+  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'studio'));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'preview'));
   $('gwModelSelect').style.display = 'none';
 
@@ -2140,9 +2146,7 @@ function showMaterialPreview(asset, { returnTo = 'discover', editable = false, c
         state.assets = state.assets.filter(a => a.id !== asset.id);
         state.likedIds.delete(asset.id);
         previewingMaterial = null;
-        document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
-        SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
-        renderAssetsView();
+        showAssetsSection();
         toast(t('deletedToast'));
       });
     };
@@ -2155,9 +2159,10 @@ function toggleLike(asset) {
 $('materialPreviewBack').addEventListener('click', () => {
   previewingMaterial = null;
   const target = (previewReturnTo === 'discover' || previewReturnTo === 'studio') ? 'studio' : 'assets';
+  if (target === 'assets') { showAssetsSection(); return; }
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === target));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== target));
-  if (target === 'studio') renderMaterialsGrid(); else renderAssetsView();
+  renderMaterialsGrid();
 });
 // Reload an asset's own recipe (its reference image + its prompt) into the composer, ready to tweak and regenerate —
 // for an image, the reference is the image itself; for a video, it's the first-frame reference it was made from (if any).
@@ -2236,15 +2241,17 @@ function enterEditMode(asset, { returnView = 'studio', countView = true } = {}) 
   comparingOriginal = false;
   closeAllPopovers();
 
-  // The tool editor is physically part of the Studio composer, so that's always the DOM shown —
-  // but the sidebar highlight follows where the user actually came from, so "Back" (below) can
-  // return them there instead of always landing on generate.
-  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === returnView));
+  // The tool editor is physically part of the Studio composer, so that's always the DOM shown, and
+  // Studio is the only nav item there is to highlight — but returnView is still tracked (below) so
+  // "Back" can scroll to wherever the user actually came from instead of always landing on generate.
+  document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'studio'));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'studio'));
   $('gwModelSelect').style.display = 'none';
-  // Discover lives below the composer on the Studio page, but it has no place inside an editing
-  // view — hide it while editing so the tool panel isn't followed by an unrelated feed.
+  // Discover and Assets both live below the composer on the Studio page, but neither has a place
+  // inside an editing view — hide them while editing so the tool panel isn't followed by unrelated
+  // feeds/galleries.
   $('materialsCanvas').style.display = 'none';
+  $('assetsCanvas').style.display = 'none';
 
   $('stTopbar').style.display = 'none';
   $('tabs').style.display = 'none';
@@ -2315,6 +2322,7 @@ function exitEditMode(navigate = true) {
   $('editTrimBlock').classList.remove('show');
   $('editBrushRow').classList.remove('show');
   $('materialsCanvas').style.display = '';
+  $('assetsCanvas').style.display = '';
   $('stTopbar').style.display = '';
   $('tabs').style.display = '';
   $('genPills').style.display = 'contents';
@@ -2324,10 +2332,8 @@ function exitEditMode(navigate = true) {
   $('generateBtn').classList.toggle('video-mode', state.mode === 'video');
 
   if (navigate && returnView === 'assets') {
-    document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === 'assets'));
-    SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== 'assets'));
     state.assetsTab = 'mine';
-    renderAssetsView();
+    showAssetsSection();
   } else if (!navigate) {
     // We're staying on Studio (already the visible view) rather than jumping to the return view —
     // keep the sidebar highlight in sync with what's actually on screen during the wait.
@@ -2605,6 +2611,7 @@ function initStudio() {
   state.mode = 'image';
   updateShellCredits();
   renderMaterialsGrid();
+  renderAssetsView();
 }
 initStudio();
 

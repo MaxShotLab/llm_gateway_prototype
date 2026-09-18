@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** September 11, 2026
+**Updated:** September 18, 2026
 
 ## 1. Purpose
 
@@ -19,7 +19,8 @@ collaboration while it is evaluated for the product baseline. It defines:
 
 - The four generation paths and their required behavior.
 - Inline editing and asset-lineage requirements.
-- The Discover feed and the Assets surface (My Creations and Liked).
+- The Discover feed and the Assets section (My Creations and Liked), both
+  embedded on the Studio page.
 - Phase 1 and Phase 2 scope and priorities.
 - Terminology and acceptance conditions.
 
@@ -128,7 +129,8 @@ each phase.
 
 ### Creator (reuse) — Phase 2
 
-1. Browse Discover, or open Assets (My Creations or Liked).
+1. Browse Discover, or open My Creations (or Liked, once it ships) — all
+   embedded on the same Studio page, not separate destinations.
 2. Select a result made by themselves, another creator, or Maxshot.
 3. In Discover or Liked, review a read-only preview — the media, its
    reference image(s), and its prompt as plain text — then choose Try this.
@@ -150,11 +152,13 @@ Creations.
 
 Studio extends the same Maxshot shell defined in
 [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.1 — same account
-session, same credit balance display, same navigation frame. It adds two
-routed surfaces — Studio (which also hosts the Discover feed embedded below
-the composer, rather than as its own route, once Phase 2 ships) and Assets
-(a single My Creations tab in Phase 1; a Liked tab is added once P1.6 ships)
-— and does not introduce a second design system or a second credit balance.
+session, same credit balance display, same navigation frame. It adds a
+single routed surface, Studio, which stacks three sections on one
+scrollable page, in this order: the generation composer, My Creations
+directly below it (P0.2 — a Liked tab joins it once P1.6 ships), and the
+Discover feed (P1.3) below that. My Creations, Liked, and Discover are
+never their own route or nav item — Studio is the only entry point — and
+none of this introduces a second design system or a second credit balance.
 
 The current prototype ([studio-prototype/index.html](./studio-prototype/index.html))
 is a single static HTML/CSS/JS file with mocked generation (results are
@@ -287,6 +291,9 @@ Acceptance:
 
 ### P0.2 My Creations
 
+- Embedded on the Studio page directly below the composer — not a separate
+  route or nav item. Studio is the only entry point, from Phase 1 on; only
+  the actions available here change in Phase 2 (below).
 - A private, filterable-by-type (all/image/video) gallery of the current
   user's own generations, listed newest first by creation date. There is no
   view-count signal to sort by yet — that arrives with Discover (P1.3).
@@ -380,9 +387,10 @@ Discover (P1.3), so it needs Discover live first.
 - Each edit action shows its own configured credit cost before applying,
   reflected live as the user changes which tool is selected.
 - An edit produces a new asset; it never overwrites the source.
-- Entering the editing view hides the Discover feed (P1.3) below the
-  composer — a user editing a result isn't also scrolling past unrelated
-  published work. Discover reappears once editing exits.
+- Entering the editing view hides both My Creations (P0.2) and the Discover
+  feed (P1.3) below the composer — a user editing a result isn't also
+  scrolling past their own gallery or unrelated published work. Both
+  reappear once editing exits.
 - Applying an edit shows the same in-progress state as generating (P0.1) —
   but the editing view itself (the result, the tool selection, the mask, the
   typed description) stays exactly as the user left it, locked against
@@ -406,7 +414,8 @@ Acceptance:
 - The source asset is unchanged and still present after an edit.
 - Inpaint requires a painted mask and a description before it can be applied;
   remove background and upscale apply with no description required.
-- Discover is not visible anywhere on screen while the editing view is open.
+- Neither My Creations nor Discover is visible anywhere on screen while the
+  editing view is open.
 - The Generate control is disabled and shows its in-progress state for the
   duration of an edit request, while the rest of the editing view (image,
   tool chips, prompt) stays visible and unchanged until the result is ready.
@@ -436,9 +445,10 @@ Acceptance:
 
 ### P1.3 Discover Feed
 
-- Embedded below the Studio composer, on the same page, rather than as its
-  own routed surface — a user scrolls from composing straight into Discover
-  without leaving Studio or losing composer state.
+- Embedded on the Studio page below My Creations (P0.2), rather than as its
+  own routed surface — a user scrolls from composing, past their own recent
+  work, straight into Discover, without leaving Studio or losing composer
+  state.
 - A single feed combining the current user's own generations with community-
   and Maxshot-published examples — no "mine vs. theirs" filter, only a type
   filter (all/image/video).
@@ -471,8 +481,9 @@ Acceptance:
 - No edit or delete control is offered anywhere in Discover, including on
   the current user's own items.
 - Opening a Discover item and returning ("Back") returns to the Studio page
-  with Discover still visible below the composer; the sidebar highlight
-  stays on Studio throughout, since Discover has no separate route.
+  with My Creations and Discover both still in place below the composer; the
+  sidebar highlight stays on Studio throughout, since Discover has no
+  separate route.
 - Most recent sorts correctly by creation date; once Most viewed ships, the
   feed re-sorts correctly as view counts change (highest first).
 - Opening any asset's detail view increments its view count by exactly one,
@@ -532,9 +543,10 @@ Acceptance:
 - A user can save any Discover item (their own or someone else's) to a
   personal Liked list with a single toggle, from the gallery card or the
   preview.
-- Liked is the second tab on the Assets surface, alongside My Creations
-  (P0.2). It is a flat, filterable-by-type (all/image/video) gallery of
-  everything the current user has saved.
+- Liked is the second tab in the Assets section, alongside My Creations
+  (P0.2) — both embedded on the Studio page, not a route of their own. It is
+  a flat, filterable-by-type (all/image/video) gallery of everything the
+  current user has saved.
 - Liked items behave like Discover items, not My Creations items: opening one
   shows the same read-only preview, with Try this and download, and no edit
   or delete control — including for the current user's own published work.
@@ -586,22 +598,23 @@ implementation begin.
 ## 10. Navigation
 
 Phase 1 adds to [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §10's
-navigation:
+navigation exactly one item:
 
 1. Studio
-2. Assets (single tab: My Creations)
 
-Phase 2 does not add a new top-level nav item — inline editing, lineage, and
-Try this live inside the existing Studio/Assets routes, and Discover (P1.3)
-ships embedded below the Studio composer rather than as its own page. Phase
-2 only adds:
+My Creations (P0.2) is not a nav item — it's a section embedded on the
+Studio page, directly below the composer, from Phase 1 on; there is no
+"Assets" route or nav entry at any point.
 
-3. A Liked tab on Assets, alongside My Creations (currently built but
-   disabled by default — see P1.6)
+Phase 2 does not add a nav item either. Inline editing, lineage, and Try
+this all live on the same Studio page, and Discover (P1.3) embeds below My
+Creations rather than shipping as its own page. Liked (P1.6) becomes a
+second tab alongside My Creations, in that same embedded section — not a
+new destination (currently built but disabled by default — see P1.6).
 
-Placement within the overall Maxshot navigation (relative to Chat, Dashboard,
-API, Credits, Referral, Profile) is a baseline decision, not this PRD's to
-make.
+Placement of Studio within the overall Maxshot navigation (relative to
+Chat, Dashboard, API, Credits, Referral, Profile) is a baseline decision,
+not this PRD's to make.
 
 ## 11. Terminology
 
@@ -627,19 +640,22 @@ make.
   if selected from inside the editing view (P1.1). Not an edit — it starts a
   new generation, billed as a normal video generation.
 - **My Creations:** The current user's private gallery of their own assets;
-  one of the two tabs on Assets, and the only one available in Phase 1.
-- **Assets:** The private surface for a user's own saved and created content,
-  split into two tabs: My Creations (own generations and edits, editable) and
-  Liked (saved Discover items, read-only). Introduced in Phase 1 as My
-  Creations only; the Liked tab is a Phase 2 addition.
+  one of the two tabs in the Assets section, and the only one available in
+  Phase 1.
+- **Assets:** The private, tab-switched section — My Creations and (once
+  P1.6 ships) Liked — embedded on the Studio page directly below the
+  composer. Not a route or nav item; Studio is the only entry point.
+  Introduced in Phase 1 as My Creations only; the Liked tab is a Phase 2
+  addition.
 - **Discover:** The public feed combining every user's published generations
   with community- and Maxshot-published examples, sortable by Most recent or
   Most viewed. Read-only — no edit, delete, or "mine vs. theirs" filter.
-  Lives embedded below the Studio composer rather than as its own routed
-  page.
+  Embedded on the Studio page below My Creations (P0.2) — not its own
+  routed page.
 - **Liked:** A user's private, per-item save list, toggled from a Discover
-  card or preview. Shown as a tab on Assets. Not visible to other users and
-  does not affect either Discover sort mode.
+  card or preview. Shown as the second tab in the Assets section (P1.6),
+  embedded on the Studio page — not a route of its own. Not visible to
+  other users and does not affect either Discover sort mode.
 - **View count:** A simple popularity signal recorded per asset, incremented
   by exactly one each time a user opens that asset's detail view, on any
   surface. Powers Discover's Most viewed sort (P1.3). Distinct from Liked,
@@ -703,3 +719,4 @@ into production.
 | 2026-08-18 | Consistency pass | Added the configured model catalog (fixing a dangling §11 reference); defined view count as one increment per open; split Discover sort into Most recent (first) and Most viewed (fast-follow); documented that Discover hides while editing. |
 | 2026-09-08 | In-progress state, direct-to-preview, confirm delete | Generating and editing now show an in-progress state (indeterminate Generate control, "Generating…") without resetting or leaving the composer/editing view until the result exists (P0.1, P1.1). A completed generation or edit opens straight into the result's preview, returning to wherever it was opened from; the composer clears on return instead of keeping the just-used input (P0.1, P1.1). Unified the four edit tools into one selection applied by Generate, rather than remove background/upscale/Animate firing immediately on click (P1.1, §11). Delete now requires an explicit confirm/cancel step everywhere it appears (P0.2, P1.1). |
 | 2026-09-11 | First & last frame, draggable references, prompt limit | Added First & last frame as a mode toggle inside Image-to-Video (not a separate tab), with its own info affordance and role-tagged references ("first" vs. "last") in Reference used/Try this; toggling it preserves both modes' uploads independently (P1.5, §11). Reference-image thumbnails can now be reordered by dragging (P0.1). Added a shared 2,500-character prompt limit with a live counter that blocks Generate/Apply until the prompt is shortened, covering both generation and every edit description (P0.1, P1.1). |
+| 2026-09-18 | Assets merged into Studio, no separate nav item | Assets (My Creations, and Liked once it ships) is no longer a routed surface or nav item — it's an embedded section on the Studio page, directly below the composer and above Discover (P0.2, P1.3, §5.1, §10, §11). Corrected every place that still described Assets as its own route: the navigation list (now just "Studio"), the frontend surfaces count, the Assets/My Creations/Liked/Discover terminology entries, the Creator (reuse) path, and the editing view's "hides Discover" behavior (now hides My Creations too, since both sit below the composer). |
