@@ -89,7 +89,7 @@ const mockUsage = [
     output: "3,147",
     subscriptionCost: 5_628,
     paygCreditCost: 0,
-    dollarCharge: 0,
+    dollarDebitMicros: 0,
     funding: "Subscription (Phase 2)",
     status: "Charged",
   },
@@ -101,7 +101,7 @@ const mockUsage = [
     output: "2,642",
     subscriptionCost: 4_549,
     paygCreditCost: 0,
-    dollarCharge: 0,
+    dollarDebitMicros: 0,
     funding: "Subscription (Phase 2)",
     status: "Charged",
   },
@@ -113,7 +113,7 @@ const mockUsage = [
     output: "9,885",
     subscriptionCost: 10_000,
     paygCreditCost: 4_106,
-    dollarCharge: 0.004106,
+    dollarDebitMicros: 4_106,
     funding: "Dollar balance",
     status: "Charged",
   },
@@ -125,7 +125,7 @@ const mockUsage = [
     output: "4,023",
     subscriptionCost: 0,
     paygCreditCost: 6_837,
-    dollarCharge: 0,
+    dollarDebitMicros: 0,
     funding: "Free Credits",
     status: "Charged",
   },
@@ -137,7 +137,7 @@ const mockUsage = [
     output: "1,398",
     subscriptionCost: 0,
     paygCreditCost: 0,
-    dollarCharge: 0,
+    dollarDebitMicros: 0,
     funding: "Free model",
     status: "Free",
   },
@@ -320,7 +320,7 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
   const isLight = theme === "light";
   const visibleAuthHint =
     authHint || (!user ? "Log in to unlock Usage, API, Credits, and account features." : "");
-  const dollarBalance = getBillingTotals(billing).dollarBalance;
+  const dollarBalanceCents = getBillingTotals(billing).dollarBalanceCents;
   const subscriptionWindows = getSubscriptionWindows(billing.subscription);
 
   return (
@@ -373,7 +373,7 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
           {user ? (
             <div className="topbar-account">
               <a className="credit-pill" href="#" onClick={(event) => { event.preventDefault(); onNavigate("topup"); }}>
-                ${dollarBalance.toFixed(2)}
+                ${(dollarBalanceCents / 100).toFixed(2)}
                 <small>Dollar balance</small>
               </a>
               <div className="account-menu-wrap">
@@ -725,7 +725,7 @@ function UsagePage({ billing }) {
         </>
       ) : (
         <section className="metric-grid payg-usage-metrics">
-          <MetricCard label="Dollar balance" value={`$${totals.dollarBalance.toFixed(2)}`} note="Available for usage or renewal" />
+          <MetricCard label="Dollar balance" value={`$${(totals.dollarBalanceCents / 100).toFixed(2)}`} note="Available for usage or renewal" />
           <MetricCard label="Promotional credits" value={totals.promotionalCredits.toLocaleString()} note="Free and referral Credits" />
           <MetricCard label="Free credits" value={billing.balances.free.toLocaleString()} note="Registered-user grant" />
           <MetricCard label="Referral rewards" value={billing.balances.referral.toLocaleString()} note="Promotional Credits" />
@@ -812,7 +812,7 @@ function UsagePage({ billing }) {
             <tbody>
               {visibleUsage.map((row) => {
                 const viewCost = billingView === "subscription" ? row.subscriptionCost : row.paygCreditCost;
-                const dollarCharge = billingView === "subscription" ? 0 : row.dollarCharge;
+                const dollarDebitMicros = billingView === "subscription" ? 0 : row.dollarDebitMicros;
                 const funding = billingView === "subscription" ? "Subscription" : row.funding;
                 return (
                 <tr key={`${billingView}-${row.time}-${row.model}`}>
@@ -822,7 +822,7 @@ function UsagePage({ billing }) {
                   <td>{row.input}</td>
                   <td>{row.output}</td>
                   <td>{viewCost.toLocaleString()}</td>
-                  <td>${dollarCharge.toFixed(6)}</td>
+                  <td>${(dollarDebitMicros / 1_000_000).toFixed(6)}</td>
                   <td>{funding}</td>
                   <td>
                     <span className={`status-pill ${row.status === "Free" ? "neutral" : "success"}`}>

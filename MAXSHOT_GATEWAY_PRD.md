@@ -381,6 +381,11 @@ Acceptance:
 - Support Dollar-balance-first renewal with a tokenized card fallback and no
   split payment.
 - Keep subscription usage, billing, and invoices separate from PAYG records.
+- Use the same full-source rule for initial purchase and renewal, and create the
+  payment, invoice, period, and allowance exactly once under one idempotency
+  key.
+- Use fixed-point integer ledger units: cents for funded amounts and plan
+  prices, microdollars for sub-cent request debits, and integers for Credits.
 
 Phase 2 acceptance:
 
@@ -484,6 +489,7 @@ chat interaction layer; Maxshot owns the rest of the application.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Subscription implementation contract | Added identical initial/renewal source rules, idempotent period creation, and fixed-point monetary units. |
 | 2026-09-21 | Two-unit billing model | Defined Dollars as user-funded value and Credits as usage/allowance units; top-ups now add Dollar balance, request records show Credit cost and Dollar debit, and spending limits use dollar-equivalent cost. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
 | 2026-07-02 | Prototype navigation alignment | Aligned navigation with current Phase 1 surfaces and moved Agents/Toolkits to Experimental coming soon. |

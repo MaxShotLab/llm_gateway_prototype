@@ -20,7 +20,7 @@ import {
   paymentMethods,
   preferredPaymentMethod,
   starterFundingTransactions,
-  subscriptionInvoices,
+  starterSubscriptionInvoices,
   subscriptionPlans,
 } from "../data/billingData";
 
@@ -35,6 +35,7 @@ export function FundingPage({ billing, setBilling }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [receiptTarget, setReceiptTarget] = useState(null);
   const [invoiceTarget, setInvoiceTarget] = useState(null);
+  const [subscriptionInvoices, setSubscriptionInvoices] = useState(starterSubscriptionInvoices);
   const [subscriptionCheckout, setSubscriptionCheckout] = useState(null);
   const [showPlans, setShowPlans] = useState(false);
   const [preferredCard, setPreferredCard] = useState(preferredPaymentMethod);
@@ -46,14 +47,16 @@ export function FundingPage({ billing, setBilling }) {
     const nextAmount = Number(value);
     setAmount(Number.isFinite(nextAmount) ? Math.max(nextAmount, 0) : 0);
   };
-  const paymentFee = amount * method.feeRate + method.fixedFee;
-  const networkFee = method.networkFee || 0;
-  const receivedAmount = Math.max(amount - paymentFee - networkFee, 0);
+  const amountCents = Math.round(amount * 100);
+  const paymentFeeCents = Math.round(amountCents * method.feeRate) + method.fixedFeeCents;
+  const networkFeeCents = method.networkFeeCents || 0;
+  const receivedCents = Math.max(amountCents - paymentFeeCents - networkFeeCents, 0);
   const totals = getBillingTotals(billing);
   const subscription = billing.subscription;
   const subscriptionWindows = getSubscriptionWindows(subscription);
 
-  const paymentAmount = `$${amount.toFixed(2)}`;
+  const formatCents = (cents) => `$${(cents / 100).toFixed(2)}`;
+  const paymentAmount = formatCents(amountCents);
 
   const completeMockPayment = () => {
     if (method.id === "card" && saveCard) setPreferredCard(preferredPaymentMethod);
@@ -63,8 +66,8 @@ export function FundingPage({ billing, setBilling }) {
         date: "Just now",
         method: method.name,
         paid: paymentAmount,
-        fees: `$${(paymentFee + networkFee).toFixed(2)}`,
-        balanceAdded: `$${receivedAmount.toFixed(2)}`,
+        fees: formatCents(paymentFeeCents + networkFeeCents),
+        balanceAdded: formatCents(receivedCents),
         status: "Completed",
         receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
       },
@@ -77,23 +80,26 @@ export function FundingPage({ billing, setBilling }) {
         : current.scenario,
       balances: {
         ...current.balances,
-        dollars: current.balances.dollars + receivedAmount,
+        dollarCents: current.balances.dollarCents + receivedCents,
       },
     }));
     setCheckoutOpen(false);
   };
 
   const activateSubscription = (plan) => {
+    const useDollarBalance = walletFirst && billing.balances.dollarCents >= plan.priceCents;
+    const paymentMethod = useDollarBalance
+      ? "Dollar balance"
+      : `${preferredCard.brand} •••• ${preferredCard.last4}`;
     setBilling((current) => {
-      const useDollarBalance = walletFirst && current.balances.dollars >= plan.priceUsd;
       return {
         ...current,
         scenario: "active",
         balances: {
           ...current.balances,
-          dollars: useDollarBalance
-            ? current.balances.dollars - plan.priceUsd
-            : current.balances.dollars,
+          dollarCents: useDollarBalance
+            ? current.balances.dollarCents - plan.priceCents
+            : current.balances.dollarCents,
         },
         subscription: {
           ...plan,
@@ -101,16 +107,26 @@ export function FundingPage({ billing, setBilling }) {
           used: 0,
           windowUsage: { fiveHour: 0, weekly: 0 },
           renewsAt: "Oct 12, 2026",
-          cancelAtPeriodEnd: false,
         },
       };
     });
+    setSubscriptionInvoices((current) => [
+      {
+        id: `INV-MOCK-${Date.now()}`,
+        date: "Just now",
+        plan: plan.name,
+        amount: formatCents(plan.priceCents),
+        method: paymentMethod,
+        status: "Paid",
+      },
+      ...current,
+    ]);
     setSubscriptionCheckout(null);
     setShowPlans(false);
   };
 
   const confirmSubscriptionPlan = (plan) => {
-    const canUseDollarBalance = walletFirst && billing.balances.dollars >= plan.priceUsd;
+    const canUseDollarBalance = walletFirst && billing.balances.dollarCents >= plan.priceCents;
     if (!canUseDollarBalance && !preferredCard) {
       setCardManagerOpen(true);
       return;
@@ -130,7 +146,7 @@ export function FundingPage({ billing, setBilling }) {
   };
 
   const renewalSource = (plan) => {
-    if (walletFirst && billing.balances.dollars >= plan.priceUsd) return "Dollar balance";
+    if (walletFirst && billing.balances.dollarCents >= plan.priceCents) return "Dollar balance";
     if (preferredCard) return `${preferredCard.brand} •••• ${preferredCard.last4}`;
     return "Payment method required";
   };
@@ -172,15 +188,15 @@ export function FundingPage({ billing, setBilling }) {
             <div className="subscription-plan-summary">
               <div>
                 <span className={`status-pill ${subscription.status === "past_due" ? "failed" : "success"}`}>
-                  <i /> {subscription.status === "past_due" ? "Renewal failed" : subscription.cancelAtPeriodEnd ? "Ends this period" : "Active"}
+                  <i /> {subscription.status === "past_due" ? "Renewal failed" : subscription.status === "cancel_at_period_end" ? "Ends this period" : "Active"}
                 </span>
                 <h3>{subscription.name}</h3>
-                <p>${subscription.priceUsd}/month · {subscription.allowance.toLocaleString()} Credits</p>
+                <p>{formatCents(subscription.priceCents)}/month · {subscription.allowance.toLocaleString()} Credits</p>
               </div>
               <div className="subscription-renewal">
                 <CalendarBlank size={18} />
                 <span>
-                  {subscription.status === "past_due" ? "Payment status" : subscription.cancelAtPeriodEnd ? "Access ends" : "Next renewal"}
+                  {subscription.status === "past_due" ? "Payment status" : subscription.status === "cancel_at_period_end" ? "Access ends" : "Next renewal"}
                   <strong>{subscription.status === "past_due" ? "Retry required" : subscription.renewsAt}</strong>
                 </span>
               </div>
@@ -204,17 +220,17 @@ export function FundingPage({ billing, setBilling }) {
             {billing.scenario === "exhausted" && <p className="billing-state-note">Allowance exhausted. Requests now use available PAYG funding.</p>}
             {billing.scenario === "insufficient" && <p className="billing-state-note danger">No usable funding remains. Add funds to continue.</p>}
             {subscription.status === "past_due" && <p className="billing-state-note">No new allowance was created. Existing PAYG funding remains available.</p>}
-            {subscription.cancelAtPeriodEnd && <p className="billing-state-note">Renewal is cancelled. Current allowance remains available through {subscription.renewsAt}.</p>}
+            {subscription.status === "cancel_at_period_end" && <p className="billing-state-note">Renewal is cancelled. Current allowance remains available through {subscription.renewsAt}.</p>}
             {billing.pendingPlan && <p className="billing-state-note">{billing.pendingPlan.name} begins at the next renewal. No prorated Credits are issued.</p>}
             <div className="subscription-actions">
               {subscription.status === "past_due" ? (
                 <button className="primary-button compact" onClick={() => renewalSource(subscription) !== "Payment method required" ? activateSubscription(subscription) : setCardManagerOpen(true)}>{renewalSource(subscription) === "Payment method required" ? "Add renewal card" : "Retry payment"}</button>
-              ) : subscription.cancelAtPeriodEnd ? (
-                <button className="secondary-button compact" onClick={() => setBilling((current) => ({ ...current, scenario: "active", subscription: { ...current.subscription, cancelAtPeriodEnd: false } }))}>Resume renewal</button>
+              ) : subscription.status === "cancel_at_period_end" ? (
+                <button className="secondary-button compact" onClick={() => setBilling((current) => ({ ...current, scenario: "active", subscription: { ...current.subscription, status: "active" } }))}>Resume renewal</button>
               ) : (
-                <button className="secondary-button compact" onClick={() => setBilling((current) => ({ ...current, scenario: "cancelled", subscription: { ...current.subscription, cancelAtPeriodEnd: true } }))}>Cancel renewal</button>
+                <button className="secondary-button compact" onClick={() => setBilling((current) => ({ ...current, scenario: "cancelled", subscription: { ...current.subscription, status: "cancel_at_period_end" } }))}>Cancel renewal</button>
               )}
-              {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (
+              {subscription.status === "active" && (
                 <button className="secondary-button compact" onClick={() => setShowPlans((value) => !value)}>Change plan</button>
               )}
             </div>
@@ -230,7 +246,7 @@ export function FundingPage({ billing, setBilling }) {
           <div className="subscription-plans">
             {subscriptionPlans.map((plan) => (
               <article key={plan.id}>
-                <div><h3>{plan.name}</h3><strong>${plan.priceUsd}<small>/month</small></strong></div>
+                <div><h3>{plan.name}</h3><strong>{formatCents(plan.priceCents)}<small>/month</small></strong></div>
                 <p>{plan.allowance.toLocaleString()} Credits each month</p>
                 <p>{plan.limits.fiveHour.toLocaleString()} / 5 hours · {plan.limits.weekly.toLocaleString()} / week</p>
                 <button className="secondary-button compact" onClick={() => setSubscriptionCheckout(plan)}>
@@ -252,7 +268,7 @@ export function FundingPage({ billing, setBilling }) {
         </div>
         <label className="save-card-option renewal-balance-option">
           <input type="checkbox" checked={walletFirst} onChange={(event) => setWalletFirst(event.target.checked)} />
-          <span><strong>Use Dollar balance first</strong><small>${billing.balances.dollars.toFixed(2)} available · one renewal uses either Dollar balance or card, without split payment.</small></span>
+          <span><strong>Use Dollar balance first</strong><small>{formatCents(billing.balances.dollarCents)} available · one renewal uses either Dollar balance or card, without split payment.</small></span>
         </label>
         {preferredCard ? (
           <div className="saved-payment-method">
@@ -290,7 +306,7 @@ export function FundingPage({ billing, setBilling }) {
         <BalanceCard
           icon={<CurrencyCircleDollar size={20} />}
           label="Dollar balance"
-          value={`$${totals.dollarBalance.toFixed(2)}`}
+          value={formatCents(totals.dollarBalanceCents)}
           note="For PAYG usage or subscription"
         />
         <BalanceCard
@@ -375,7 +391,7 @@ export function FundingPage({ billing, setBilling }) {
 
           <aside className="panel order-summary">
           <span className="eyebrow">Dollar balance · estimated</span>
-          <h2>${receivedAmount.toFixed(2)}</h2>
+          <h2>{formatCents(receivedCents)}</h2>
           <p>Balance added</p>
           <div className="summary-line">
             <span>Method</span>
@@ -387,15 +403,15 @@ export function FundingPage({ billing, setBilling }) {
           </div>
           <div className="summary-line">
             <span>Platform fee</span>
-            <strong>{method.providerCalculatedFee ? "Calculated by provider" : `$${paymentFee.toFixed(2)} (${method.feeRate * 100}%)`}</strong>
+            <strong>{method.providerCalculatedFee ? "Calculated by provider" : `${formatCents(paymentFeeCents)} (${method.feeRate * 100}%)`}</strong>
           </div>
           <div className="summary-line">
             <span>Network fee</span>
-            <strong>${networkFee.toFixed(2)}</strong>
+            <strong>{formatCents(networkFeeCents)}</strong>
           </div>
           <div className="summary-total">
             <span>You receive</span>
-            <strong>${receivedAmount.toFixed(2)} Dollar balance</strong>
+            <strong>{formatCents(receivedCents)} Dollar balance</strong>
           </div>
           <button className="primary-button" onClick={() => setCheckoutOpen(true)}>
             Continue <ArrowRight size={17} />
@@ -478,7 +494,7 @@ export function FundingPage({ billing, setBilling }) {
             <div className="checkout-review">
               <span><b>Method</b>{method.name}</span>
               <span><b>Payment</b>{paymentAmount}</span>
-              <span><b>Balance added</b>${receivedAmount.toFixed(2)}</span>
+              <span><b>Balance added</b>{formatCents(receivedCents)}</span>
             </div>
             <div className="form-actions">
               <button className="secondary-button" onClick={() => setCheckoutOpen(false)}>Cancel</button>
@@ -499,7 +515,7 @@ export function FundingPage({ billing, setBilling }) {
               <span><b>Plan</b>{subscriptionCheckout.name}</span>
               <span><b>Monthly allowance</b>{subscriptionCheckout.allowance.toLocaleString()} Credits</span>
               <span><b>Usage limits</b>{subscriptionCheckout.limits.fiveHour.toLocaleString()} / 5 hours · {subscriptionCheckout.limits.weekly.toLocaleString()} / week</span>
-              <span><b>Monthly payment</b>${subscriptionCheckout.priceUsd}.00</span>
+              <span><b>Monthly payment</b>{formatCents(subscriptionCheckout.priceCents)}</span>
               <span><b>Payment source</b>{renewalSource(subscriptionCheckout)}</span>
               <span><b>Referral reward</b>Not eligible</span>
             </div>

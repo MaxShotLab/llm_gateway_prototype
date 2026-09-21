@@ -2,7 +2,7 @@ export const subscriptionPlans = [
   {
     id: "core",
     name: "Core",
-    priceUsd: 12,
+    priceCents: 1_200,
     allowance: 15_000_000,
     policyVersion: "2026-09-v1",
     limits: { fiveHour: 3_000_000, weekly: 12_000_000 },
@@ -10,7 +10,7 @@ export const subscriptionPlans = [
   {
     id: "plus",
     name: "Plus",
-    priceUsd: 20,
+    priceCents: 2_000,
     allowance: 30_000_000,
     policyVersion: "2026-09-v1",
     limits: { fiveHour: 5_000_000, weekly: 25_000_000 },
@@ -23,7 +23,7 @@ export const billingScenarioOptions = [
   { id: "active", label: "Active subscription" },
   { id: "low", label: "Allowance low" },
   { id: "exhausted", label: "Allowance exhausted" },
-  { id: "insufficient", label: "No usable Credits" },
+  { id: "insufficient", label: "No usable funding" },
   { id: "cancelled", label: "Cancelled at period end" },
   { id: "past_due", label: "Failed renewal + PAYG" },
 ];
@@ -31,7 +31,7 @@ export const billingScenarioOptions = [
 const defaultBalances = {
   free: 6_800_000,
   referral: 500_000,
-  dollars: 48.2,
+  dollarCents: 4_820,
 };
 
 export function createBillingScenario(scenario = "active") {
@@ -45,7 +45,7 @@ export function createBillingScenario(scenario = "active") {
   if (scenario === "insufficient") {
     return {
       ...base,
-      balances: { free: 0, referral: 0, dollars: 0 },
+      balances: { free: 0, referral: 0, dollarCents: 0 },
       subscription: {
         ...plan,
         status: "active",
@@ -62,7 +62,9 @@ export function createBillingScenario(scenario = "active") {
     ...base,
     subscription: {
       ...plan,
-      status: scenario === "past_due" ? "past_due" : "active",
+      status: scenario === "past_due"
+        ? "past_due"
+        : scenario === "cancelled" ? "cancel_at_period_end" : "active",
       used: scenario === "active" || scenario === "cancelled"
         ? 12_200_000
         : scenario === "low" ? 28_000_000 : plan.allowance,
@@ -72,13 +74,12 @@ export function createBillingScenario(scenario = "active") {
           ? { fiveHour: plan.limits.fiveHour, weekly: plan.limits.weekly }
           : { fiveHour: 2_800_000, weekly: 12_200_000 },
       renewsAt: "Oct 12, 2026",
-      cancelAtPeriodEnd: scenario === "cancelled",
     },
   };
 }
 
 export function getBillingTotals(billing) {
-  const subscriptionRemaining = billing.subscription?.status === "active"
+  const subscriptionRemaining = ["active", "cancel_at_period_end"].includes(billing.subscription?.status)
     ? Math.max(billing.subscription.allowance - billing.subscription.used, 0)
     : 0;
   const windowRemaining = getSubscriptionWindows(billing.subscription)
@@ -87,19 +88,19 @@ export function getBillingTotals(billing) {
     ? Math.min(subscriptionRemaining, ...windowRemaining)
     : 0;
   const promotionalCredits = billing.balances.free + billing.balances.referral;
-  const dollarBalance = billing.balances.dollars;
+  const dollarBalanceCents = billing.balances.dollarCents;
 
   return {
     subscriptionRemaining,
     subscriptionAvailable,
     promotionalCredits,
-    dollarBalance,
-    hasUsableFunds: subscriptionAvailable > 0 || promotionalCredits > 0 || dollarBalance > 0,
+    dollarBalanceCents,
+    hasUsableFunds: subscriptionAvailable > 0 || promotionalCredits > 0 || dollarBalanceCents > 0,
   };
 }
 
 export function getSubscriptionWindows(subscription) {
-  if (!subscription || subscription.status !== "active") return [];
+  if (!subscription || !["active", "cancel_at_period_end"].includes(subscription.status)) return [];
   return [
     {
       id: "fiveHour",
@@ -129,8 +130,8 @@ export const paymentMethods = [
     name: "Crypto",
     detail: "LI.FI on-chain",
     feeRate: 0.05,
-    fixedFee: 0,
-    networkFee: 0,
+    fixedFeeCents: 0,
+    networkFeeCents: 0,
     settlement: "On-chain settlement",
   },
   {
@@ -138,7 +139,7 @@ export const paymentMethods = [
     name: "Card",
     detail: "Visa, Mastercard · provider checkout",
     feeRate: 0,
-    fixedFee: 0,
+    fixedFeeCents: 0,
     providerCalculatedFee: true,
     settlement: "Provider card checkout",
   },
@@ -150,7 +151,7 @@ export const preferredPaymentMethod = {
   expires: "08/29",
 };
 
-export const subscriptionInvoices = [
+export const starterSubscriptionInvoices = [
   {
     id: "INV-2026-0612",
     date: "Jun 12, 2026",

@@ -268,6 +268,8 @@ Anthropic- or Gemini-compatible customer APIs are not included in Phase 2.
   pricing.
 - Charge renewals from Dollar balance first when enabled and sufficient;
   otherwise use a tokenized saved card. Do not split one renewal.
+- Apply the same rule to initial purchase and create each paid period and
+  allowance exactly once.
 - Keep subscription Credits, promotional Credits, and Dollar balance separate.
 - Show subscription usage windows, renewal state, invoices, and PAYG fallback.
 
@@ -351,6 +353,7 @@ Required alignment work:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Subscription implementation contract | Clarified that initial purchase and renewal share one full-source payment rule and create each period and allowance exactly once. |
 | 2026-09-21 | Two-unit billing model | Replaced funded Credits with Dollar balance while retaining Credits for usage metering and promotional allowances. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
 | 2026-07-02 | Prototype navigation alignment | Aligned navigation with current Phase 1 surfaces and moved Agents/Toolkits to Experimental coming soon. |

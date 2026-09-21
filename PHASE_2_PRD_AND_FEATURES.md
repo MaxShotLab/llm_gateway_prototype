@@ -155,43 +155,21 @@ Must-do features:
 - Send renewal, failed-payment, allowance-low, and allowance-exhausted states
   to the UI.
 
-Recommended implementation algorithm:
+Implementation contract:
 
-1. Resolve account entitlement before each billable request.
-2. Estimate the maximum required cost from selected model, route, and request
-   limits.
-3. Check active subscription status and remaining allowance for the current
-   billing period.
-4. Reserve estimated cost from subscription allowance first.
-5. If subscription allowance is insufficient, reserve the remainder from free
-   Credits, referral Credits, then Dollar balance at the versioned rate.
-6. Reject the request before provider execution if neither source can cover the
-   estimated cost.
-7. Execute the request through the gateway.
-8. Convert the gateway metering event into final user-facing cost.
-9. Reconcile the reservation:
-   - deduct actual cost from subscription allowance first;
-   - deduct overflow from promotional Credits, then Dollar balance;
-   - release unused reservation;
-   - create exactly one usage record.
-10. On renewal, charge the full price to Dollar balance when preferred and
-    sufficient; otherwise charge the full price to the saved card. No split
-    payment is supported.
-11. After successful payment, create a new subscription-period Credit bucket
-    and do not merge it with Dollar balance or promotional Credit buckets.
-12. On cancellation, keep the current period active until period end and stop
-    the next renewal.
-13. Apply plan changes at the next renewal without prorated Credit refunds.
-14. On failed renewal payment, do not create a new allowance bucket. Existing
-    Dollar balance and promotional Credits remain usable immediately.
-15. Count gross Dollar-equivalent cost against API-key limits at the versioned
-    request rate, regardless of funding source.
-16. Gate subscription usage by the lowest remaining amount across the 5-hour,
-    weekly, and billing-period windows.
-17. At 100% of a subscription window, use promotional Credits or Dollar balance
-    until the window resets.
-18. Version plan limits and Credit-to-Dollar rates so future protocol changes
-    do not rewrite active or historical subscription periods.
+- `SUBSCRIPTION_FEATURE_REQUIREMENTS.md` is authoritative for the state model,
+  payment algorithm, idempotency, records, precision, and acceptance criteria.
+- Initial purchase and renewal use the same full-source rule: Dollar balance
+  first when enabled and sufficient, otherwise saved card; never split.
+- One idempotent billing operation creates exactly one successful payment,
+  invoice, subscription period, and allowance bucket.
+- Subscription states are `pending_payment`, `active`,
+  `cancel_at_period_end`, `past_due`, and `ended`.
+- Credits are integers. User-funded amounts and plan prices use integer cents;
+  sub-cent request debits use integer microdollars.
+- Request charging consumes subscription Credits, free Credits, referral
+  Credits, then Dollar balance and records Credit cost separately from Dollar
+  debit.
 
 Minimum ledger buckets:
 
@@ -205,14 +183,10 @@ Minimum ledger buckets:
 Subscription allowance is not withdrawable, refundable as credits, or
 redeemable back to fiat or crypto.
 
-Automatic monthly renewal supports Dollar-balance-first payment with a
-provider-managed card fallback. Crypto remains a one-time Dollar-balance top-up
-method. Subscription payments do not generate referral rewards.
-
-There are no trials or refunds. Cancellation disables the next billing cycle
-only; the current paid period remains active. Payment execution details follow
-the provider interface, notifications are in-app only, and administrative
-billing operations are deferred.
+There are no trials, refunds, split payments, or subscription referral rewards.
+Cancellation disables the next billing cycle only; the current paid period
+remains active. Notifications are in-app only, and administrative billing
+operations are deferred.
 
 ## 5. Phase 2 Acceptance Criteria
 
@@ -283,6 +257,7 @@ These need product discussion before Phase 2 requirements are finalized:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Subscription implementation contract | Added canonical states, identical initial/renewal payment rules, idempotent charge-and-allowance creation, billing records, and fixed-point precision; made the standalone subscription requirements authoritative for implementation details. |
 | 2026-09-21 | Two-unit billing model | Defined Dollar balance for user-funded value and Credits for metering and allowances; added Dollar-balance-first subscription payment, card fallback, and no split payment. |
 | 2026-09-21 | Account usage summary alignment | Moved the compact usage summary from Chat to the expandable account menu and retained full details in Usage. |
 | 2026-09-21 | Subscription limits and billing surfaces | Added card prerequisites, preferred payment, invoices, separate PAYG/subscription usage, versioned 5-hour and weekly windows, and in-app 90% warnings. |

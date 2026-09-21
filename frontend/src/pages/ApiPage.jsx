@@ -18,7 +18,8 @@ import {
 } from "../data/apiData";
 
 const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value);
-const formatDollars = (value) => `$${Number(value).toFixed(2)}`;
+const formatDollarCents = (value) => `$${(value / 100).toFixed(2)}`;
+const formatDollarMicros = (value) => `$${(value / 1_000_000).toFixed(6)}`;
 
 export function ApiPage() {
   const [keys, setKeys] = useState(starterApiKeys);
@@ -53,10 +54,10 @@ export function ApiPage() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const name = form.get("name").trim();
-    const dailyLimit = Number(form.get("dailyLimit")) || 0;
-    const monthlyLimit = Number(form.get("monthlyLimit")) || 0;
+    const dailyLimitCents = Math.round((Number(form.get("dailyLimit")) || 0) * 100);
+    const monthlyLimitCents = Math.round((Number(form.get("monthlyLimit")) || 0) * 100);
     const expires = form.get("expires") || "Never";
-    const created = createMockApiKey(name, dailyLimit, monthlyLimit, expires, keys.length + 1);
+    const created = createMockApiKey(name, dailyLimitCents, monthlyLimitCents, expires, keys.length + 1);
 
     setKeys((current) => [...current, created.key]);
     setSelectedKeyId(created.key.id);
@@ -67,11 +68,11 @@ export function ApiPage() {
   const updateLimit = (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const dailyLimit = Number(form.get("dailyLimit")) || 0;
-    const monthlyLimit = Number(form.get("monthlyLimit")) || 0;
+    const dailyLimitCents = Math.round((Number(form.get("dailyLimit")) || 0) * 100);
+    const monthlyLimitCents = Math.round((Number(form.get("monthlyLimit")) || 0) * 100);
     setKeys((current) =>
       current.map((item) =>
-        item.id === selectedKey.id ? { ...item, dailyLimit, monthlyLimit } : item,
+        item.id === selectedKey.id ? { ...item, dailyLimitCents, monthlyLimitCents } : item,
       ),
     );
   };
@@ -126,8 +127,8 @@ export function ApiPage() {
 
         <div className="key-list">
           {keys.map((item) => {
-            const limitPercent = item.monthlyLimit
-              ? Math.min((item.spent / item.monthlyLimit) * 100, 100)
+            const limitPercent = item.monthlyLimitCents
+              ? Math.min((item.spentCents / item.monthlyLimitCents) * 100, 100)
               : 0;
 
             return (
@@ -145,7 +146,7 @@ export function ApiPage() {
                 </div>
                 <div className="key-limit">
                   <span>
-                    {formatDollars(item.spent)} of {item.monthlyLimit ? formatDollars(item.monthlyLimit) : "no limit"}
+                    {formatDollarCents(item.spentCents)} of {item.monthlyLimitCents ? formatDollarCents(item.monthlyLimitCents) : "no limit"}
                   </span>
                   <i><b style={{ width: `${limitPercent}%` }} /></i>
                 </div>
@@ -189,11 +190,11 @@ export function ApiPage() {
               <ApiMetric label="Output tokens" value={formatNumber(selectedKey.outputTokens)} />
               <ApiMetric
                 label="Daily remaining"
-                value={selectedKey.dailyLimit ? formatDollars(Math.max(selectedKey.dailyLimit - selectedKey.dailySpent, 0)) : "Unlimited"}
+                value={selectedKey.dailyLimitCents ? formatDollarCents(Math.max(selectedKey.dailyLimitCents - selectedKey.dailySpentCents, 0)) : "Unlimited"}
               />
               <ApiMetric
                 label="Monthly remaining"
-                value={selectedKey.monthlyLimit ? formatDollars(Math.max(selectedKey.monthlyLimit - selectedKey.spent, 0)) : "Unlimited"}
+                value={selectedKey.monthlyLimitCents ? formatDollarCents(Math.max(selectedKey.monthlyLimitCents - selectedKey.spentCents, 0)) : "Unlimited"}
               />
             </div>
             <form className="spending-limit-form" onSubmit={updateLimit}>
@@ -206,7 +207,7 @@ export function ApiPage() {
                     type="number"
                     min="0"
                     step="1"
-                    defaultValue={selectedKey.dailyLimit}
+                    defaultValue={selectedKey.dailyLimitCents / 100}
                     key={`${selectedKey.id}-daily`}
                     aria-label="Daily spending limit"
                   />
@@ -221,7 +222,7 @@ export function ApiPage() {
                     type="number"
                     min="0"
                     step="1"
-                    defaultValue={selectedKey.monthlyLimit}
+                    defaultValue={selectedKey.monthlyLimitCents / 100}
                     key={selectedKey.id}
                     aria-label="Monthly spending limit"
                   />
@@ -283,7 +284,7 @@ export function ApiPage() {
                         <td>{formatNumber(item.inputTokens)} / {formatNumber(item.outputTokens)}</td>
                         <td>{item.latency}</td>
                         <td>{item.creditCost}</td>
-                        <td>{item.dollarEquivalent}</td>
+                        <td>{formatDollarMicros(item.dollarEquivalentMicros)}</td>
                         <td>{item.funding}</td>
                         <td><span className={`status-pill ${item.status === "Succeeded" ? "success" : "failed"}`}><i /> {item.status}</span></td>
                       </tr>

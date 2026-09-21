@@ -64,7 +64,50 @@ because they represent different units and accounting treatment.
 | Referral rewards | Confirmed referral reward | Configured policy | Third |
 | Dollar balance (USD) | User top-up | No expiry | Last; converted at the versioned request rate |
 
-## 4. Recommended Billing Algorithm
+## 4. Subscription Lifecycle And Billing Algorithm
+
+### 4.1 Canonical States
+
+| State | Meaning | Allowed next states |
+|---|---|---|
+| `pending_payment` | Initial payment has started; no allowance is available | `active`, `ended` |
+| `active` | Current paid period and allowance are available | `cancel_at_period_end`, `past_due`, `ended` |
+| `cancel_at_period_end` | Current period remains active; next renewal is disabled | `active`, `ended` |
+| `past_due` | Renewal failed; no new period or allowance was created | `active`, `ended` |
+| `ended` | No active subscription entitlement | `pending_payment` |
+
+A scheduled plan change is stored separately as `pending_plan_id`; it does not
+change the current subscription state or allowance before renewal.
+
+### 4.2 Initial Purchase And Renewal
+
+Initial purchase and renewal use the same payment-source rule:
+
+1. Create one stable idempotency key from account, operation type, plan, and
+   target billing period.
+2. If Dollar-balance-first is enabled and the full plan price is available,
+   debit the complete price from Dollar balance.
+3. Otherwise charge the complete price to the saved card. Do not partially
+   debit Dollar balance and charge the remainder to card.
+4. If neither source can pay the full price, initial purchase ends without an
+   entitlement and renewal enters `past_due`.
+5. After confirmed payment, atomically create or finalize exactly one payment
+   record, invoice, subscription period, and subscription Credit bucket.
+6. Replaying a command or payment-provider webhook with the same idempotency
+   key must return the original result without another debit, card charge,
+   invoice, period, or allowance grant.
+7. On renewal failure, do not create a new period or allowance. Promotional
+   Credits and Dollar balance remain available for PAYG.
+8. Cancellation changes `active` to `cancel_at_period_end`; resuming before
+   period end returns it to `active`. At period end it becomes `ended`.
+9. Apply a pending plan change only after the next successful full payment. Do
+   not prorate or refund unused allowance as Credits.
+
+An active user may remove the saved card. Renewal then uses Dollar balance only
+when Dollar-balance-first is enabled and the full price is available; otherwise
+renewal fails and enters `past_due`.
+
+### 4.3 Request Usage Charging
 
 1. Resolve the account entitlement before each billable request.
 2. Estimate the maximum required cost from the selected model, route, and
@@ -74,37 +117,38 @@ because they represent different units and accounting treatment.
 4. Reserve the estimated cost from subscription allowance first.
 5. If the allowance is insufficient, reserve the remainder from free Credits,
    referral Credits, then Dollar balance at the versioned request rate.
-6. Reject the request before provider execution if neither source covers the
-   estimated cost.
-7. Execute the request through the gateway.
-8. Convert the gateway metering event into the final user-facing cost.
-9. Reconcile the reservation:
-   - deduct actual cost from subscription allowance first;
-   - deduct overflow from promotional Credits, then Dollar balance;
-   - release unused reservation;
-   - create exactly one usage record.
-10. On renewal, charge the entire plan price to Dollar balance when the user
-    has enabled Dollar-balance-first and sufficient funds; otherwise charge the
-    entire amount to the saved card. Do not split one renewal across sources.
-11. After successful payment, create a new subscription-period Credit bucket.
-    Do not merge it with Dollar balance or promotional Credit buckets.
-12. On cancellation, keep the current period active until its end and stop the
-    next renewal.
-13. Apply plan changes at the next renewal. Do not prorate or refund unused
-    allowance as Credits.
-14. On failed renewal payment, do not create a new allowance bucket. Existing
-    Dollar balance and promotional Credits remain usable immediately.
-15. Count the gross Dollar-equivalent cost of each API request against API-key
-    spending limits using the versioned rate at request time, regardless of
-    which funding source pays it.
-16. Before using subscription allowance, check the configured 5-hour, weekly,
-    and billing-period limits. The available subscription amount is the lowest
-    remaining amount across those windows.
-17. When a subscription window reaches 90%, create one in-app warning for that
-    window. When it reaches 100%, stop using subscription allowance until its
-   reset and fall back to promotional Credits or Dollar balance when available.
-18. Store the plan, limit, and Credit-to-Dollar rate version on each relevant
-    record so later protocol changes do not alter historical limits or usage.
+6. Reject the request before provider execution if the combined eligible
+   sources cannot cover the estimated cost.
+7. Execute the request and convert its metering event into final user-facing
+   Credit cost and Dollar debit.
+8. Reconcile the reservation once: deduct actual subscription Credits first,
+   deduct overflow from promotional Credits then Dollar balance, release unused
+   reservation, and create exactly one usage record.
+9. Count gross Dollar-equivalent cost against API-key spending limits at the
+   versioned request rate regardless of funding source.
+10. Gate subscription usage by the lowest remaining amount across 5-hour,
+    weekly, and billing-period limits.
+11. At 90% of a subscription window, create one in-app warning. At 100%, stop
+    using subscription allowance until reset and use PAYG funding when
+    available.
+12. Store plan, limit, and Credit-to-Dollar rate versions so later changes do
+    not alter active or historical periods.
+
+### 4.4 Precision And Minimum Records
+
+- Store Credits as integers.
+- Store funded balances, top-ups, plan prices, and spending limits as integer
+  cents. Store sub-cent request Dollar debits and equivalents as integer
+  microdollars. Never use floating-point values for ledger arithmetic.
+- Store the rounding policy and rate version used for every Credit-to-Dollar
+  conversion.
+- Each subscription payment/invoice records: account, plan and plan version,
+  billing period, amount and currency, payment source, Dollar-balance debit,
+  card charge, provider reference when applicable, status, timestamps, and
+  idempotency key.
+- Each subscription period records: period ID, start and end timestamps,
+  subscription state, plan and limit versions, granted allowance, consumed
+  allowance, and linked payment/invoice IDs.
 
 ## 5. Payment And Reward Rules
 
@@ -137,6 +181,7 @@ because they represent different units and accounting treatment.
 ## 6. Acceptance Criteria
 
 - A user can compare plans and subscribe to one plan.
+- Initial purchase and renewal follow the same full-source payment rule.
 - A user can change plan or cancel renewal and see the resulting status.
 - A billable request consumes subscription allowance before other credit
   buckets.
@@ -147,6 +192,8 @@ because they represent different units and accounting treatment.
 - Final usage cost is reconciled against the reservation without double
   charging and unused reservation is released.
 - Renewal starts a new allowance period without changing historical usage.
+- Duplicate commands or provider webhooks cannot create another charge,
+  invoice, subscription period, or allowance grant.
 - Failed-payment and cancellation states are visible and do not corrupt Dollar
   or Credit balances.
 - The UI shows Credit cost, actual Dollar debit, and funding source separately.
@@ -160,6 +207,8 @@ because they represent different units and accounting treatment.
   additional subscription allowance.
 - A tokenized preferred card can be selected for renewal, and subscription
   invoices are visible separately from PAYG receipts.
+- Every successful initial purchase or renewal produces one invoice showing
+  whether Dollar balance or card funded it.
 - API-key limits use gross Dollar-equivalent cost regardless of funding source.
 - A renewal uses the full Dollar balance charge or the full saved-card charge,
   never a split payment.
@@ -181,8 +230,9 @@ in-app only.
 
 | Date | Change |
 |---|---|
+| 2026-09-21 | Added the canonical subscription state machine, identical initial-purchase and renewal source rules, idempotent payment and allowance creation, minimum billing records, fixed-point precision, card-removal behavior, and payment-source invoices. |
 | 2026-09-21 | Replaced funded Credits with a two-unit model: Dollar balance for user funds and subscription payment, Credits for usage and allowances; added Dollar-balance-first renewal with card fallback and no split payment. |
-| 2026-09-21 | Moved the compact usage summary from Chat to the account menu and clarified that window availability gates the combined usable balance. |
+| 2026-09-21 | Moved the compact usage summary from Chat to the account menu and clarified that window availability gates available funding. |
 | 2026-09-21 | Added card prerequisites, preferred payment method, invoices, separate PAYG/subscription views, versioned 5-hour and weekly limits, and in-app 90% warnings. Explicitly excluded trials, refunds, and admin operations. |
 | 2026-09-21 | Locked the monthly allowance-only model, immediate PAYG fallback, renewal rules, payment rails, API-limit accounting, and referral exclusion. |
 | 2026-09-21 | Extracted subscription requirements from the Phase 2 PRD into a standalone document. |
