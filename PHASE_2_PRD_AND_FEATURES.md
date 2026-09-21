@@ -17,7 +17,7 @@ Consistency notes:
 - `PHASE_1_PRD_AND_FEATURES.md` does not define Phase 2 details, but clearly
   marks Agents and Toolkits as deferred from Phase 1.
 - Phase 2 must extend the Phase 1 framework, account model, usage model, and
-  prepaid credit model. It must not replace them.
+  prepaid Dollar balance and Credit metering model. It must not replace them.
 
 ## 2. Phase 2 Goal
 
@@ -39,7 +39,7 @@ Phase 1 foundation -> advanced chat controls -> memory/prompts/agents/skills -> 
 | Prompts | Personal prompt library with variables and insertion into chat |
 | Agents | Personal agents with model, instructions, knowledge, skills, tools, and usage |
 | Toolkits | Skills, fixed tool catalog, and knowledge/tool configuration |
-| Subscription | Optional recurring plans alongside pay-as-you-go credits |
+| Subscription | Optional recurring plans alongside Dollar-funded pay-as-you-go |
 | Gateway logs | Content-free request logs, provider visibility, failover details, privacy-route eligibility |
 
 ## 4. Phase 2 Feature Extraction
@@ -120,12 +120,13 @@ Detailed requirements are maintained in
 Phase 2 adds a second pay-to-use method:
 
 ```text
-Pay-as-you-go credits + optional subscription plan
+Dollar-funded pay-as-you-go + optional subscription plan
 ```
 
-Pay-as-you-go remains the default usage model. Subscription is an optional
-account entitlement that grants a configured monthly Credit allowance. It does
-not change per-request pricing.
+Pay-as-you-go remains the default usage model. Dollars represent user-funded
+value; Credits measure LLM usage and subscription or promotional allowances.
+Subscription is an optional account entitlement that grants a configured
+monthly Credit allowance. It does not change per-request pricing.
 
 Must-do features:
 
@@ -135,14 +136,13 @@ Must-do features:
 - Cancel renewal.
 - Show current plan, renewal date, allowance, used amount, and remaining
   amount.
-- Apply subscription allowance before paid pay-as-you-go credits.
-- Fall back to pay-as-you-go credits when subscription allowance is exhausted,
-  if the user has usable credits.
-- Block usage when both subscription allowance and usable credits are
-  insufficient.
-- Keep subscription allowance, free credits, paid credits, and referral rewards
-  as separate ledger buckets.
-- Show usage split by subscription allowance and pay-as-you-go credits.
+- Apply subscription allowance before promotional Credits and Dollar balance.
+- Fall back to free Credits, referral Credits, then Dollar balance when the
+  subscription allowance is exhausted.
+- Block usage when all eligible Credit and Dollar sources are insufficient.
+- Keep subscription allowance, free Credits, referral Credits, and Dollar
+  balance as separate ledger buckets.
+- Show Credit cost and actual Dollar debit separately.
 - Show configurable 5-hour and weekly subscription limits in the expandable
   account menu and full remaining amounts and reset times in Usage.
 - Warn in-app at 90% consumption for each subscription window.
@@ -150,6 +150,8 @@ Must-do features:
   top-ups, and receipts.
 - Support a tokenized preferred card for recurring billing before subscription
   launch.
+- Allow a full subscription charge from Dollar balance, with saved card as
+  fallback. Do not split one renewal across both sources.
 - Send renewal, failed-payment, allowance-low, and allowance-exhausted states
   to the UI.
 
@@ -161,31 +163,35 @@ Recommended implementation algorithm:
 3. Check active subscription status and remaining allowance for the current
    billing period.
 4. Reserve estimated cost from subscription allowance first.
-5. If subscription allowance is insufficient, reserve the remainder from usable
-   pay-as-you-go credits.
+5. If subscription allowance is insufficient, reserve the remainder from free
+   Credits, referral Credits, then Dollar balance at the versioned rate.
 6. Reject the request before provider execution if neither source can cover the
    estimated cost.
 7. Execute the request through the gateway.
 8. Convert the gateway metering event into final user-facing cost.
 9. Reconcile the reservation:
    - deduct actual cost from subscription allowance first;
-   - deduct overflow from pay-as-you-go credits;
+   - deduct overflow from promotional Credits, then Dollar balance;
    - release unused reservation;
    - create exactly one usage record.
-10. On renewal, create a new subscription-period ledger bucket and do not merge
-    it with existing pay-as-you-go credit buckets.
-11. On cancellation, keep the current period active until period end and stop
+10. On renewal, charge the full price to Dollar balance when preferred and
+    sufficient; otherwise charge the full price to the saved card. No split
+    payment is supported.
+11. After successful payment, create a new subscription-period Credit bucket
+    and do not merge it with Dollar balance or promotional Credit buckets.
+12. On cancellation, keep the current period active until period end and stop
     the next renewal.
-12. Apply plan changes at the next renewal without prorated Credit refunds.
-13. On failed renewal payment, do not create a new allowance bucket. Existing
-    pay-as-you-go Credits remain usable immediately.
-14. Count gross Credit cost against API-key limits regardless of funding source.
-15. Gate subscription usage by the lowest remaining amount across the 5-hour,
+13. Apply plan changes at the next renewal without prorated Credit refunds.
+14. On failed renewal payment, do not create a new allowance bucket. Existing
+    Dollar balance and promotional Credits remain usable immediately.
+15. Count gross Dollar-equivalent cost against API-key limits at the versioned
+    request rate, regardless of funding source.
+16. Gate subscription usage by the lowest remaining amount across the 5-hour,
     weekly, and billing-period windows.
-16. At 100% of a subscription window, use pay-as-you-go Credits when available
+17. At 100% of a subscription window, use promotional Credits or Dollar balance
     until the window resets.
-17. Version plan limits so future protocol changes do not rewrite active or
-    historical subscription periods.
+18. Version plan limits and Credit-to-Dollar rates so future protocol changes
+    do not rewrite active or historical subscription periods.
 
 Minimum ledger buckets:
 
@@ -194,14 +200,14 @@ Minimum ledger buckets:
 | Subscription allowance | Active plan period | End of billing period | First |
 | Free credits | Registered-user grant | Configured policy | Second |
 | Referral rewards | Confirmed referral reward | Configured policy | Third |
-| Paid credits | User top-up | No expiry | Last |
+| Dollar balance (USD) | User top-up | No expiry | Last; converted at the versioned request rate |
 
 Subscription allowance is not withdrawable, refundable as credits, or
 redeemable back to fiat or crypto.
 
-Automatic monthly renewal requires card billing. Crypto remains a one-time
-pay-as-you-go top-up method. Subscription payments do not generate referral
-rewards.
+Automatic monthly renewal supports Dollar-balance-first payment with a
+provider-managed card fallback. Crypto remains a one-time Dollar-balance top-up
+method. Subscription payments do not generate referral rewards.
 
 There are no trials or refunds. Cancellation disables the next billing cycle
 only; the current paid period remains active. Payment execution details follow
@@ -223,7 +229,7 @@ Phase 2 is acceptable when:
 7. Gateway logs expose routing and failover details without storing prompt or
    response content.
 8. A user can subscribe, use allowance, exhaust allowance, fall back to
-   pay-as-you-go credits, and see the ledger split correctly.
+   promotional Credits or Dollar balance, and see the ledger split correctly.
 9. Subscription renewal, cancellation, and failed-payment states are reflected
    without corrupting pay-as-you-go balances.
 10. Subscription usage windows, invoices, and payment history are visible and
@@ -277,6 +283,7 @@ These need product discussion before Phase 2 requirements are finalized:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Two-unit billing model | Defined Dollar balance for user-funded value and Credits for metering and allowances; added Dollar-balance-first subscription payment, card fallback, and no split payment. |
 | 2026-09-21 | Account usage summary alignment | Moved the compact usage summary from Chat to the expandable account menu and retained full details in Usage. |
 | 2026-09-21 | Subscription limits and billing surfaces | Added card prerequisites, preferred payment, invoices, separate PAYG/subscription usage, versioned 5-hour and weekly windows, and in-app 90% warnings. |
 | 2026-09-21 | Subscription contract revision | Locked the monthly allowance-only model, immediate PAYG fallback, payment and cancellation rules, and Credit-based API-limit accounting. |

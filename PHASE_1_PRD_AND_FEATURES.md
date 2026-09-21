@@ -2,7 +2,7 @@
 
 **Status:** Draft for team discussion
 **Scope:** Phase 1 usage-based LLM Gateway release
-**Updated:** July 2, 2026
+**Updated:** September 21, 2026
 
 ## 1. Phase 1 Goal
 
@@ -21,7 +21,7 @@ version.
 | Surface | Phase 1 Scope |
 |---|---|
 | Chat | Multi-model chat with configured model list, history, temporary chat, and supported model capabilities |
-| Usage and billing | Free credits, paid credits, token histories, usage totals, balance, and spending limits |
+| Usage and billing | Dollar balance, promotional Credits, token histories, usage totals, and dollar spending limits |
 | Top-up | At least two configured top-up methods, including one fiat path |
 | Account | Email login and profile |
 | API keys | Multiple API keys with usage and limit controls |
@@ -53,7 +53,7 @@ Phase 1 must optimize for six complete paths:
 | Area | Must do in Phase 1 |
 |---|---|
 | Chat | Configured flagship/free model list, streaming chat, stop/retry/regenerate, history, search, file upload, model price/capability display, temporary chat, web search/reasoning toggles when supported |
-| Usage | Configurable registered-user free credits, paid credits after top-up, token histories, per-request costs, current-period totals, CSV export, chat/API split |
+| Usage | Configurable free/referral Credits, Dollar balance after top-up, token histories, per-request Credit cost and Dollar debit, current-period totals, CSV export, chat/API split |
 | Limits | Account limits, API-key limits, low-balance warning, hard block on exhausted balance/limit |
 | Top-up | At least two configured top-up methods, including one fiat path, receipts, status |
 | Account | Email login, profile, logout |
@@ -91,15 +91,17 @@ subscription credits, plan renewal, or subscription expiry in this version.
 
 Must-do features:
 
-- Usable spend balance and USD estimate.
+- Dollar balance for user-funded value.
 - Configurable free credits granted to registered users.
-- Paid credits added after user top-up.
-- Free and paid credits combined into one usable spend balance.
+- Dollar balance added after confirmed user top-up, net of disclosed fees.
+- Credits used only for metering, subscription allowance, and promotional
+  grants; Dollars and Credits are never combined into one balance.
 - Chat and API usage separated by source.
 - Token consumption history.
 - Current-period request, token, and cost totals.
 - Per-request records with timestamp, source, model, input tokens, output
-  tokens, cached tokens when available, and cost.
+  tokens, cached tokens when available, Credit cost, Dollar debit, and funding
+  source.
 - CSV export.
 - Top-up records and receipts.
 - Account-level daily and monthly spending limits.
@@ -109,10 +111,10 @@ Must-do features:
 
 Usage records must not store prompt or response content.
 
-The UI may show one combined usable balance, but the backend ledger must retain
-separate free-credit and paid-credit entries, including source, grant/top-up
-time, expiry policy, and consumption order. Expiring or free credits are
-consumed before paid credits.
+The backend ledger must retain separate Dollar, free-Credit, and referral-Credit
+entries, including source, event time, expiry policy, and consumption order.
+Free and referral Credits are consumed before Dollar balance. Dollar charges
+use the versioned Credit-to-Dollar rate recorded with each request.
 
 ## 7. Top-Up
 
@@ -125,18 +127,18 @@ Must-do top-up:
 - One confirmed fiat card payment path.
 - One additional configured method, preferably Base USDC or Base AIT through
   wallet connect or deposit address.
-- Quote, network fee, payment fee, expected credits, and final amount before
+- Quote, network fee, payment fee, expected Dollar balance, and final amount before
   confirmation.
 - Transaction status and top-up history.
-- Payment status, receipt, and credit arrival confirmation.
+- Payment status, receipt, and Dollar-balance arrival confirmation.
 
 The conversion must be explicit:
 
 ```text
-Pay $10, 10 USDC, or 10 AIT, subject to configured rates and fees -> receive estimated credits
+Pay $10, 10 USDC, or 10 AIT, subject to configured rates and fees -> receive estimated Dollar balance
 ```
 
-Top-up credits are spend-only inside Maxshot. Phase 1 does not support balance
+Dollar balance is spend-only inside Maxshot. Phase 1 does not support balance
 withdrawals, cash-out, refunds, or redemption back to fiat or crypto.
 
 ## 8. Account And Security
@@ -163,8 +165,8 @@ Must-do features:
 - Withhold rewards for failed top-ups and revoke or withhold rewards for
   abusive top-ups.
 
-Referral rewards are promotional credits. They must be tracked separately in
-the backend ledger and may be shown inside the combined usable spend balance.
+Referral rewards are promotional Credits. They must be tracked separately from
+Dollar balance and must not be shown as one combined balance.
 
 ## 10. API Keys
 
@@ -227,6 +229,7 @@ Phase 1 is acceptable when a test user can complete these paths end to end:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Two-unit billing model | Replaced funded Credits with Dollar balance, retained Credits for usage and promotional grants, separated per-request Credit cost from Dollar debit, and changed spending limits to dollars. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
 | 2026-07-02 | Prototype navigation alignment | Clarified that Agents and Toolkits are Experimental coming-soon prototype entries, not Phase 1 scope. |
 | 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |

@@ -1,5 +1,3 @@
-export const creditsPerUsd = 1_000_000;
-
 export const subscriptionPlans = [
   {
     id: "core",
@@ -33,7 +31,7 @@ export const billingScenarioOptions = [
 const defaultBalances = {
   free: 6_800_000,
   referral: 500_000,
-  paid: 48_200_000,
+  dollars: 48.2,
 };
 
 export function createBillingScenario(scenario = "active") {
@@ -47,7 +45,7 @@ export function createBillingScenario(scenario = "active") {
   if (scenario === "insufficient") {
     return {
       ...base,
-      balances: { free: 0, referral: 0, paid: 0 },
+      balances: { free: 0, referral: 0, dollars: 0 },
       subscription: {
         ...plan,
         status: "active",
@@ -88,13 +86,15 @@ export function getBillingTotals(billing) {
   const subscriptionAvailable = windowRemaining.length
     ? Math.min(subscriptionRemaining, ...windowRemaining)
     : 0;
-  const payg = Object.values(billing.balances).reduce((sum, value) => sum + value, 0);
+  const promotionalCredits = billing.balances.free + billing.balances.referral;
+  const dollarBalance = billing.balances.dollars;
 
   return {
     subscriptionRemaining,
     subscriptionAvailable,
-    payg,
-    usable: subscriptionAvailable + payg,
+    promotionalCredits,
+    dollarBalance,
+    hasUsableFunds: subscriptionAvailable > 0 || promotionalCredits > 0 || dollarBalance > 0,
   };
 }
 
@@ -176,7 +176,7 @@ export const starterFundingTransactions = [
     method: "Crypto · LI.FI",
     paid: "$25.00",
     fees: "$1.25",
-    credits: "23,750,000",
+    balanceAdded: "$23.75",
     status: "Completed",
     receipt: "RCPT-1048",
   },

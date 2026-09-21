@@ -84,7 +84,7 @@ Vite's default preview port, normally
 - Agent and skill builders.
 - Usage summaries and records.
 - API-key creation, one-time secret display, limits, logs, and revocation.
-- Free, paid, referral, and usable credit balances.
+- Dollar balance plus separate free and referral Credit balances.
 - Card, Alipay, USDC, and other cryptocurrency funding methods.
 - Mock checkout, transactions, receipts, and monthly spending limits.
 - Memory creation and deletion.

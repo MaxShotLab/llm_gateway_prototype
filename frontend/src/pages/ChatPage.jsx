@@ -85,13 +85,13 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const activeMessages = activeConversation?.messages || [];
   const billingTotals = getBillingTotals(billing);
   const billingNotice = billing.scenario === "insufficient"
-    ? { tone: "danger", text: "No usable Credits. Add Credits to continue." }
+    ? { tone: "danger", text: "No usable funding. Add funds to continue." }
     : billing.scenario === "past_due"
-      ? { tone: "neutral", text: "Renewal failed. Requests continue with PAYG Credits." }
+      ? { tone: "neutral", text: "Renewal failed. Requests continue with available PAYG funding." }
       : billing.scenario === "low"
-        ? { tone: "neutral", text: "Monthly allowance is low. PAYG Credits will take over automatically." }
+        ? { tone: "neutral", text: "Monthly allowance is low. PAYG funding will take over automatically." }
       : billing.scenario === "exhausted"
-        ? { tone: "neutral", text: "Monthly allowance used. Requests continue with PAYG Credits." }
+        ? { tone: "neutral", text: "Monthly allowance used. Requests continue with available PAYG funding." }
         : billing.scenario === "cancelled"
           ? { tone: "neutral", text: `Subscription ends ${billing.subscription.renewsAt}. Current Credits remain usable.` }
           : null;
@@ -203,7 +203,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
       onLoginRequired?.();
       return;
     }
-    if (billingTotals.usable <= 0) {
+    if (!billingTotals.hasUsableFunds) {
       onCreditsRequired?.();
       return;
     }

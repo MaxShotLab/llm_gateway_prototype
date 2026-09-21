@@ -87,9 +87,9 @@ const mockUsage = [
     model: "MiniMax-M3",
     input: "2,481",
     output: "3,147",
-    cost: "5,628",
     subscriptionCost: 5_628,
-    paygCost: 0,
+    paygCreditCost: 0,
+    dollarCharge: 0,
     funding: "Subscription (Phase 2)",
     status: "Charged",
   },
@@ -99,9 +99,9 @@ const mockUsage = [
     model: "GPT-5 mini",
     input: "1,907",
     output: "2,642",
-    cost: "4,549",
     subscriptionCost: 4_549,
-    paygCost: 0,
+    paygCreditCost: 0,
+    dollarCharge: 0,
     funding: "Subscription (Phase 2)",
     status: "Charged",
   },
@@ -111,10 +111,10 @@ const mockUsage = [
     model: "Claude Sonnet 4.6",
     input: "4,221",
     output: "9,885",
-    cost: "14,106",
     subscriptionCost: 10_000,
-    paygCost: 4_106,
-    funding: "Subscription + PAYG (Phase 2)",
+    paygCreditCost: 4_106,
+    dollarCharge: 0.004106,
+    funding: "Dollar balance",
     status: "Charged",
   },
   {
@@ -123,9 +123,9 @@ const mockUsage = [
     model: "Gemini 3.1 Pro",
     input: "2,814",
     output: "4,023",
-    cost: "6,837",
     subscriptionCost: 0,
-    paygCost: 6_837,
+    paygCreditCost: 6_837,
+    dollarCharge: 0,
     funding: "Free Credits",
     status: "Charged",
   },
@@ -135,9 +135,9 @@ const mockUsage = [
     model: "DeepSeek V4 Flash",
     input: "1,102",
     output: "1,398",
-    cost: "0",
     subscriptionCost: 0,
-    paygCost: 0,
+    paygCreditCost: 0,
+    dollarCharge: 0,
     funding: "Free model",
     status: "Free",
   },
@@ -320,7 +320,7 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
   const isLight = theme === "light";
   const visibleAuthHint =
     authHint || (!user ? "Log in to unlock Usage, API, Credits, and account features." : "");
-  const usableCredits = getBillingTotals(billing).usable;
+  const dollarBalance = getBillingTotals(billing).dollarBalance;
   const subscriptionWindows = getSubscriptionWindows(billing.subscription);
 
   return (
@@ -373,8 +373,8 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
           {user ? (
             <div className="topbar-account">
               <a className="credit-pill" href="#" onClick={(event) => { event.preventDefault(); onNavigate("topup"); }}>
-                {usableCredits.toLocaleString()} Credits
-                <small>Usable balance</small>
+                ${dollarBalance.toFixed(2)}
+                <small>Dollar balance</small>
               </a>
               <div className="account-menu-wrap">
                 <button
@@ -695,7 +695,7 @@ function UsagePage({ billing }) {
     usageTypes[row.source] && (
       billingView === "subscription"
         ? row.subscriptionCost > 0
-        : row.paygCost > 0 || row.funding === "Free model"
+        : row.paygCreditCost > 0 || row.funding === "Free model"
     ),
   );
 
@@ -720,13 +720,13 @@ function UsagePage({ billing }) {
             <MetricCard label="Next renewal" value={billing.subscription?.renewsAt || "No plan"} note="Cancellation stops next billing" />
           </section>
           {windows.some((window) => window.percent >= 90) && (
-            <div className="usage-limit-alert" role="status">A subscription usage window is above 90%. PAYG Credits take over when the limit is reached.</div>
+            <div className="usage-limit-alert" role="status">A subscription usage window is above 90%. PAYG funding takes over when the limit is reached.</div>
           )}
         </>
       ) : (
         <section className="metric-grid payg-usage-metrics">
-          <MetricCard label="PAYG balance" value={totals.payg.toLocaleString()} note="Credits available" />
-          <MetricCard label="Paid credits" value={billing.balances.paid.toLocaleString()} note="Confirmed top-ups" />
+          <MetricCard label="Dollar balance" value={`$${totals.dollarBalance.toFixed(2)}`} note="Available for usage or renewal" />
+          <MetricCard label="Promotional credits" value={totals.promotionalCredits.toLocaleString()} note="Free and referral Credits" />
           <MetricCard label="Free credits" value={billing.balances.free.toLocaleString()} note="Registered-user grant" />
           <MetricCard label="Referral rewards" value={billing.balances.referral.toLocaleString()} note="Promotional Credits" />
         </section>
@@ -803,15 +803,17 @@ function UsagePage({ billing }) {
                 <th>Model</th>
                 <th>Input</th>
                 <th>Output</th>
-                <th>Cost</th>
+                <th>Credit cost</th>
+                <th>Dollar debit</th>
                 <th>Funding source</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {visibleUsage.map((row) => {
-                const viewCost = billingView === "subscription" ? row.subscriptionCost : row.paygCost;
-                const funding = billingView === "subscription" ? "Subscription" : row.funding.replace(" (Phase 2)", "").replace("Subscription + ", "");
+                const viewCost = billingView === "subscription" ? row.subscriptionCost : row.paygCreditCost;
+                const dollarCharge = billingView === "subscription" ? 0 : row.dollarCharge;
+                const funding = billingView === "subscription" ? "Subscription" : row.funding;
                 return (
                 <tr key={`${billingView}-${row.time}-${row.model}`}>
                   <td>{row.time}</td>
@@ -820,6 +822,7 @@ function UsagePage({ billing }) {
                   <td>{row.input}</td>
                   <td>{row.output}</td>
                   <td>{viewCost.toLocaleString()}</td>
+                  <td>${dollarCharge.toFixed(6)}</td>
                   <td>{funding}</td>
                   <td>
                     <span className={`status-pill ${row.status === "Free" ? "neutral" : "success"}`}>

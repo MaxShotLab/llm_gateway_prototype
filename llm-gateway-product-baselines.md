@@ -2,7 +2,7 @@
 
 **Status:** Authoritative product specification
 **Scope:** Phase 1 usage-based release and Phase 2 advanced features
-**Updated:** July 2, 2026
+**Updated:** September 21, 2026
 
 This document is the single source of truth for Maxshot LLM Gateway product
 design. It defines the product, users, framework decisions, feature scope,
@@ -28,8 +28,8 @@ Maxshot provides:
 
 - Multi-model web chat.
 - An OpenAI-compatible API gateway.
-- Prepaid usage, free and paid credits, account funding, referral rewards, and
-  spending limits.
+- Prepaid Dollar balance, promotional Credits, account funding, referral
+  rewards, and spending limits.
 - Advanced reusable prompts, agents, skills, and memory after Phase 1.
 
 Users access the configured model catalog through chat or API keys. Maxshot
@@ -145,26 +145,26 @@ Account deletion is not supported.
 
 ### 4.5 Credits And Funding
 
-- Maintain a prepaid balance denominated in credits.
+- Maintain a prepaid Dollar balance separately from Credit allowances.
 - Grant configurable free credits to registered users.
-- Add paid credits after successful top-up.
-- Show one usable spend balance while retaining separate free-credit and
-  paid-credit ledger entries internally.
-- Show the estimated USD value.
-- Consume expiring or free credits before paid credits.
-- Deduct metered usage from available credits.
+- Add Dollar balance after successful top-up.
+- Show Dollar balance and promotional Credit balances separately.
+- Consume expiring or promotional Credits before Dollar balance.
+- Meter usage in Credits and deduct the resulting charge from eligible Credit
+  allowances or Dollar balance.
 - Stop billable requests when balance or spending limits are exhausted.
 - Fund the account through at least two configured top-up methods, including at
   least one fiat card path.
-- Show exchange rates, network fees, payment fees, and final credit amount
+- Show exchange rates, network fees, payment fees, and final Dollar balance
   before confirmation.
 - Show funding status, transaction history, and receipts.
 - Support Phase 1 chat file upload when the selected model supports files.
 
 One credit is an internal usage-accounting unit. Credits are not redeemable,
 reserve-backed, transferable, or represented as cryptocurrency. Payments
-purchase credits and do not create a stored fiat or cryptocurrency balance.
-Top-up credits are spend-only inside Maxshot; balance withdrawals, cash-out,
+add a nonwithdrawable Dollar balance and do not create a withdrawable fiat or
+cryptocurrency account.
+Dollar balance is spend-only inside Maxshot; balance withdrawals, cash-out,
 refunds, and redemption back to fiat or crypto are not supported.
 
 Monthly subscriptions are not part of Phase 1.
@@ -191,14 +191,14 @@ Monthly subscriptions are not part of Phase 1.
 - Withhold rewards for failed top-ups and revoke or withhold rewards for
   abusive top-ups.
 
-Referral rewards are promotional credits. They must be tracked separately in
-the backend ledger and may be shown inside the combined usable spend balance.
+Referral rewards are promotional Credits. They must be tracked separately from
+Dollar balance and must not be shown as one combined balance.
 
 ## 5. Phase 2: Advanced Features
 
 **Priority:** P1 after Phase 1 acceptance
 **Goal:** Add richer workflows, privacy controls, reusable builders, and deeper
-gateway visibility without changing the Phase 1 credit model.
+gateway visibility without changing the Phase 1 two-unit billing model.
 
 ### 5.1 Advanced Chat And Privacy
 
@@ -261,6 +261,16 @@ Automatic routing by benchmark or quality score, semantic caching, batch
 inference, shared capacity pools, user-supplied provider credentials, and
 Anthropic- or Gemini-compatible customer APIs are not included in Phase 2.
 
+### 5.7 Subscription
+
+- Offer optional recurring plans alongside pay-as-you-go.
+- Grant a configured monthly Credit allowance without changing per-request
+  pricing.
+- Charge renewals from Dollar balance first when enabled and sufficient;
+  otherwise use a tokenized saved card. Do not split one renewal.
+- Keep subscription Credits, promotional Credits, and Dollar balance separate.
+- Show subscription usage windows, renewal state, invoices, and PAYG fallback.
+
 ## 6. Navigation
 
 Phase 1 navigation:
@@ -287,10 +297,11 @@ clearly labeled as deferred and not part of Phase 1 production scope:
   route after the primary route fails.
 - **Credit:** Maxshot's non-transferable prepaid usage-accounting unit.
 - **Free credit:** A configurable credit grant for registered users.
-- **Paid credit:** A funded credit added after successful top-up.
+- **Dollar balance:** User-funded, nonwithdrawable value denominated in USD.
 - **Referral reward:** A promotional credit granted to a referrer after a
   referred user's confirmed top-up.
-- **Pay-as-you-go:** Metered usage deducted from prepaid credits.
+- **Pay-as-you-go:** Credit-metered usage charged to promotional Credits and
+  then Dollar balance.
 - **Account funding:** Purchasing credits through a configured payment method.
 - **Spending limit:** A monthly account or API-key ceiling that blocks further
   billable usage when reached.
@@ -306,7 +317,7 @@ clearly labeled as deferred and not part of Phase 1 production scope:
   provider routes that do not retain prompt or response content.
 - **Usage record:** Non-content metering data used for user visibility and
   billing.
-- **Funding transaction:** A payment attempt that purchases credits.
+- **Funding transaction:** A payment attempt that adds Dollar balance.
 
 ## 8. Explicitly Out Of Scope
 
@@ -316,9 +327,8 @@ clearly labeled as deferred and not part of Phase 1 production scope:
 - Agent publishing, revenue sharing, scheduled execution, and subaccounts.
 - Custom tools and user-managed MCP servers.
 - Independent agent balances or budgets.
-- Monthly and annual subscriptions.
 - Postpaid usage.
-- Invoices and promotional rebates.
+- Promotional rebates.
 - Redeemable, reserve-backed, utility, governance, or creator tokens.
 - Trading, deposits, and on-chain reserve accounting.
 
@@ -341,6 +351,7 @@ Required alignment work:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Two-unit billing model | Replaced funded Credits with Dollar balance while retaining Credits for usage metering and promotional allowances. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
 | 2026-07-02 | Prototype navigation alignment | Aligned navigation with current Phase 1 surfaces and moved Agents/Toolkits to Experimental coming soon. |
 | 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |

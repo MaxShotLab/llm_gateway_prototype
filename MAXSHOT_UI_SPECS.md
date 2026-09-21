@@ -141,7 +141,7 @@ Shell UX:
 - Sidebar navigation names destinations, not feature descriptions.
 - Active navigation uses lime fill with black foreground.
 - The top bar should expose the currently selected model, account identity,
-  available credits, and login/account action when relevant.
+  Dollar balance, and login/account action when relevant.
 - Collapsed sidebar keeps destination icons aligned to the expanded rail.
 - Mobile uses a drawer-style navigation entry and must preserve access to model
   selection, account balance, and login/account state.
@@ -264,9 +264,8 @@ UI, not secondary settings.
 
 #### Top-Up
 
-- Top-up shows one usable spend balance while preserving free, paid, and
-  referral credit distinctions where they affect expiry or ledger behavior.
-- Funding amount, method, fees, exchange rate, final credits, and status must be
+- Top-up shows Dollar balance separately from free and referral Credit balances.
+- Funding amount, method, fees, exchange rate, final Dollar balance, and status must be
   visible before confirmation.
 - Payment methods should be compact selectable rows or tiles, not marketing
   cards.

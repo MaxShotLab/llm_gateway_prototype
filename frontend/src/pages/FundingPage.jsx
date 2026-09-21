@@ -15,7 +15,6 @@ import {
 import {
   billingScenarioOptions,
   createBillingScenario,
-  creditsPerUsd,
   getBillingTotals,
   getSubscriptionWindows,
   paymentMethods,
@@ -40,6 +39,7 @@ export function FundingPage({ billing, setBilling }) {
   const [showPlans, setShowPlans] = useState(false);
   const [preferredCard, setPreferredCard] = useState(preferredPaymentMethod);
   const [cardManagerOpen, setCardManagerOpen] = useState(false);
+  const [walletFirst, setWalletFirst] = useState(true);
 
   const method = paymentMethods.find((item) => item.id === methodId);
   const updateAmount = (value) => {
@@ -49,7 +49,6 @@ export function FundingPage({ billing, setBilling }) {
   const paymentFee = amount * method.feeRate + method.fixedFee;
   const networkFee = method.networkFee || 0;
   const receivedAmount = Math.max(amount - paymentFee - networkFee, 0);
-  const credits = receivedAmount * creditsPerUsd;
   const totals = getBillingTotals(billing);
   const subscription = billing.subscription;
   const subscriptionWindows = getSubscriptionWindows(subscription);
@@ -65,7 +64,7 @@ export function FundingPage({ billing, setBilling }) {
         method: method.name,
         paid: paymentAmount,
         fees: `$${(paymentFee + networkFee).toFixed(2)}`,
-        credits: credits.toLocaleString(),
+        balanceAdded: `$${receivedAmount.toFixed(2)}`,
         status: "Completed",
         receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
       },
@@ -78,31 +77,41 @@ export function FundingPage({ billing, setBilling }) {
         : current.scenario,
       balances: {
         ...current.balances,
-        paid: current.balances.paid + credits,
+        dollars: current.balances.dollars + receivedAmount,
       },
     }));
     setCheckoutOpen(false);
   };
 
   const activateSubscription = (plan) => {
-    setBilling((current) => ({
-      ...current,
-      scenario: "active",
-      subscription: {
-        ...plan,
-        status: "active",
-        used: 0,
-        windowUsage: { fiveHour: 0, weekly: 0 },
-        renewsAt: "Oct 12, 2026",
-        cancelAtPeriodEnd: false,
-      },
-    }));
+    setBilling((current) => {
+      const useDollarBalance = walletFirst && current.balances.dollars >= plan.priceUsd;
+      return {
+        ...current,
+        scenario: "active",
+        balances: {
+          ...current.balances,
+          dollars: useDollarBalance
+            ? current.balances.dollars - plan.priceUsd
+            : current.balances.dollars,
+        },
+        subscription: {
+          ...plan,
+          status: "active",
+          used: 0,
+          windowUsage: { fiveHour: 0, weekly: 0 },
+          renewsAt: "Oct 12, 2026",
+          cancelAtPeriodEnd: false,
+        },
+      };
+    });
     setSubscriptionCheckout(null);
     setShowPlans(false);
   };
 
   const confirmSubscriptionPlan = (plan) => {
-    if (!preferredCard) {
+    const canUseDollarBalance = walletFirst && billing.balances.dollars >= plan.priceUsd;
+    if (!canUseDollarBalance && !preferredCard) {
       setCardManagerOpen(true);
       return;
     }
@@ -118,6 +127,12 @@ export function FundingPage({ billing, setBilling }) {
   const changeScenario = (scenario) => {
     setBilling(createBillingScenario(scenario));
     setShowPlans(scenario === "checkout");
+  };
+
+  const renewalSource = (plan) => {
+    if (walletFirst && billing.balances.dollars >= plan.priceUsd) return "Dollar balance";
+    if (preferredCard) return `${preferredCard.brand} •••• ${preferredCard.last4}`;
+    return "Payment method required";
   };
 
   return (
@@ -140,7 +155,7 @@ export function FundingPage({ billing, setBilling }) {
           <div>
             <span className="eyebrow">Phase 2 proposal · simulated</span>
             <h2>Subscription</h2>
-            <p>Monthly allowance first, then PAYG Credits. Per-request pricing stays the same.</p>
+            <p>Monthly allowance first, then promotional Credits and Dollar balance. Per-request pricing stays the same.</p>
           </div>
           <label className="prototype-scenario">
             <span>Prototype state</span>
@@ -185,15 +200,15 @@ export function FundingPage({ billing, setBilling }) {
               ))}
             </div>
             {subscriptionWindows.some((window) => window.percent >= 90) && <p className="billing-state-note">A subscription usage window is above 90%. An in-app warning has been sent.</p>}
-            {billing.scenario === "low" && <p className="billing-state-note">Monthly allowance is low. PAYG Credits will be used automatically after it is exhausted.</p>}
-            {billing.scenario === "exhausted" && <p className="billing-state-note">Allowance exhausted. Requests now use PAYG Credits.</p>}
-            {billing.scenario === "insufficient" && <p className="billing-state-note danger">No usable Credits remain. Add Credits to continue.</p>}
-            {subscription.status === "past_due" && <p className="billing-state-note">No new allowance was created. Existing PAYG Credits remain available.</p>}
+            {billing.scenario === "low" && <p className="billing-state-note">Monthly allowance is low. PAYG funding will be used automatically after it is exhausted.</p>}
+            {billing.scenario === "exhausted" && <p className="billing-state-note">Allowance exhausted. Requests now use available PAYG funding.</p>}
+            {billing.scenario === "insufficient" && <p className="billing-state-note danger">No usable funding remains. Add funds to continue.</p>}
+            {subscription.status === "past_due" && <p className="billing-state-note">No new allowance was created. Existing PAYG funding remains available.</p>}
             {subscription.cancelAtPeriodEnd && <p className="billing-state-note">Renewal is cancelled. Current allowance remains available through {subscription.renewsAt}.</p>}
             {billing.pendingPlan && <p className="billing-state-note">{billing.pendingPlan.name} begins at the next renewal. No prorated Credits are issued.</p>}
             <div className="subscription-actions">
               {subscription.status === "past_due" ? (
-                <button className="primary-button compact" onClick={() => preferredCard ? activateSubscription(subscription) : setCardManagerOpen(true)}>{preferredCard ? "Retry card payment" : "Add renewal card"}</button>
+                <button className="primary-button compact" onClick={() => renewalSource(subscription) !== "Payment method required" ? activateSubscription(subscription) : setCardManagerOpen(true)}>{renewalSource(subscription) === "Payment method required" ? "Add renewal card" : "Retry payment"}</button>
               ) : subscription.cancelAtPeriodEnd ? (
                 <button className="secondary-button compact" onClick={() => setBilling((current) => ({ ...current, scenario: "active", subscription: { ...current.subscription, cancelAtPeriodEnd: false } }))}>Resume renewal</button>
               ) : (
@@ -206,7 +221,7 @@ export function FundingPage({ billing, setBilling }) {
           </div>
         ) : (
           <div className="subscription-empty">
-            <div><h3>Use PAYG Credits without a plan</h3><p>A subscription only adds a monthly allowance. It is not required to use Maxshot.</p></div>
+            <div><h3>Use PAYG without a plan</h3><p>A subscription only adds a monthly Credit allowance. It is not required to use Maxshot.</p></div>
             <button className="primary-button compact" onClick={() => setShowPlans(true)}>View plans</button>
           </div>
         )}
@@ -229,16 +244,20 @@ export function FundingPage({ billing, setBilling }) {
 
       <section className="panel subscription-payment-panel">
         <div className="panel-heading">
-          <div><h2>Renewal payment method</h2><p>Card details are stored and processed by the payment provider.</p></div>
+          <div><h2>Renewal payment</h2><p>Use Dollar balance first, with a provider-managed card as fallback.</p></div>
           <div className="subscription-payment-actions">
             {preferredCard && <button className="secondary-button compact" onClick={() => setPreferredCard(null)}>Remove</button>}
             <button className="secondary-button compact" onClick={() => setCardManagerOpen(true)}>{preferredCard ? "Change card" : "Add card"}</button>
           </div>
         </div>
+        <label className="save-card-option renewal-balance-option">
+          <input type="checkbox" checked={walletFirst} onChange={(event) => setWalletFirst(event.target.checked)} />
+          <span><strong>Use Dollar balance first</strong><small>${billing.balances.dollars.toFixed(2)} available · one renewal uses either Dollar balance or card, without split payment.</small></span>
+        </label>
         {preferredCard ? (
           <div className="saved-payment-method">
             <CreditCard size={22} />
-            <span><strong>{preferredCard.brand} •••• {preferredCard.last4}</strong><small>Expires {preferredCard.expires} · Preferred for subscription renewal</small></span>
+            <span><strong>{preferredCard.brand} •••• {preferredCard.last4}</strong><small>Expires {preferredCard.expires} · fallback when Dollar balance is disabled or insufficient</small></span>
           </div>
         ) : (
           <p className="billing-state-note">Add a provider-managed card before the next subscription renewal.</p>
@@ -270,21 +289,15 @@ export function FundingPage({ billing, setBilling }) {
       <section className="credit-balance-grid">
         <BalanceCard
           icon={<CurrencyCircleDollar size={20} />}
-          label="PAYG balance"
-          value={totals.payg.toLocaleString()}
-          note="Excludes subscription allowance"
-        />
-        <BalanceCard
-          icon={<Wallet size={20} />}
-          label="Paid credits"
-          value={billing.balances.paid.toLocaleString()}
-          note="From confirmed top-ups"
+          label="Dollar balance"
+          value={`$${totals.dollarBalance.toFixed(2)}`}
+          note="For PAYG usage or subscription"
         />
         <BalanceCard
           icon={<Coins size={20} />}
           label="Free credits"
           value={billing.balances.free.toLocaleString()}
-          note="Consumed before paid credits"
+          note="Consumed before Dollar balance"
         />
         <BalanceCard
           icon={<CurrencyCircleDollar size={20} />}
@@ -294,7 +307,7 @@ export function FundingPage({ billing, setBilling }) {
         />
       </section>
 
-      <div className="funding-mode-tabs" role="tablist" aria-label="Add Credits method">
+      <div className="funding-mode-tabs" role="tablist" aria-label="Add funds method">
         <button className={fundingMode === "checkout" ? "active" : ""} onClick={() => setFundingMode("checkout")} role="tab" aria-selected={fundingMode === "checkout"}>Instant Checkout</button>
         <button className={fundingMode === "deposit" ? "active" : ""} onClick={() => setFundingMode("deposit")} role="tab" aria-selected={fundingMode === "deposit"}>Deposit Address</button>
       </div>
@@ -304,7 +317,7 @@ export function FundingPage({ billing, setBilling }) {
           <section className="panel purchase-panel">
           <div className="panel-heading">
             <div>
-              <h2>Add credits</h2>
+              <h2>Add funds</h2>
               <p>Choose an amount and payment method.</p>
             </div>
           </div>
@@ -361,9 +374,9 @@ export function FundingPage({ billing, setBilling }) {
           </section>
 
           <aside className="panel order-summary">
-          <span className="eyebrow">Credits added · estimated</span>
-          <h2>{credits.toLocaleString()}</h2>
-          <p>Credits added</p>
+          <span className="eyebrow">Dollar balance · estimated</span>
+          <h2>${receivedAmount.toFixed(2)}</h2>
+          <p>Balance added</p>
           <div className="summary-line">
             <span>Method</span>
             <strong>{method.name}</strong>
@@ -382,7 +395,7 @@ export function FundingPage({ billing, setBilling }) {
           </div>
           <div className="summary-total">
             <span>You receive</span>
-            <strong>${receivedAmount.toFixed(2)} → {credits.toLocaleString()}</strong>
+            <strong>${receivedAmount.toFixed(2)} Dollar balance</strong>
           </div>
           <button className="primary-button" onClick={() => setCheckoutOpen(true)}>
             Continue <ArrowRight size={17} />
@@ -391,7 +404,7 @@ export function FundingPage({ billing, setBilling }) {
             <ShieldCheck size={15} /> Mock checkout · {method.settlement}
           </small>
           <small className="spend-only-note">
-            Credits are for Maxshot usage only. Withdrawals/refunds are not supported.
+            Dollar balance is for Maxshot services only. Withdrawals/refunds are not supported.
           </small>
           </aside>
         </div>
@@ -400,7 +413,7 @@ export function FundingPage({ billing, setBilling }) {
           <div>
             <span className="eyebrow">Base Network only</span>
             <h2>Deposit to your dedicated address</h2>
-            <p>Transfer supported tokens on Base. Credits are added after on-chain confirmation.</p>
+            <p>Transfer supported tokens on Base. Dollar balance is added after on-chain confirmation.</p>
           </div>
           <div className="deposit-address-box">
             <code>0xYOUR_DEDICATED_BASE_ADDRESS</code>
@@ -413,7 +426,7 @@ export function FundingPage({ billing, setBilling }) {
               {depositCopied ? "Copied" : "Copy"}
             </button>
           </div>
-          <small>Send Base USDC or Base AIT to this address. Credits are credited automatically.</small>
+          <small>Send Base USDC or Base AIT to this address. Dollar balance is credited automatically.</small>
         </section>
       )}
 
@@ -431,7 +444,7 @@ export function FundingPage({ billing, setBilling }) {
                 <th>Payment method</th>
                 <th>Paid</th>
                 <th>Fees</th>
-                <th>Credits</th>
+                <th>Balance added</th>
                 <th>Status</th>
                 <th>Receipt</th>
               </tr>
@@ -443,7 +456,7 @@ export function FundingPage({ billing, setBilling }) {
                   <td>{item.method}</td>
                   <td>{item.paid}</td>
                   <td>{item.fees}</td>
-                  <td>{item.credits}</td>
+                  <td>{item.balanceAdded}</td>
                   <td><span className="status-pill success"><i /> {item.status}</span></td>
                   <td><button className="receipt-button" onClick={() => setReceiptTarget(item)}><DownloadSimple size={15} /> {item.receipt}</button></td>
                 </tr>
@@ -465,7 +478,7 @@ export function FundingPage({ billing, setBilling }) {
             <div className="checkout-review">
               <span><b>Method</b>{method.name}</span>
               <span><b>Payment</b>{paymentAmount}</span>
-              <span><b>Credits</b>{credits.toLocaleString()}</span>
+              <span><b>Balance added</b>${receivedAmount.toFixed(2)}</span>
             </div>
             <div className="form-actions">
               <button className="secondary-button" onClick={() => setCheckoutOpen(false)}>Cancel</button>
@@ -481,18 +494,18 @@ export function FundingPage({ billing, setBilling }) {
             <button className="modal-close" onClick={() => setSubscriptionCheckout(null)} aria-label="Close subscription checkout"><X size={19} /></button>
             <span className="api-modal-icon"><CreditCard size={22} /></span>
             <h2 id="subscription-checkout-title">Confirm example plan</h2>
-            <p>Simulated recurring card checkout. No funds will be transmitted.</p>
+            <p>Simulated recurring payment. No funds will be transmitted.</p>
             <div className="checkout-review">
               <span><b>Plan</b>{subscriptionCheckout.name}</span>
               <span><b>Monthly allowance</b>{subscriptionCheckout.allowance.toLocaleString()} Credits</span>
               <span><b>Usage limits</b>{subscriptionCheckout.limits.fiveHour.toLocaleString()} / 5 hours · {subscriptionCheckout.limits.weekly.toLocaleString()} / week</span>
               <span><b>Monthly payment</b>${subscriptionCheckout.priceUsd}.00</span>
-              <span><b>Renewal card</b>{preferredCard ? `${preferredCard.brand} •••• ${preferredCard.last4}` : "Required before activation"}</span>
+              <span><b>Payment source</b>{renewalSource(subscriptionCheckout)}</span>
               <span><b>Referral reward</b>Not eligible</span>
             </div>
             <div className="form-actions">
               <button className="secondary-button" onClick={() => setSubscriptionCheckout(null)}>Cancel</button>
-              <button className="primary-button compact" onClick={() => confirmSubscriptionPlan(subscriptionCheckout)}>{!preferredCard ? "Add card first" : subscription ? "Schedule plan change" : "Confirm mock subscription"}</button>
+              <button className="primary-button compact" onClick={() => confirmSubscriptionPlan(subscriptionCheckout)}>{renewalSource(subscriptionCheckout) === "Payment method required" ? "Add card first" : subscription ? "Schedule plan change" : "Confirm mock subscription"}</button>
             </div>
           </section>
         </div>
@@ -509,7 +522,7 @@ export function FundingPage({ billing, setBilling }) {
               <span><b>Payment method</b>{receiptTarget.method}</span>
               <span><b>Paid</b>{receiptTarget.paid}</span>
               <span><b>Fees</b>{receiptTarget.fees}</span>
-              <span><b>Credits purchased</b>{receiptTarget.credits}</span>
+              <span><b>Balance added</b>{receiptTarget.balanceAdded}</span>
               <span><b>Status</b>{receiptTarget.status}</span>
             </div>
             <button className="primary-button" onClick={() => setReceiptTarget(null)}>Done</button>

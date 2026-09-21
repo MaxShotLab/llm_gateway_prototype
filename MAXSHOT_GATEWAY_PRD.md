@@ -2,12 +2,13 @@
 
 **Status:** Authoritative delivery specification
 **Baseline:** [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
-**Updated:** July 2, 2026
+**Updated:** September 21, 2026
 
 ## 1. Purpose
 
-Maxshot is a multi-model chat and API gateway with prepaid usage, configurable
-free credits, account funding, referral rewards, and spending limits. It gives
+Maxshot is a multi-model chat and API gateway with prepaid Dollar balance,
+configurable promotional Credits, account funding, referral rewards, and
+spending limits. It gives
 individuals and developers one account for using configured models through a
 web chat or an OpenAI-compatible API.
 
@@ -41,7 +42,8 @@ Governance:
 
 - Establish a maintainable React chat frontend based on assistant-ui.
 - Deliver the complete login-to-chat and login-to-API paths.
-- Meter every billable request and deduct the correct credits.
+- Meter every billable request in Credits and deduct the correct Dollar balance
+  or eligible Credit allowance.
 - Let users fund an account and control spending.
 - Keep product and gateway records under clear system ownership.
 
@@ -49,6 +51,8 @@ Governance:
 
 - Add advanced chat privacy and memory controls.
 - Add reusable prompts, agents, skills, knowledge, and tools.
+- Add optional recurring subscriptions with Credit allowances and
+  Dollar-balance-first payment.
 - Expose detailed provider and failover information.
 - Extend the product without replacing the Phase 1 framework or credit model.
 
@@ -59,7 +63,7 @@ Governance:
 - Team organizations, members, roles, or permissions.
 - Public marketplaces, collaboration, or builder monetization.
 - Trading, deposit, token, or reserve products.
-- Postpaid balances, negative balances, or monthly/annual subscriptions.
+- Postpaid balances or negative balances.
 - User-managed MCP servers or arbitrary custom tools.
 
 ## 4. Users And Key Paths
@@ -67,7 +71,7 @@ Governance:
 ### Chat User
 
 1. Log in by email.
-2. Confirm available credits.
+2. Confirm available funding.
 3. Select a model and see its price.
 4. Send a message and receive a streaming response.
 5. Reopen the conversation from history.
@@ -84,9 +88,9 @@ Governance:
 
 ### Paying User
 
-1. Review free, paid, and usable credit balances.
+1. Review Dollar balance and promotional Credit balances separately.
 2. Choose a funding amount and payment method.
-3. Review fees, exchange rate, and credits received.
+3. Review fees, exchange rate, and Dollar balance received.
 4. Confirm payment.
 5. Review status, receipt, and updated balance.
 
@@ -154,7 +158,7 @@ Maxshot services map gateway records into user-facing usage and credit entries.
 | Conversation and message | Maxshot services |
 | Prompt, agent, skill, memory, file | Maxshot services |
 | Product entitlement | Maxshot services |
-| Funding transaction and user credit balance | Maxshot services |
+| Funding transaction, Dollar balance, and Credit buckets | Maxshot services |
 | Referral attribution and reward ledger | Maxshot services |
 | Provider and route configuration | New API |
 | Raw gateway metering and routing event | New API |
@@ -254,12 +258,12 @@ Acceptance:
 - Unified chat and API usage records.
 - Current-period request, token, and credit totals.
 - Configurable registered-user free credits.
-- Paid credits added after successful top-up.
-- One usable spend balance in the UI, backed by separate free-credit and
-  paid-credit ledger entries.
-- Expiring or free credits consumed before paid credits.
-- Atomic credit deduction from billable gateway events.
-- Request blocking when available credits or limits are exhausted.
+- Dollar balance added after successful top-up, net of disclosed fees.
+- Separate Dollar balance and promotional Credit balances in the UI and ledger.
+- Expiring or promotional Credits consumed before Dollar balance.
+- Atomic Credit metering and Dollar/allowance deduction from billable gateway
+  events.
+- Request blocking when available funding or limits are exhausted.
 - No prompt or response content in usage or billing records.
 - CSV export.
 
@@ -274,15 +278,16 @@ Acceptance:
 - One additional configured method, preferably Base USDC or Base AIT through
   wallet connect or deposit address.
 - Funding amount selection.
-- Exchange-rate, network-fee, payment-fee, and final-credit disclosure.
+- Exchange-rate, network-fee, payment-fee, and final-Dollar-balance disclosure.
 - Payment status, history, and receipt.
 
 Acceptance:
 
-- Credits are granted only after confirmed payment.
+- Dollar balance is granted only after confirmed payment.
 - Failed payments do not change the balance.
-- Adding a payment method does not change the credit ledger model.
-- Free and paid credit ledger entries remain distinguishable after top-up.
+- Adding a payment method does not change the two-unit ledger model.
+- Dollar and promotional Credit ledger entries remain distinguishable after
+  top-up.
 - Top-up credits are spend-only inside Maxshot; balance withdrawals, cash-out,
   refunds, and redemption back to fiat or crypto are not supported.
 
@@ -317,8 +322,8 @@ Acceptance:
 - A registered user can generate and share a referral link.
 - A referred user's confirmed top-up creates at most one reward for the
   referrer.
-- Referral rewards are tracked separately in the backend ledger and may appear
-  in the combined usable spend balance.
+- Referral rewards are tracked separately from Dollar balance and must not
+  appear as one combined balance.
 
 ## 8. Phase 2 Requirements
 
@@ -367,12 +372,23 @@ Acceptance:
 - Serving-provider and failover disclosure.
 - Expandable routing details and privacy-route eligibility.
 
+### P1.7 Subscription
+
+- Implement the contract in
+  [SUBSCRIPTION_FEATURE_REQUIREMENTS.md](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md).
+- Keep Dollar balance, subscription Credits, free Credits, and referral Credits
+  as separate ledger buckets.
+- Support Dollar-balance-first renewal with a tokenized card fallback and no
+  split payment.
+- Keep subscription usage, billing, and invoices separate from PAYG records.
+
 Phase 2 acceptance:
 
 - Each feature works with persistent data and production authorization.
 - Builders cannot select tools outside the fixed catalog.
 - Zero-retention controls cannot select an ineligible route.
 - Advanced screens use the Phase 1 account, usage, and credit records.
+- Subscription renewal and PAYG fallback preserve the two-unit ledger model.
 
 ## 9. P2 Deferred And Out-Of-Scope Work
 
@@ -385,8 +401,7 @@ Phase 2 acceptance:
 - Automatic routing by benchmark or quality score.
 - Semantic caching, batch inference, and shared capacity pools.
 - Anthropic- and Gemini-compatible customer endpoints.
-- Invoices and promotional rebates.
-- Monthly and annual subscriptions.
+- Promotional rebates.
 
 P2 is not a third delivery phase. None of this work is scheduled by this PRD.
 Adding it requires an approved product-baseline change before requirements or
@@ -420,19 +435,22 @@ be represented as Phase 1 production scope.
 - **Primary route:** The first configured route attempted for a request.
 - **Fallback route:** An eligible route attempted after primary-route failure.
 - **Failover:** The controlled retry from a failed primary route to a fallback.
-- **Credit:** A non-transferable internal unit used to account for prepaid
-  usage.
+- **Dollar balance:** User-funded, nonwithdrawable value denominated in USD and
+  usable for PAYG charges or subscription payments.
+- **Credit:** A non-transferable internal unit used to meter LLM usage and
+  represent subscription or promotional allowances.
 - **Free credit:** A configurable credit grant for registered users.
-- **Paid credit:** A funded credit added after successful top-up.
 - **Referral reward:** A promotional credit granted to a referrer after a
   referred user's confirmed top-up.
-- **Available credits:** The credits eligible to pay for the next request.
-- **Pay-as-you-go:** Metered usage deducted from available prepaid credits.
-- **Account funding:** A payment that purchases credits.
-- **Spending limit:** A monthly account or API-key ceiling.
+- **Available funding:** The Credit allowance or Dollar balance eligible to pay
+  for the next request.
+- **Pay-as-you-go:** Metered usage charged to promotional Credits and then
+  Dollar balance.
+- **Account funding:** A payment that adds Dollar balance.
+- **Spending limit:** A dollar-denominated account or API-key ceiling.
 - **Usage event:** Raw non-content metering data emitted by the gateway.
 - **Usage record:** User-facing metering data derived from usage events.
-- **Funding transaction:** A payment attempt to purchase credits.
+- **Funding transaction:** A payment attempt to add Dollar balance.
 - **Conversation:** A persisted ordered thread of user and assistant messages.
 - **Temporary conversation:** A session-only conversation not saved to history.
 - **Zero-retention mode:** A temporary conversation restricted to routes whose
@@ -466,6 +484,7 @@ chat interaction layer; Maxshot owns the rest of the application.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Two-unit billing model | Defined Dollars as user-funded value and Credits as usage/allowance units; top-ups now add Dollar balance, request records show Credit cost and Dollar debit, and spending limits use dollar-equivalent cost. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |
 | 2026-07-02 | Prototype navigation alignment | Aligned navigation with current Phase 1 surfaces and moved Agents/Toolkits to Experimental coming soon. |
 | 2026-07-02 | Referral cap clarification | Clarified referral rewards as 10% of confirmed referee top-ups, capped at $50 from each referred user. |

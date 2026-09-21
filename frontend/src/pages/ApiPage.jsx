@@ -18,6 +18,7 @@ import {
 } from "../data/apiData";
 
 const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value);
+const formatDollars = (value) => `$${Number(value).toFixed(2)}`;
 
 export function ApiPage() {
   const [keys, setKeys] = useState(starterApiKeys);
@@ -144,7 +145,7 @@ export function ApiPage() {
                 </div>
                 <div className="key-limit">
                   <span>
-                    {formatNumber(item.spent)} of {item.monthlyLimit ? `${formatNumber(item.monthlyLimit)} Credits` : "no limit"}
+                    {formatDollars(item.spent)} of {item.monthlyLimit ? formatDollars(item.monthlyLimit) : "no limit"}
                   </span>
                   <i><b style={{ width: `${limitPercent}%` }} /></i>
                 </div>
@@ -188,23 +189,23 @@ export function ApiPage() {
               <ApiMetric label="Output tokens" value={formatNumber(selectedKey.outputTokens)} />
               <ApiMetric
                 label="Daily remaining"
-                value={selectedKey.dailyLimit ? `${formatNumber(Math.max(selectedKey.dailyLimit - selectedKey.dailySpent, 0))} Credits` : "Unlimited"}
+                value={selectedKey.dailyLimit ? formatDollars(Math.max(selectedKey.dailyLimit - selectedKey.dailySpent, 0)) : "Unlimited"}
               />
               <ApiMetric
                 label="Monthly remaining"
-                value={selectedKey.monthlyLimit ? `${formatNumber(Math.max(selectedKey.monthlyLimit - selectedKey.spent, 0))} Credits` : "Unlimited"}
+                value={selectedKey.monthlyLimit ? formatDollars(Math.max(selectedKey.monthlyLimit - selectedKey.spent, 0)) : "Unlimited"}
               />
             </div>
             <form className="spending-limit-form" onSubmit={updateLimit}>
               <label>
-                Daily Credit limit
+                Daily spending limit
                 <span className="currency-input">
-                  <i>Cr</i>
+                  <i>$</i>
                   <input
                     name="dailyLimit"
                     type="number"
                     min="0"
-                    step="100000"
+                    step="1"
                     defaultValue={selectedKey.dailyLimit}
                     key={`${selectedKey.id}-daily`}
                     aria-label="Daily spending limit"
@@ -212,14 +213,14 @@ export function ApiPage() {
                 </span>
               </label>
               <label>
-                Monthly Credit limit
+                Monthly spending limit
                 <span className="currency-input">
-                  <i>Cr</i>
+                  <i>$</i>
                   <input
                     name="monthlyLimit"
                     type="number"
                     min="0"
-                    step="100000"
+                    step="1"
                     defaultValue={selectedKey.monthlyLimit}
                     key={selectedKey.id}
                     aria-label="Monthly spending limit"
@@ -267,7 +268,8 @@ export function ApiPage() {
                     <th>Requested model</th>
                     <th>Tokens in / out</th>
                     <th>Latency</th>
-                    <th>Cost</th>
+                    <th>Credit cost</th>
+                    <th>Dollar equivalent</th>
                     <th>Funding source</th>
                     <th>Status</th>
                   </tr>
@@ -280,7 +282,8 @@ export function ApiPage() {
                         <td><code>{item.model}</code></td>
                         <td>{formatNumber(item.inputTokens)} / {formatNumber(item.outputTokens)}</td>
                         <td>{item.latency}</td>
-                        <td>{item.cost}</td>
+                        <td>{item.creditCost}</td>
+                        <td>{item.dollarEquivalent}</td>
                         <td>{item.funding}</td>
                         <td><span className={`status-pill ${item.status === "Succeeded" ? "success" : "failed"}`}><i /> {item.status}</span></td>
                       </tr>
@@ -301,8 +304,8 @@ export function ApiPage() {
             <h2 id="create-key-title">Create API key</h2>
             <form onSubmit={createKey}>
               <label>Key name<input name="name" placeholder="Production API" required autoFocus /></label>
-              <label>Daily Credit limit<span className="currency-input"><i>Cr</i><input name="dailyLimit" type="number" min="0" step="100000" defaultValue="25000000" /></span></label>
-              <label>Monthly Credit limit<span className="currency-input"><i>Cr</i><input name="monthlyLimit" type="number" min="0" step="100000" defaultValue="100000000" /></span></label>
+              <label>Daily spending limit<span className="currency-input"><i>$</i><input name="dailyLimit" type="number" min="0" step="1" defaultValue="25" /></span></label>
+              <label>Monthly spending limit<span className="currency-input"><i>$</i><input name="monthlyLimit" type="number" min="0" step="1" defaultValue="100" /></span></label>
               <label>Expiry<select name="expires" defaultValue="Never"><option>Never</option><option>30 days</option><option>90 days</option><option>1 year</option></select></label>
               <div className="form-actions">
                 <button type="button" className="secondary-button" onClick={() => setCreateOpen(false)}>Cancel</button>
