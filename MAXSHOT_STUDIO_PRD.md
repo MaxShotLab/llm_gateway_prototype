@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** September 18, 2026
+**Updated:** September 21, 2026
 
 ## 1. Purpose
 
@@ -168,6 +168,16 @@ information architecture. It is not the production frontend foundation, in
 the same sense [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §12
 describes for the Gateway prototype.
 
+The prototype also simulates the generation-failure behavior in P0.1/P1.1: a
+prompt or edit description containing one of three keywords resolves to a
+failed result instead of a successful one, so the inline error message and
+its clearing behavior can be exercised without a real provider. `test-error-
+policy` simulates a content-policy rejection, `test-error-image` simulates a
+restricted reference image, and `test-error-fail` simulates a generic
+provider failure. This keyword trigger is prototype-only scaffolding, not a
+production requirement — a real provider integration reports its own failure
+reasons.
+
 A separate proof-of-concept ([live-demo/](../live-demo)) wires text-to-image
 and text-to-video composer actions to fal.ai for real generation, proving the
 composer-to-provider request shape works end to end. It does not implement
@@ -269,6 +279,18 @@ Nothing here depends on anything in §8.
   ("Back") from that preview clears the composer's prompt and any reference
   image(s), so it starts blank rather than showing the input that was just
   used.
+- A failed generation (for example, a prompt or reference image flagged by
+  content policy, or a provider that simply fails to return a result) shows
+  an inline error message in the composer, near the prompt field, explaining
+  what went wrong and what to do next — not a silent failure and not a
+  disruptive modal. No credit is deducted, and the prompt and any uploaded
+  reference images are left exactly as they were, so the user can adjust and
+  retry without starting over. The message reflects only the most recent
+  attempt — it clears as soon as the user edits the prompt, or moves on to a
+  different context (switching mode/tab, entering or leaving edit view,
+  navigating elsewhere) — rather than persisting indefinitely or following
+  the user into an unrelated view. Edit actions (P1.1) show a failure the
+  same way, in the same location, with the same clearing behavior.
 
 Acceptance:
 
@@ -288,6 +310,13 @@ Acceptance:
   re-uploading.
 - Typing past 2,500 characters turns the counter into a warning; Generate is
   blocked with a message until the prompt is back under the limit.
+- A failed generation shows its error message in place, deducts no credit,
+  and leaves the prompt and any uploaded reference images untouched for
+  retry.
+- An error message shown after a failed generation or edit does not follow
+  the user into an unrelated context — editing the prompt, switching mode or
+  tab, entering or leaving edit view, or navigating elsewhere (sidebar,
+  gallery card, a different item's preview) all clear it.
 
 ### P0.2 My Creations
 
@@ -402,6 +431,10 @@ Discover (P1.3), so it needs Discover live first.
   goes back to wherever the edit was opened from — My Creations if that's
   where the gallery card or preview's edit shortcut was — not always to the
   Studio composer.
+- A failed edit shows the same inline error message, in the same location and
+  with the same clearing behavior, as a failed generation (P0.1) — no credit
+  is deducted, and the editing view (image, tool selection, mask, typed
+  description) is left exactly as it was for the user to retry.
 - Deleting the currently-edited result (P0.2) asks for confirmation first,
   the same as everywhere else delete appears.
 - Exiting editing without generating returns the composer to its prior
@@ -720,3 +753,4 @@ into production.
 | 2026-09-08 | In-progress state, direct-to-preview, confirm delete | Generating and editing now show an in-progress state (indeterminate Generate control, "Generating…") without resetting or leaving the composer/editing view until the result exists (P0.1, P1.1). A completed generation or edit opens straight into the result's preview, returning to wherever it was opened from; the composer clears on return instead of keeping the just-used input (P0.1, P1.1). Unified the four edit tools into one selection applied by Generate, rather than remove background/upscale/Animate firing immediately on click (P1.1, §11). Delete now requires an explicit confirm/cancel step everywhere it appears (P0.2, P1.1). |
 | 2026-09-11 | First & last frame, draggable references, prompt limit | Added First & last frame as a mode toggle inside Image-to-Video (not a separate tab), with its own info affordance and role-tagged references ("first" vs. "last") in Reference used/Try this; toggling it preserves both modes' uploads independently (P1.5, §11). Reference-image thumbnails can now be reordered by dragging (P0.1). Added a shared 2,500-character prompt limit with a live counter that blocks Generate/Apply until the prompt is shortened, covering both generation and every edit description (P0.1, P1.1). |
 | 2026-09-18 | Assets merged into Studio, no separate nav item | Assets (My Creations, and Liked once it ships) is no longer a routed surface or nav item — it's an embedded section on the Studio page, directly below the composer and above Discover (P0.2, P1.3, §5.1, §10, §11). Corrected every place that still described Assets as its own route: the navigation list (now just "Studio"), the frontend surfaces count, the Assets/My Creations/Liked/Discover terminology entries, the Creator (reuse) path, and the editing view's "hides Discover" behavior (now hides My Creations too, since both sit below the composer). |
+| 2026-09-21 | Generation-failure error message | Defined the inline error message shown when a generation or edit fails (content policy, restricted reference image, or generic provider failure) — no credit deducted, input left untouched for retry, and the message clears on prompt edit or on leaving the current context rather than persisting into an unrelated view (P0.1, P1.1). Documented the prototype's keyword-based failure simulation (§5.1) used to exercise this without a real provider. |
