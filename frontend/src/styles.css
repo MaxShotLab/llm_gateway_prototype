@@ -2416,12 +2416,92 @@ textarea:focus-visible {
   top: calc(100% + 8px);
   right: 0;
   z-index: 30;
-  min-width: 150px;
+  width: 292px;
   padding: 6px;
   background: #151515;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 10px;
   box-shadow: 0 18px 52px rgba(0, 0, 0, 0.32);
+}
+
+.account-menu-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.account-menu-identity span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.account-menu-identity strong {
+  overflow: hidden;
+  color: #eee;
+  font-size: 12px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-identity small {
+  color: #858585;
+  font-size: 10px;
+}
+
+.account-usage-section {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.account-menu .account-usage-toggle {
+  justify-content: space-between;
+}
+
+.account-usage-toggle > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-usage-toggle > svg {
+  transition: transform 140ms ease;
+}
+
+.account-usage-toggle > svg.open {
+  transform: rotate(180deg);
+}
+
+.account-usage-details {
+  display: grid;
+  gap: 9px;
+  padding: 5px 11px 10px 36px;
+}
+
+.account-usage-details > div {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  color: #d7d7d2;
+  font-size: 11px;
+}
+
+.account-usage-details strong {
+  font-size: 11px;
+  font-weight: 560;
+}
+
+.account-usage-details small {
+  color: #777;
+  font-size: 10px;
+}
+
+.account-usage-details > div.warning strong {
+  color: #c79a61;
 }
 
 .account-menu button {
@@ -6775,16 +6855,14 @@ body {
   font-size: 11px;
 }
 
-.subscription-window-grid article > i,
-.chat-usage-quicklook i {
+.subscription-window-grid article > i {
   height: 5px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.09);
   border-radius: 999px;
 }
 
-.subscription-window-grid article > i > em,
-.chat-usage-quicklook i > em {
+.subscription-window-grid article > i > em {
   display: block;
   height: 100%;
   background: #8fa6c2;
@@ -6799,8 +6877,7 @@ body {
   border-color: rgba(207, 158, 96, 0.35);
 }
 
-.subscription-window-grid article.warning > i > em,
-.chat-usage-quicklook .warning i > em {
+.subscription-window-grid article.warning > i > em {
   background: #c79a61;
 }
 
@@ -6828,6 +6905,11 @@ body {
 .subscription-payment-panel,
 .subscription-billing-history {
   margin-bottom: 16px;
+}
+
+.subscription-payment-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .saved-payment-method,
@@ -6923,38 +7005,6 @@ body {
   cursor: pointer;
 }
 
-.chat-usage-quicklook {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.chat-usage-quicklook > span {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 9px;
-  color: #888;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
-  font-size: 9px;
-}
-
-.chat-usage-quicklook b,
-.chat-usage-quicklook strong {
-  color: #cbd2da;
-  font-size: 10px;
-}
-
-.chat-usage-quicklook small {
-  grid-column: 1 / -1;
-  font-size: 9px;
-}
-
 .usage-limit-alert {
   margin-bottom: 14px;
   padding: 10px 12px;
@@ -7011,38 +7061,31 @@ body {
   background: var(--light-accent);
 }
 
-.theme-light .subscription-window-grid article,
-.theme-light .chat-usage-quicklook > span {
+.theme-light .subscription-window-grid article {
   color: var(--light-muted);
   background: var(--light-panel-soft);
   border-color: var(--light-line);
 }
 
-.theme-light .subscription-window-grid article > i,
-.theme-light .chat-usage-quicklook i {
+.theme-light .subscription-window-grid article > i {
   background: #ded9ce;
 }
 
-.theme-light .subscription-window-grid article > i > em,
-.theme-light .chat-usage-quicklook i > em {
+.theme-light .subscription-window-grid article > i > em {
   background: var(--light-accent);
 }
 
-.theme-light .subscription-window-grid article.warning > i > em,
-.theme-light .chat-usage-quicklook .warning i > em {
+.theme-light .subscription-window-grid article.warning > i > em {
   background: #a9783d;
 }
 
 .theme-light .subscription-window-grid article small,
 .theme-light .saved-payment-method small,
-.theme-light .save-card-option small,
-.theme-light .chat-usage-quicklook > span {
+.theme-light .save-card-option small {
   color: var(--light-muted);
 }
 
-.theme-light .save-card-option,
-.theme-light .chat-usage-quicklook b,
-.theme-light .chat-usage-quicklook strong {
+.theme-light .save-card-option {
   color: var(--light-ink);
 }
 
@@ -7082,10 +7125,10 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .subscription-window-grid,
-  .chat-usage-quicklook {
+  .subscription-window-grid {
     grid-template-columns: 1fr;
   }
+
 }
 
 .auth-hint {
@@ -7124,6 +7167,25 @@ body {
   background: rgba(255, 253, 248, 0.98);
   border-color: rgba(73, 87, 108, 0.12);
   box-shadow: 0 18px 44px rgba(67, 94, 126, 0.16);
+}
+
+.theme-light .account-menu-identity,
+.theme-light .account-usage-section {
+  border-color: var(--light-line);
+}
+
+.theme-light .account-menu-identity strong,
+.theme-light .account-usage-details > div {
+  color: var(--light-ink);
+}
+
+.theme-light .account-menu-identity small,
+.theme-light .account-usage-details small {
+  color: var(--light-muted);
+}
+
+.theme-light .account-usage-details > div.warning strong {
+  color: #8b622f;
 }
 
 .theme-light .account-menu button {

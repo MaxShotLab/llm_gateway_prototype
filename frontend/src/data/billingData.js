@@ -6,6 +6,7 @@ export const subscriptionPlans = [
     name: "Core",
     priceUsd: 12,
     allowance: 15_000_000,
+    policyVersion: "2026-09-v1",
     limits: { fiveHour: 3_000_000, weekly: 12_000_000 },
   },
   {
@@ -13,6 +14,7 @@ export const subscriptionPlans = [
     name: "Plus",
     priceUsd: 20,
     allowance: 30_000_000,
+    policyVersion: "2026-09-v1",
     limits: { fiveHour: 5_000_000, weekly: 25_000_000 },
   },
 ];
@@ -51,7 +53,7 @@ export function createBillingScenario(scenario = "active") {
         status: "active",
         used: plan.allowance,
         windowUsage: { fiveHour: plan.limits.fiveHour, weekly: plan.limits.weekly },
-        renewsAt: "Jul 12, 2026",
+        renewsAt: "Oct 12, 2026",
       },
     };
   }
@@ -71,7 +73,7 @@ export function createBillingScenario(scenario = "active") {
         : scenario === "exhausted"
           ? { fiveHour: plan.limits.fiveHour, weekly: plan.limits.weekly }
           : { fiveHour: 2_800_000, weekly: 12_200_000 },
-      renewsAt: "Jul 12, 2026",
+      renewsAt: "Oct 12, 2026",
       cancelAtPeriodEnd: scenario === "cancelled",
     },
   };
@@ -81,17 +83,23 @@ export function getBillingTotals(billing) {
   const subscriptionRemaining = billing.subscription?.status === "active"
     ? Math.max(billing.subscription.allowance - billing.subscription.used, 0)
     : 0;
+  const windowRemaining = getSubscriptionWindows(billing.subscription)
+    .map((window) => Math.max(window.limit - window.used, 0));
+  const subscriptionAvailable = windowRemaining.length
+    ? Math.min(subscriptionRemaining, ...windowRemaining)
+    : 0;
   const payg = Object.values(billing.balances).reduce((sum, value) => sum + value, 0);
 
   return {
     subscriptionRemaining,
+    subscriptionAvailable,
     payg,
-    usable: subscriptionRemaining + payg,
+    usable: subscriptionAvailable + payg,
   };
 }
 
 export function getSubscriptionWindows(subscription) {
-  if (!subscription) return [];
+  if (!subscription || subscription.status !== "active") return [];
   return [
     {
       id: "fiveHour",
@@ -131,6 +139,7 @@ export const paymentMethods = [
     detail: "Visa, Mastercard · provider checkout",
     feeRate: 0,
     fixedFee: 0,
+    providerCalculatedFee: true,
     settlement: "Provider card checkout",
   },
 ];
@@ -147,6 +156,7 @@ export const subscriptionInvoices = [
     date: "Jun 12, 2026",
     plan: "Plus",
     amount: "$20.00",
+    method: "Visa •••• 4242",
     status: "Paid",
   },
   {
@@ -154,6 +164,7 @@ export const subscriptionInvoices = [
     date: "May 12, 2026",
     plan: "Plus",
     amount: "$20.00",
+    method: "Visa •••• 4242",
     status: "Paid",
   },
 ];

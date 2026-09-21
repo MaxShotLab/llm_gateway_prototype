@@ -143,8 +143,8 @@ Must-do features:
 - Keep subscription allowance, free credits, paid credits, and referral rewards
   as separate ledger buckets.
 - Show usage split by subscription allowance and pay-as-you-go credits.
-- Show configurable 5-hour and weekly subscription limits, remaining amounts,
-  and reset times in Chat and Usage.
+- Show configurable 5-hour and weekly subscription limits in the expandable
+  account menu and full remaining amounts and reset times in Usage.
 - Warn in-app at 90% consumption for each subscription window.
 - Separate subscription usage, payments, and invoices from pay-as-you-go usage,
   top-ups, and receipts.
@@ -277,6 +277,7 @@ These need product discussion before Phase 2 requirements are finalized:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-09-21 | Account usage summary alignment | Moved the compact usage summary from Chat to the expandable account menu and retained full details in Usage. |
 | 2026-09-21 | Subscription limits and billing surfaces | Added card prerequisites, preferred payment, invoices, separate PAYG/subscription usage, versioned 5-hour and weekly windows, and in-app 90% warnings. |
 | 2026-09-21 | Subscription contract revision | Locked the monthly allowance-only model, immediate PAYG fallback, payment and cancellation rules, and Credit-based API-limit accounting. |
 | 2026-07-15 | Subscription scope revision | Added Phase 2 subscription as a second pay-to-use method alongside pay-as-you-go, with feature details and a recommended ledger/reservation algorithm. |

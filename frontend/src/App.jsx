@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Brain,
+  CaretDown,
   ChatsCircle,
   Check,
   Code,
@@ -315,10 +316,12 @@ const starterSkills = [
 function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme, setTheme, billing, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [usageOpen, setUsageOpen] = useState(false);
   const isLight = theme === "light";
   const visibleAuthHint =
     authHint || (!user ? "Log in to unlock Usage, API, Credits, and account features." : "");
   const usableCredits = getBillingTotals(billing).usable;
+  const subscriptionWindows = getSubscriptionWindows(billing.subscription);
 
   return (
     <div className={`app-shell theme-${theme} ${collapsed ? "is-collapsed" : ""}`}>
@@ -385,6 +388,34 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
                 </button>
                 {accountOpen && (
                   <div className="account-menu" role="menu">
+                    <div className="account-menu-identity">
+                      <UserCircle size={24} />
+                      <span><strong>{user}</strong><small>{billing.subscription?.name || "PAYG"}</small></span>
+                    </div>
+                    {subscriptionWindows.length > 0 && (
+                      <div className="account-usage-section">
+                        <button
+                          className="account-usage-toggle"
+                          onClick={() => setUsageOpen((open) => !open)}
+                          aria-expanded={usageOpen}
+                          aria-controls="account-usage-details"
+                        >
+                          <span><Gauge size={17} /> Usage remaining</span>
+                          <CaretDown className={usageOpen ? "open" : ""} size={15} />
+                        </button>
+                        {usageOpen && (
+                          <div className="account-usage-details" id="account-usage-details">
+                            {subscriptionWindows.map((window) => (
+                              <div className={window.percent >= 90 ? "warning" : ""} key={window.id}>
+                                <span>{window.label === "5-hour limit" ? "5 hours" : "Weekly"}</span>
+                                <strong>{Math.max(100 - window.percent, 0)}%</strong>
+                                <small>Resets {window.reset}</small>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <button
                       role="menuitem"
                       onClick={() => {

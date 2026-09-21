@@ -24,7 +24,7 @@ import {
   mockUploadFiles,
   starterConversations,
 } from "../data/chatData";
-import { getBillingTotals, getSubscriptionWindows } from "../data/billingData";
+import { getBillingTotals } from "../data/billingData";
 
 const responseText =
   "The mock gateway completed this request with the selected model and recorded token usage and Credit cost. This response is streaming to demonstrate the production chat behavior.";
@@ -84,7 +84,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const selectedModel = chatModels.find((item) => item.name === model);
   const activeMessages = activeConversation?.messages || [];
   const billingTotals = getBillingTotals(billing);
-  const subscriptionWindows = getSubscriptionWindows(billing.subscription);
   const billingNotice = billing.scenario === "insufficient"
     ? { tone: "danger", text: "No usable Credits. Add Credits to continue." }
     : billing.scenario === "past_due"
@@ -455,7 +454,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                 <button key={prompt} onClick={() => setValue(prompt)}>{prompt}</button>
               ))}
             </div>
-            <ChatUsageQuickLook windows={subscriptionWindows} />
             {billingNotice && <BillingNotice notice={billingNotice} onCreditsRequired={onCreditsRequired} />}
             <ChatComposer
               value={value}
@@ -494,7 +492,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
               )}
             </div>
             <div className="composer-dock chat-core-dock">
-              <ChatUsageQuickLook windows={subscriptionWindows} />
               {billingNotice && <BillingNotice notice={billingNotice} onCreditsRequired={onCreditsRequired} />}
               <ChatComposer
                 value={value}
@@ -529,23 +526,6 @@ function BillingNotice({ notice, onCreditsRequired }) {
     <div className={`chat-billing-notice ${notice.tone}`}>
       <span>{notice.text}</span>
       {notice.tone === "danger" && <button onClick={onCreditsRequired}>Add Credits</button>}
-    </div>
-  );
-}
-
-function ChatUsageQuickLook({ windows }) {
-  if (!windows.length) return null;
-
-  return (
-    <div className="chat-usage-quicklook" aria-label="Subscription usage limits">
-      {windows.map((window) => (
-        <span className={window.percent >= 90 ? "warning" : ""} key={window.id}>
-          <b>{window.label}</b>
-          <i><em style={{ width: `${window.percent}%` }} /></i>
-          <strong>{window.percent}%</strong>
-          <small>Resets {window.reset}</small>
-        </span>
-      ))}
     </div>
   );
 }

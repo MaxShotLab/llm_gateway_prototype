@@ -38,6 +38,8 @@ export function FundingPage({ billing, setBilling }) {
   const [invoiceTarget, setInvoiceTarget] = useState(null);
   const [subscriptionCheckout, setSubscriptionCheckout] = useState(null);
   const [showPlans, setShowPlans] = useState(false);
+  const [preferredCard, setPreferredCard] = useState(preferredPaymentMethod);
+  const [cardManagerOpen, setCardManagerOpen] = useState(false);
 
   const method = paymentMethods.find((item) => item.id === methodId);
   const updateAmount = (value) => {
@@ -55,6 +57,7 @@ export function FundingPage({ billing, setBilling }) {
   const paymentAmount = `$${amount.toFixed(2)}`;
 
   const completeMockPayment = () => {
+    if (method.id === "card" && saveCard) setPreferredCard(preferredPaymentMethod);
     setTransactions((current) => [
       {
         id: `fund-${Date.now()}`,
@@ -90,7 +93,7 @@ export function FundingPage({ billing, setBilling }) {
         status: "active",
         used: 0,
         windowUsage: { fiveHour: 0, weekly: 0 },
-        renewsAt: "Jul 12, 2026",
+        renewsAt: "Oct 12, 2026",
         cancelAtPeriodEnd: false,
       },
     }));
@@ -99,6 +102,10 @@ export function FundingPage({ billing, setBilling }) {
   };
 
   const confirmSubscriptionPlan = (plan) => {
+    if (!preferredCard) {
+      setCardManagerOpen(true);
+      return;
+    }
     if (!subscription) {
       activateSubscription(plan);
       return;
@@ -157,7 +164,10 @@ export function FundingPage({ billing, setBilling }) {
               </div>
               <div className="subscription-renewal">
                 <CalendarBlank size={18} />
-                <span>{subscription.cancelAtPeriodEnd ? "Access ends" : "Next renewal"}<strong>{subscription.renewsAt}</strong></span>
+                <span>
+                  {subscription.status === "past_due" ? "Payment status" : subscription.cancelAtPeriodEnd ? "Access ends" : "Next renewal"}
+                  <strong>{subscription.status === "past_due" ? "Retry required" : subscription.renewsAt}</strong>
+                </span>
               </div>
             </div>
             <div className="subscription-progress">
@@ -183,7 +193,7 @@ export function FundingPage({ billing, setBilling }) {
             {billing.pendingPlan && <p className="billing-state-note">{billing.pendingPlan.name} begins at the next renewal. No prorated Credits are issued.</p>}
             <div className="subscription-actions">
               {subscription.status === "past_due" ? (
-                <button className="primary-button compact" onClick={() => activateSubscription(subscription)}>Retry card payment</button>
+                <button className="primary-button compact" onClick={() => preferredCard ? activateSubscription(subscription) : setCardManagerOpen(true)}>{preferredCard ? "Retry card payment" : "Add renewal card"}</button>
               ) : subscription.cancelAtPeriodEnd ? (
                 <button className="secondary-button compact" onClick={() => setBilling((current) => ({ ...current, scenario: "active", subscription: { ...current.subscription, cancelAtPeriodEnd: false } }))}>Resume renewal</button>
               ) : (
@@ -220,12 +230,19 @@ export function FundingPage({ billing, setBilling }) {
       <section className="panel subscription-payment-panel">
         <div className="panel-heading">
           <div><h2>Renewal payment method</h2><p>Card details are stored and processed by the payment provider.</p></div>
-          <button className="secondary-button compact">Change card</button>
+          <div className="subscription-payment-actions">
+            {preferredCard && <button className="secondary-button compact" onClick={() => setPreferredCard(null)}>Remove</button>}
+            <button className="secondary-button compact" onClick={() => setCardManagerOpen(true)}>{preferredCard ? "Change card" : "Add card"}</button>
+          </div>
         </div>
-        <div className="saved-payment-method">
-          <CreditCard size={22} />
-          <span><strong>{preferredPaymentMethod.brand} •••• {preferredPaymentMethod.last4}</strong><small>Expires {preferredPaymentMethod.expires} · Preferred for subscription renewal</small></span>
-        </div>
+        {preferredCard ? (
+          <div className="saved-payment-method">
+            <CreditCard size={22} />
+            <span><strong>{preferredCard.brand} •••• {preferredCard.last4}</strong><small>Expires {preferredCard.expires} · Preferred for subscription renewal</small></span>
+          </div>
+        ) : (
+          <p className="billing-state-note">Add a provider-managed card before the next subscription renewal.</p>
+        )}
       </section>
 
       <section className="panel funding-history subscription-billing-history">
@@ -357,7 +374,7 @@ export function FundingPage({ billing, setBilling }) {
           </div>
           <div className="summary-line">
             <span>Platform fee</span>
-            <strong>${paymentFee.toFixed(2)} ({method.feeRate * 100}%)</strong>
+            <strong>{method.providerCalculatedFee ? "Calculated by provider" : `$${paymentFee.toFixed(2)} (${method.feeRate * 100}%)`}</strong>
           </div>
           <div className="summary-line">
             <span>Network fee</span>
@@ -470,12 +487,12 @@ export function FundingPage({ billing, setBilling }) {
               <span><b>Monthly allowance</b>{subscriptionCheckout.allowance.toLocaleString()} Credits</span>
               <span><b>Usage limits</b>{subscriptionCheckout.limits.fiveHour.toLocaleString()} / 5 hours · {subscriptionCheckout.limits.weekly.toLocaleString()} / week</span>
               <span><b>Monthly payment</b>${subscriptionCheckout.priceUsd}.00</span>
-              <span><b>Renewal card</b>{preferredPaymentMethod.brand} •••• {preferredPaymentMethod.last4}</span>
+              <span><b>Renewal card</b>{preferredCard ? `${preferredCard.brand} •••• ${preferredCard.last4}` : "Required before activation"}</span>
               <span><b>Referral reward</b>Not eligible</span>
             </div>
             <div className="form-actions">
               <button className="secondary-button" onClick={() => setSubscriptionCheckout(null)}>Cancel</button>
-              <button className="primary-button compact" onClick={() => confirmSubscriptionPlan(subscriptionCheckout)}>{subscription ? "Schedule plan change" : "Confirm mock subscription"}</button>
+              <button className="primary-button compact" onClick={() => confirmSubscriptionPlan(subscriptionCheckout)}>{!preferredCard ? "Add card first" : subscription ? "Schedule plan change" : "Confirm mock subscription"}</button>
             </div>
           </section>
         </div>
@@ -510,10 +527,32 @@ export function FundingPage({ billing, setBilling }) {
             <div className="checkout-review">
               <span><b>Plan</b>{invoiceTarget.plan}</span>
               <span><b>Amount</b>{invoiceTarget.amount}</span>
-              <span><b>Payment method</b>{preferredPaymentMethod.brand} •••• {preferredPaymentMethod.last4}</span>
+              <span><b>Payment method</b>{invoiceTarget.method}</span>
               <span><b>Status</b>{invoiceTarget.status}</span>
             </div>
             <button className="primary-button" onClick={() => setInvoiceTarget(null)}>Done</button>
+          </section>
+        </div>
+      )}
+
+      {cardManagerOpen && (
+        <div className="modal-backdrop api-modal-backdrop" role="presentation">
+          <section className="api-modal funding-checkout" role="dialog" aria-modal="true" aria-labelledby="card-manager-title">
+            <button className="modal-close" onClick={() => setCardManagerOpen(false)} aria-label="Close card manager"><X size={19} /></button>
+            <span className="api-modal-icon"><CreditCard size={22} /></span>
+            <h2 id="card-manager-title">Manage renewal card</h2>
+            <p>Simulated provider-managed payment method. No card data is entered or stored by Maxshot.</p>
+            <div className="checkout-review">
+              <span><b>Current</b>{preferredCard ? `${preferredCard.brand} •••• ${preferredCard.last4}` : "No saved card"}</span>
+              <span><b>Example replacement</b>Mastercard •••• 4444</span>
+            </div>
+            <div className="form-actions">
+              <button className="secondary-button" onClick={() => setCardManagerOpen(false)}>Cancel</button>
+              <button className="primary-button compact" onClick={() => {
+                setPreferredCard({ brand: "Mastercard", last4: "4444", expires: "10/30" });
+                setCardManagerOpen(false);
+              }}>Use example provider card</button>
+            </div>
           </section>
         </div>
       )}

@@ -36,8 +36,8 @@ be redeemed for fiat or crypto or refunded as credits.
 - View usage split between subscription allowance and pay-as-you-go credits.
 - View configurable 5-hour and weekly subscription limits, usage, remaining
   allowance, and reset times.
-- See a compact 5-hour and weekly usage summary in Chat and full details on the
-  Usage page.
+- See a compact, expandable 5-hour and weekly usage summary in the account menu
+  and full details on the Usage page.
 - Keep subscription billing, invoices, and usage separate from pay-as-you-go
   balances, top-ups, and usage.
 - Save and manage a tokenized preferred card through the payment provider for
@@ -137,7 +137,8 @@ different sources, expiry rules, and accounting treatment.
 - Failed-payment and cancellation states are visible and do not corrupt
   pay-as-you-go balances.
 - The UI shows the source of each consumed unit: subscription or credits.
-- Chat shows a compact 5-hour and weekly subscription usage summary.
+- The account menu shows a compact, expandable 5-hour and weekly subscription
+  usage summary for active subscription periods.
 - Usage provides separate Subscription and PAYG views and shows window reset
   times.
 - A 90% subscription-window warning appears in-app and is not duplicated for
@@ -164,6 +165,7 @@ in-app only.
 
 | Date | Change |
 |---|---|
+| 2026-09-21 | Moved the compact usage summary from Chat to the account menu and clarified that window availability gates the combined usable balance. |
 | 2026-09-21 | Added card prerequisites, preferred payment method, invoices, separate PAYG/subscription views, versioned 5-hour and weekly limits, and in-app 90% warnings. Explicitly excluded trials, refunds, and admin operations. |
 | 2026-09-21 | Locked the monthly allowance-only model, immediate PAYG fallback, renewal rules, payment rails, API-limit accounting, and referral exclusion. |
 | 2026-09-21 | Extracted subscription requirements from the Phase 2 PRD into a standalone document. |
