@@ -9,6 +9,7 @@ import {
   DotsThree,
   Gauge,
   Globe,
+  GithubLogo,
   Key,
   Lightning,
   MagnifyingGlass,
@@ -31,10 +32,11 @@ import {
 import { ChatPage } from "./pages/ChatPage";
 import { ApiPage } from "./pages/ApiPage";
 import { FundingPage } from "./pages/FundingPage";
+import { createBillingScenario, getBillingTotals, getSubscriptionWindows } from "./data/billingData";
 
 const phaseOneNavItems = [
   { id: "chat", label: "Chat", Icon: ChatsCircle },
-  { id: "usage", label: "Dashboard", Icon: Gauge },
+  { id: "usage", label: "Usage", Icon: Gauge },
   { id: "api", label: "API", Icon: Key },
   { id: "topup", label: "Credits", Icon: Wallet },
   { id: "referral", label: "Referral", Icon: ShareNetwork },
@@ -48,8 +50,8 @@ const phaseTwoNavItems = [
 
 const protectedPageCopy = {
   usage: {
-    label: "Dashboard",
-    description: "Usage, bills, balances, and spending limits are tied to your account.",
+    label: "Usage",
+    description: "Usage records and Credit balances are tied to your account.",
   },
   api: {
     label: "API",
@@ -85,6 +87,9 @@ const mockUsage = [
     input: "2,481",
     output: "3,147",
     cost: "5,628",
+    subscriptionCost: 5_628,
+    paygCost: 0,
+    funding: "Subscription (Phase 2)",
     status: "Charged",
   },
   {
@@ -94,6 +99,9 @@ const mockUsage = [
     input: "1,907",
     output: "2,642",
     cost: "4,549",
+    subscriptionCost: 4_549,
+    paygCost: 0,
+    funding: "Subscription (Phase 2)",
     status: "Charged",
   },
   {
@@ -103,6 +111,9 @@ const mockUsage = [
     input: "4,221",
     output: "9,885",
     cost: "14,106",
+    subscriptionCost: 10_000,
+    paygCost: 4_106,
+    funding: "Subscription + PAYG (Phase 2)",
     status: "Charged",
   },
   {
@@ -112,6 +123,9 @@ const mockUsage = [
     input: "2,814",
     output: "4,023",
     cost: "6,837",
+    subscriptionCost: 0,
+    paygCost: 6_837,
+    funding: "Free Credits",
     status: "Charged",
   },
   {
@@ -121,6 +135,9 @@ const mockUsage = [
     input: "1,102",
     output: "1,398",
     cost: "0",
+    subscriptionCost: 0,
+    paygCost: 0,
+    funding: "Free model",
     status: "Free",
   },
 ];
@@ -132,9 +149,9 @@ const dashboardChartData = {
 };
 
 const referralConfig = {
-  rewardRate: 10,
-  maxRewardUsd: 50,
-  link: "https://gateway.maxshot.ai/r/max-dchef",
+  rewardRate: 1,
+  code: "ms-demo-referral",
+  link: "https://gateway.maxshot.ai/?ref=ms-demo-referral",
 };
 
 const referralTopUps = [
@@ -142,17 +159,17 @@ const referralTopUps = [
     id: "ref-1042",
     user: "alex@builder.dev",
     joined: "Jun 12, 2026",
-    topUp: "$100.00",
-    reward: "$10.00",
+    topUp: 100_000_000,
+    reward: 1_000_000,
     status: "Confirmed",
   },
   {
     id: "ref-1037",
     user: "mia@studio.ai",
     joined: "Jun 10, 2026",
-    topUp: "$250.00",
-    reward: "$25.00",
-    status: "Confirmed",
+    topUp: 250_000_000,
+    reward: 2_500_000,
+    status: "Pending",
   },
 ];
 
@@ -295,12 +312,13 @@ const starterSkills = [
   },
 ];
 
-function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme, setTheme, children }) {
+function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme, setTheme, billing, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const isLight = theme === "light";
   const visibleAuthHint =
-    authHint || (!user ? "Log in to unlock Dashboard, API, Credits, and account features." : "");
+    authHint || (!user ? "Log in to unlock Usage, API, Credits, and account features." : "");
+  const usableCredits = getBillingTotals(billing).usable;
 
   return (
     <div className={`app-shell theme-${theme} ${collapsed ? "is-collapsed" : ""}`}>
@@ -346,14 +364,14 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
               {visibleAuthHint}
             </div>
           ) : (
-            <span />
+            <span className="prototype-label">Prototype</span>
           )}
 
           {user ? (
             <div className="topbar-account">
               <a className="credit-pill" href="#" onClick={(event) => { event.preventDefault(); onNavigate("topup"); }}>
-                55,500,000 credits
-                <small>≈ $55.50</small>
+                {usableCredits.toLocaleString()} Credits
+                <small>Usable balance</small>
               </a>
               <div className="account-menu-wrap">
                 <button
@@ -522,7 +540,7 @@ function DeferredNotice({ title }) {
       <span>Experimental</span>
       <div>
         <h2>{title} are not part of Phase 1.</h2>
-        <p>This prototype is kept for product review. Launch scope remains Chat, Dashboard, API, Credits, Referral, and Profile.</p>
+        <p>This prototype is kept for product review. Launch scope remains Chat, Usage, API, Credits, Referral, and Profile.</p>
       </div>
     </section>
   );
@@ -531,11 +549,15 @@ function DeferredNotice({ title }) {
 function ReferralPage() {
   const [copied, setCopied] = useState(false);
   const confirmedTopUp = referralTopUps.reduce(
-    (sum, item) => sum + parseCurrency(item.topUp),
+    (sum, item) => sum + (item.status === "Confirmed" ? item.topUp : 0),
     0,
   );
   const earnedRewards = referralTopUps.reduce(
-    (sum, item) => sum + parseCurrency(item.reward),
+    (sum, item) => sum + (item.status === "Confirmed" ? item.reward : 0),
+    0,
+  );
+  const pendingRewards = referralTopUps.reduce(
+    (sum, item) => sum + (item.status === "Pending" ? item.reward : 0),
     0,
   );
 
@@ -554,9 +576,12 @@ function ReferralPage() {
       <section className="referral-hero panel">
         <div>
           <h2>Invite users. Earn confirmed rewards.</h2>
-          <p>Share your link. When a referred user tops up, you receive 10% promotional credits, capped at $50 from each referee.</p>
+          <p>Share your link. When a referred user tops up, you receive 1% promotional Credits.</p>
         </div>
         <div className="referral-link-box">
+          <small>Your referral code</small>
+          <code>{referralConfig.code}</code>
+          <small>Your referral link</small>
           <code>{referralConfig.link}</code>
           <button className="secondary-button compact" onClick={copyReferralLink}>
             {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -572,26 +597,26 @@ function ReferralPage() {
         </article>
         <article>
           <strong>{referralConfig.rewardRate}%</strong>
-          <span>Reward from confirmed referee top-ups.</span>
+          <span>Promotional Credits from referred top-ups.</span>
         </article>
         <article>
-          <strong>${referralConfig.maxRewardUsd}</strong>
-          <span>Maximum reward from each referee.</span>
+          <strong>Auto</strong>
+          <span>Confirmed rewards are credited automatically.</span>
         </article>
       </section>
 
       <section className="metric-grid referral-metrics">
-        <MetricCard label="Earned rewards" value={formatCurrency(earnedRewards)} note="Confirmed promotional credits" />
-        <MetricCard label="Confirmed top-up" value={formatCurrency(confirmedTopUp)} note="Measured referee volume" />
-        <MetricCard label="Reward rate" value={`${referralConfig.rewardRate}%`} note="Of confirmed referee top-up" />
-        <MetricCard label="Reward cap" value={`$${referralConfig.maxRewardUsd}`} note="Per referred user" />
+        <MetricCard label="Earned rewards" value={earnedRewards.toLocaleString()} note="Confirmed promotional Credits" />
+        <MetricCard label="Confirmed top-up" value={confirmedTopUp.toLocaleString()} note="Measured referee volume" />
+        <MetricCard label="Pending rewards" value={pendingRewards.toLocaleString()} note="Awaiting confirmation" />
+        <MetricCard label="Referred accounts" value={referralTopUps.length.toLocaleString()} note="Unique attributed accounts" />
       </section>
 
       <section className="panel referral-table-panel">
         <div className="panel-heading">
           <div>
             <h2>Referred top-ups</h2>
-            <p>{referralTopUps.length} confirmed rewards.</p>
+            <p>{referralTopUps.length} attributed accounts.</p>
           </div>
         </div>
         <div className="table-scroll">
@@ -610,10 +635,10 @@ function ReferralPage() {
                 <tr key={item.id}>
                   <td>{item.user}</td>
                   <td>{item.joined}</td>
-                  <td>{item.topUp}</td>
-                  <td>{item.reward}</td>
+                  <td>{item.topUp.toLocaleString()}</td>
+                  <td>{item.reward.toLocaleString()}</td>
                   <td>
-                    <span className="status-pill success">
+                    <span className={`status-pill ${item.status === "Confirmed" ? "success" : "neutral"}`}>
                       <i /> {item.status}
                     </span>
                   </td>
@@ -627,52 +652,72 @@ function ReferralPage() {
   );
 }
 
-function parseCurrency(value) {
-  return Number(String(value).replace(/[^0-9.-]+/g, "")) || 0;
-}
-
-function formatCurrency(value) {
-  return `$${value.toFixed(2)}`;
-}
-
-function UsagePage() {
+function UsagePage({ billing }) {
   const periods = ["7 days", "30 days", "All"];
   const [activePeriod, setActivePeriod] = useState("30 days");
   const chartData = dashboardChartData[activePeriod];
+  const totals = getBillingTotals(billing);
+  const windows = getSubscriptionWindows(billing.subscription);
+  const [billingView, setBillingView] = useState("subscription");
+  const [usageTypes, setUsageTypes] = useState({ Chat: true, API: true });
+  const visibleUsage = mockUsage.filter((row) =>
+    usageTypes[row.source] && (
+      billingView === "subscription"
+        ? row.subscriptionCost > 0
+        : row.paygCost > 0 || row.funding === "Free model"
+    ),
+  );
 
   return (
     <main className="content-page dashboard-page">
       <PageHeader
-        title="Dashboard"
+        title="Usage"
       />
 
-      <section className="metric-grid">
-        <MetricCard label="Usable balance" value="$55.50" note="55,500,000 credits" />
-        <MetricCard label="Free credits" value="6,800,000" note="Consumed before paid credits" />
-        <MetricCard label="Paid credits" value="48,200,000" note="Top-up balance" />
-        <MetricCard label="Period spend" value="31,120" note="Credits used in 30 days" />
-      </section>
+      <div className="billing-scope-tabs" role="tablist" aria-label="Usage billing source">
+        <button className={billingView === "subscription" ? "active" : ""} onClick={() => setBillingView("subscription")} role="tab" aria-selected={billingView === "subscription"}>Subscription</button>
+        <button className={billingView === "payg" ? "active" : ""} onClick={() => setBillingView("payg")} role="tab" aria-selected={billingView === "payg"}>PAYG</button>
+      </div>
 
-      <section className="limit-grid">
-        <div className="panel limit-card">
-          <span>Daily limit</span>
-          <strong>$8.40 / $25.00</strong>
-          <div className="limit-track"><i style={{ width: "34%" }} /></div>
-        </div>
-        <div className="panel limit-card">
-          <span>Monthly limit</span>
-          <strong>$55.50 / $150.00</strong>
-          <div className="limit-track"><i style={{ width: "37%" }} /></div>
-        </div>
-      </section>
+      {billingView === "subscription" ? (
+        <>
+          <section className="metric-grid subscription-usage-metrics">
+            <MetricCard label="Period allowance" value={totals.subscriptionRemaining.toLocaleString()} note="Credits remaining" />
+            {windows.map((window) => (
+              <MetricCard key={window.id} label={window.label} value={`${window.percent}% used`} note={`Resets ${window.reset}`} />
+            ))}
+            <MetricCard label="Next renewal" value={billing.subscription?.renewsAt || "No plan"} note="Cancellation stops next billing" />
+          </section>
+          {windows.some((window) => window.percent >= 90) && (
+            <div className="usage-limit-alert" role="status">A subscription usage window is above 90%. PAYG Credits take over when the limit is reached.</div>
+          )}
+        </>
+      ) : (
+        <section className="metric-grid payg-usage-metrics">
+          <MetricCard label="PAYG balance" value={totals.payg.toLocaleString()} note="Credits available" />
+          <MetricCard label="Paid credits" value={billing.balances.paid.toLocaleString()} note="Confirmed top-ups" />
+          <MetricCard label="Free credits" value={billing.balances.free.toLocaleString()} note="Registered-user grant" />
+          <MetricCard label="Referral rewards" value={billing.balances.referral.toLocaleString()} note="Promotional Credits" />
+        </section>
+      )}
 
       <section className="panel usage-chart-panel">
         <div className="panel-heading">
           <div>
-            <h2>Credit usage</h2>
-            <p>Chat and API usage are metered without storing prompt or response content.</p>
+            <h2>{billingView === "subscription" ? "Subscription usage" : "PAYG usage"}</h2>
+            <p>Chat and API usage are metered separately by funding source.</p>
           </div>
           <div className="period-tabs" aria-label="Usage period">
+            {Object.keys(usageTypes).map((type) => (
+              <button
+                key={type}
+                className={usageTypes[type] ? "active" : ""}
+                onClick={() => setUsageTypes((current) => ({ ...current, [type]: !current[type] }))}
+                aria-pressed={usageTypes[type]}
+              >
+                {type}
+              </button>
+            ))}
             {periods.map((period) => (
               <button
                 key={period}
@@ -717,9 +762,6 @@ function UsagePage() {
             <h2>Recent activity</h2>
             <p>Per-request token and credit records.</p>
           </div>
-          <button className="secondary-button compact">
-            Export CSV
-          </button>
         </div>
         <div className="table-scroll">
           <table>
@@ -731,25 +773,30 @@ function UsagePage() {
                 <th>Input</th>
                 <th>Output</th>
                 <th>Cost</th>
+                <th>Funding source</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {mockUsage.map((row) => (
-                <tr key={`${row.time}-${row.model}`}>
+              {visibleUsage.map((row) => {
+                const viewCost = billingView === "subscription" ? row.subscriptionCost : row.paygCost;
+                const funding = billingView === "subscription" ? "Subscription" : row.funding.replace(" (Phase 2)", "").replace("Subscription + ", "");
+                return (
+                <tr key={`${billingView}-${row.time}-${row.model}`}>
                   <td>{row.time}</td>
                   <td>{row.source}</td>
                   <td>{row.model}</td>
                   <td>{row.input}</td>
                   <td>{row.output}</td>
-                  <td>{row.cost}</td>
+                  <td>{viewCost.toLocaleString()}</td>
+                  <td>{funding}</td>
                   <td>
                     <span className={`status-pill ${row.status === "Free" ? "neutral" : "success"}`}>
                       <i /> {row.status}
                     </span>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
@@ -758,7 +805,10 @@ function UsagePage() {
   );
 }
 
-function SettingsPage({ user }) {
+function SettingsPage({ user, onLogout }) {
+  const [retention, setRetention] = useState("Permanent");
+  const [developerMode, setDeveloperMode] = useState(false);
+
   return (
     <main className="content-page settings-page">
       <PageHeader title="Profile" />
@@ -766,7 +816,7 @@ function SettingsPage({ user }) {
         <div className="panel-heading">
           <div>
             <h2>Account</h2>
-            <p>Email login and account display settings.</p>
+            <p>Profile and account display settings.</p>
           </div>
         </div>
         <div className="settings-grid">
@@ -774,60 +824,47 @@ function SettingsPage({ user }) {
             Display name
             <input defaultValue={user ? user.split("@")[0] : "Maxshot user"} />
           </label>
-          <label>
-            Email
-            <input type="email" defaultValue={user || "demo@maxshot.ai"} readOnly />
-          </label>
         </div>
         <div className="profile-actions">
           <button className="secondary-button compact">Save account</button>
         </div>
       </section>
-      <section className="panel settings-panel">
+      <section className="panel settings-panel profile-section">
         <div className="panel-heading">
           <div>
-            <h2>Spend controls</h2>
-            <p>Account-level limits block new billable requests when reached. API key limits stay on the API page.</p>
+            <h2>Login methods</h2>
           </div>
         </div>
-        <div className="settings-grid">
-          <label>
-            Daily limit
-            <input defaultValue="$25" />
-          </label>
-          <label>
-            Monthly limit
-            <input defaultValue="$150" />
-          </label>
-        </div>
-        <div className="profile-actions">
-          <button className="secondary-button compact">Save limits</button>
+        <div className="profile-method-list">
+          <div><span><UserCircle size={20} /><b>Google</b><small>{user || "demo@maxshot.ai"}</small></span><em>Connected</em></div>
+          <div><span><GithubLogo size={20} /><b>GitHub</b><small>Not linked</small></span><button className="secondary-button compact">Bind</button></div>
+          <div><span><Wallet size={20} /><b>Wallet</b><small>Not linked</small></span><button className="secondary-button compact">Connect wallet</button></div>
         </div>
       </section>
-      <section className="panel settings-panel">
+      <section className="panel settings-panel profile-section">
         <div className="panel-heading">
           <div>
-            <h2>Defaults</h2>
-            <p>Global preferences used when a page does not override them.</p>
+            <h2>Advanced</h2>
           </div>
         </div>
-        <div className="settings-grid">
-          <label>
-            Default model
-            <select defaultValue="MiniMax-M3">
-              <option>MiniMax-M3</option>
-              <option>GPT-5 mini</option>
-              <option>Claude Sonnet 4.6</option>
-              <option>Gemini 3.1 Pro</option>
-            </select>
-          </label>
-          <label>
-            Low-balance alert
-            <input defaultValue="$10" />
-          </label>
+        <div className="profile-advanced-row">
+          <div><b>Chat history retention</b><small>Choose how long saved conversations are retained.</small></div>
+          <div className="period-tabs">
+            {["Permanent", "90 days", "30 days"].map((option) => (
+              <button key={option} className={retention === option ? "active" : ""} onClick={() => setRetention(option)}>{option}</button>
+            ))}
+          </div>
         </div>
-        <div className="profile-actions">
-          <button className="secondary-button compact">Save defaults</button>
+        <div className="profile-advanced-row">
+          <div><b>Developer mode</b><small>Show LLM parameter controls in Chat.</small></div>
+          <button className={`switch ${developerMode ? "on" : ""}`} onClick={() => setDeveloperMode((value) => !value)} aria-pressed={developerMode}><span /></button>
+        </div>
+      </section>
+      <section className="panel settings-panel profile-section">
+        <div className="panel-heading"><div><h2>Session &amp; security</h2></div></div>
+        <div className="profile-advanced-row">
+          <div><b>Log out</b><small>End your active session on this device.</small></div>
+          <button className="secondary-button compact" onClick={onLogout}>Log out</button>
         </div>
       </section>
     </main>
@@ -1309,6 +1346,7 @@ export function App() {
   const [chatSeed, setChatSeed] = useState("");
   const [theme, setTheme] = useState("light");
   const [authHint, setAuthHint] = useState("");
+  const [billing, setBilling] = useState(() => createBillingScenario("active"));
 
   const navigate = (nextPage) => {
     const protectedCopy = protectedPageCopy[nextPage];
@@ -1340,11 +1378,11 @@ export function App() {
         />
       );
     }
-    if (active === "usage") return <UsagePage />;
+    if (active === "usage") return <UsagePage billing={billing} />;
     if (active === "api") return <ApiPage />;
-    if (active === "topup") return <FundingPage />;
+    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} />;
     if (active === "referral") return <ReferralPage />;
-    if (active === "settings") return <SettingsPage user={user} />;
+    if (active === "settings") return <SettingsPage user={user} onLogout={logout} />;
     return (
       <ChatPage
         seedPrompt={chatSeed}
@@ -1354,9 +1392,11 @@ export function App() {
           setAuthHint("Log in to start chatting.");
           setLoginOpen(true);
         }}
+        billing={billing}
+        onCreditsRequired={() => navigate("topup")}
       />
     );
-  }, [active, chatSeed, user]);
+  }, [active, billing, chatSeed, user]);
 
   return (
     <div className={`app-theme theme-${theme}`}>
@@ -1369,6 +1409,7 @@ export function App() {
         authHint={authHint}
         theme={theme}
         setTheme={setTheme}
+        billing={billing}
       >
         {page}
       </AppShell>

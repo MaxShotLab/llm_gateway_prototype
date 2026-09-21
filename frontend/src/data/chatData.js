@@ -1,24 +1,24 @@
 export const starterConversations = [
   {
-    id: "routing-review",
-    title: "Gateway routing review",
+    id: "usage-review",
+    title: "Gateway usage overview",
     model: "MiniMax-M3",
     updated: "12 min",
     messages: [
       {
         role: "user",
         content:
-          "Summarize the main requirements for a reliable multi-provider routing layer.",
+          "Summarize the main features of an AI gateway for chat and API access.",
       },
       {
         role: "assistant",
         content:
-          "A reliable routing layer needs deterministic provider selection, bounded retries, model-compatible failover, cost and latency telemetry, and explicit privacy constraints. The gateway should record the requested model, serving provider, token usage, latency, cost, and failover events for every request.",
+          "An AI gateway provides a consistent chat and API experience, supports streaming, applies API-key limits, and records token usage, Credit cost, latency, and request status.",
         citations: [
           {
-            title: "Routing and fallbacks",
+            title: "Chat and API access",
             source: "Maxshot product baseline",
-            url: "#routing",
+            url: "#access",
           },
           {
             title: "Gateway observability",
@@ -42,7 +42,7 @@ export const starterConversations = [
       {
         role: "assistant",
         content:
-          "Update the base URL and API key, map the requested model to the Maxshot catalog, verify streaming behavior, set a spending limit, and test timeout and failover handling before moving production traffic.",
+          "Update the base URL and API key, map the requested model to the Maxshot catalog, verify streaming behavior, configure API-key limits, and test request errors before moving production traffic.",
       },
     ],
   },
@@ -59,24 +59,24 @@ export const starterConversations = [
       {
         role: "assistant",
         content:
-          "The prototype validates Maxshot's Phase 1 structure: configured multi-model chat, API access, top-up, free and paid credits, usage totals, referral rewards, and spending controls. Phase 2 surfaces such as prompts, agents, skills, and memory remain separated from the launch scope.",
+          "The prototype validates Maxshot's existing product structure: multi-model chat, API access, top-up, free and paid Credits, usage records, referral rewards, and API-key limits. Proposed Phase 2 surfaces remain clearly separated from launched features.",
       },
     ],
   },
   {
-    id: "privacy-notes",
-    title: "Privacy mode notes",
+    id: "attachment-notes",
+    title: "Attachment support notes",
     model: "Gemini 3.1 Pro",
     updated: "Jun 9",
     messages: [
       {
         role: "user",
-        content: "Explain temporary chat versus zero-retention mode.",
+        content: "Explain how file attachments depend on the selected model.",
       },
       {
         role: "assistant",
         content:
-          "Temporary chat prevents Maxshot from adding the conversation to persistent history. Zero-retention mode also requires an eligible provider route that does not retain prompt or response content.",
+          "Attachment controls are enabled only when the selected model supports the uploaded file type. Unsupported controls remain disabled until a compatible model is selected.",
       },
     ],
   },

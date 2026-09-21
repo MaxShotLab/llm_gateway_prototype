@@ -6,7 +6,6 @@ import {
   CaretDown,
   ChatsCircle,
   Check,
-  ClockCounterClockwise,
   FileText,
   Globe,
   LinkSimple,
@@ -25,9 +24,17 @@ import {
   mockUploadFiles,
   starterConversations,
 } from "../data/chatData";
+import { getBillingTotals, getSubscriptionWindows } from "../data/billingData";
 
 const responseText =
-  "The mock gateway selected an eligible provider route, preserved the conversation's model and privacy requirements, and recorded token usage, latency, cost, and failover status. This response is streaming to demonstrate the production chat behavior.";
+  "The mock gateway completed this request with the selected model and recorded token usage and Credit cost. This response is streaming to demonstrate the production chat behavior.";
+
+const starterPrompts = [
+  "Summarize text",
+  "Explain a concept",
+  "Draft a message",
+  "Brainstorm ideas",
+];
 
 function createConversation(model) {
   return {
@@ -54,9 +61,8 @@ function addMockFile(currentFiles, setFiles) {
   if (nextFile) setFiles((current) => [...current, nextFile]);
 }
 
-export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired }) {
+export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired, billing, onCreditsRequired }) {
   const [conversations, setConversations] = useState(starterConversations);
-  const [transientConversation, setTransientConversation] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [value, setValue] = useState("");
   const [historyQuery, setHistoryQuery] = useState("");
@@ -65,19 +71,31 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   );
   const [model, setModel] = useState(chatModels[0].name);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const [autoModel, setAutoModel] = useState(false);
   const [searchEnabled, setSearchEnabled] = useState(false);
   const [reasoningEnabled, setReasoningEnabled] = useState(false);
-  const [temporary, setTemporary] = useState(false);
   const [files, setFiles] = useState([]);
   const [streaming, setStreaming] = useState(false);
   const [streamedText, setStreamedText] = useState("");
   const streamTimer = useRef(null);
 
   const activeConversation =
-    conversations.find((conversation) => conversation.id === activeId) ||
-    (transientConversation?.id === activeId ? transientConversation : null);
+    conversations.find((conversation) => conversation.id === activeId) || null;
   const selectedModel = chatModels.find((item) => item.name === model);
   const activeMessages = activeConversation?.messages || [];
+  const billingTotals = getBillingTotals(billing);
+  const subscriptionWindows = getSubscriptionWindows(billing.subscription);
+  const billingNotice = billing.scenario === "insufficient"
+    ? { tone: "danger", text: "No usable Credits. Add Credits to continue." }
+    : billing.scenario === "past_due"
+      ? { tone: "neutral", text: "Renewal failed. Requests continue with PAYG Credits." }
+      : billing.scenario === "low"
+        ? { tone: "neutral", text: "Monthly allowance is low. PAYG Credits will take over automatically." }
+      : billing.scenario === "exhausted"
+        ? { tone: "neutral", text: "Monthly allowance used. Requests continue with PAYG Credits." }
+        : billing.scenario === "cancelled"
+          ? { tone: "neutral", text: `Subscription ends ${billing.subscription.renewsAt}. Current Credits remain usable.` }
+          : null;
 
   const filteredConversations = useMemo(
     () =>
@@ -101,10 +119,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   );
 
   const updateActiveConversation = (updater) => {
-    if (transientConversation?.id === activeId) {
-      setTransientConversation((current) => updater(current));
-      return;
-    }
     setConversations((current) =>
       current.map((conversation) =>
         conversation.id === activeId ? updater(conversation) : conversation,
@@ -115,7 +129,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const startNewChat = () => {
     if (streamTimer.current) window.clearInterval(streamTimer.current);
     setActiveId(null);
-    setTransientConversation(null);
     setValue("");
     setFiles([]);
     setStreamedText("");
@@ -126,21 +139,10 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const selectConversation = (conversation) => {
     if (streaming) return;
     setActiveId(conversation.id);
-    setTransientConversation(null);
     setModel(conversation.model);
-    setTemporary(false);
     setReasoningEnabled(false);
     setFiles([]);
     if (window.matchMedia("(max-width: 900px)").matches) setHistoryOpen(false);
-  };
-
-  const toggleTemporary = () => {
-    const next = !temporary;
-    setTemporary(next);
-    if (next) {
-      setActiveId(null);
-      setTransientConversation(null);
-    }
   };
 
   const selectModel = (nextModel) => {
@@ -151,22 +153,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
     if (!nextModel.files) setFiles([]);
   };
 
-  const finishStream = (conversationId, assistantMessage, persist) => {
-    if (!persist) {
-      setTransientConversation((current) =>
-        current?.id === conversationId
-          ? {
-              ...current,
-              messages: [...current.messages, assistantMessage],
-              updated: "Now",
-            }
-          : current,
-      );
-      setStreaming(false);
-      setStreamedText("");
-      streamTimer.current = null;
-      return;
-    }
+  const finishStream = (conversationId, assistantMessage) => {
     setConversations((current) =>
       current.map((conversation) =>
         conversation.id === conversationId
@@ -189,14 +176,14 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
     citations: searchEnabled
       ? [
           {
-            title: "Gateway routing baseline",
-            source: "Maxshot product baseline",
-            url: "#gateway-routing",
+            title: "Model overview",
+            source: "Maxshot model catalog",
+            url: "#model-overview",
           },
           {
-            title: "Provider privacy controls",
-            source: "Provider configuration",
-            url: "#privacy-controls",
+            title: "Web search result",
+            source: "Example source",
+            url: "#search-result",
           },
         ]
       : [],
@@ -217,13 +204,16 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
       onLoginRequired?.();
       return;
     }
+    if (billingTotals.usable <= 0) {
+      onCreditsRequired?.();
+      return;
+    }
     const prompt = promptOverride || value.trim();
     const userMessage = {
       role: "user",
       content: prompt,
       files,
     };
-    const shouldPersist = !temporary;
     let conversationId = activeId;
 
     if (!conversationId || !activeConversation) {
@@ -232,13 +222,8 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
       nextConversation.title =
         prompt.length > 38 ? `${prompt.slice(0, 38)}...` : prompt;
       nextConversation.messages = appendUser ? [userMessage] : [];
-      if (shouldPersist) {
-        setConversations((current) => [nextConversation, ...current]);
-        setActiveId(conversationId);
-      } else {
-        setTransientConversation(nextConversation);
-        setActiveId(conversationId);
-      }
+      setConversations((current) => [nextConversation, ...current]);
+      setActiveId(conversationId);
     } else {
       if (appendUser) {
         updateActiveConversation((conversation) => ({
@@ -268,7 +253,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
         finishStream(
           conversationId,
           buildAssistantMessage(),
-          shouldPersist,
         );
       }
     }, 24);
@@ -293,7 +277,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
             model: selectedModel.name,
           },
         },
-        !temporary,
       );
     } else {
       setStreaming(false);
@@ -409,15 +392,14 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
             </button>
             <div className="chat-title">
               <strong>{activeConversation?.title || "New conversation"}</strong>
-              <span>
-                {temporary ? "Temporary" : "Saved to history"}
-              </span>
+              <span>Saved to history</span>
             </div>
           </div>
           <div className="chat-context-actions">
             <div className="model-picker">
               <button
                 onClick={() => setModelMenuOpen((state) => !state)}
+                disabled={autoModel}
                 aria-label="Select chat model"
               >
                 <span className="model-dot" />
@@ -444,12 +426,15 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
               )}
             </div>
             <button
-              className={`privacy-button ${temporary ? "enabled" : ""}`}
-              onClick={toggleTemporary}
-              aria-pressed={temporary}
+              className={`privacy-button ${autoModel ? "enabled" : ""}`}
+              onClick={() => {
+                setAutoModel((value) => !value);
+                setModelMenuOpen(false);
+              }}
+              aria-pressed={autoModel}
             >
-              <ClockCounterClockwise size={17} />
-              Temporary Chat
+              <Sparkle size={17} />
+              Auto model
             </button>
           </div>
         </header>
@@ -457,15 +442,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
         {!hasMessages ? (
           <div className="chat-empty chat-core-empty">
             <div className="mode-summary">
-              {temporary ? (
-                <>
-                  <ClockCounterClockwise size={16} /> Temporary chat
-                </>
-              ) : (
-                <>
-                  <Sparkle size={16} /> Multi-model workspace
-                </>
-              )}
+              <Sparkle size={16} /> Multi-model workspace
             </div>
             <div className="empty-conversation-title">
               New conversation
@@ -473,6 +450,13 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
             <h1>
               Welcome to <span className="wordmark">Maxshot</span>, how can I help?
             </h1>
+            <div className="starter-prompts" aria-label="Prompt starters">
+              {starterPrompts.map((prompt) => (
+                <button key={prompt} onClick={() => setValue(prompt)}>{prompt}</button>
+              ))}
+            </div>
+            <ChatUsageQuickLook windows={subscriptionWindows} />
+            {billingNotice && <BillingNotice notice={billingNotice} onCreditsRequired={onCreditsRequired} />}
             <ChatComposer
               value={value}
               setValue={setValue}
@@ -510,6 +494,8 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
               )}
             </div>
             <div className="composer-dock chat-core-dock">
+              <ChatUsageQuickLook windows={subscriptionWindows} />
+              {billingNotice && <BillingNotice notice={billingNotice} onCreditsRequired={onCreditsRequired} />}
               <ChatComposer
                 value={value}
                 setValue={setValue}
@@ -528,15 +514,39 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                 removeFile={(id) => setFiles((current) => current.filter((file) => file.id !== id))}
               />
               <p>
-                {temporary
-                  ? "Temporary chat · not saved"
-                  : "Check important information."}
+                Check important information.
               </p>
             </div>
           </>
         )}
       </section>
     </main>
+  );
+}
+
+function BillingNotice({ notice, onCreditsRequired }) {
+  return (
+    <div className={`chat-billing-notice ${notice.tone}`}>
+      <span>{notice.text}</span>
+      {notice.tone === "danger" && <button onClick={onCreditsRequired}>Add Credits</button>}
+    </div>
+  );
+}
+
+function ChatUsageQuickLook({ windows }) {
+  if (!windows.length) return null;
+
+  return (
+    <div className="chat-usage-quicklook" aria-label="Subscription usage limits">
+      {windows.map((window) => (
+        <span className={window.percent >= 90 ? "warning" : ""} key={window.id}>
+          <b>{window.label}</b>
+          <i><em style={{ width: `${window.percent}%` }} /></i>
+          <strong>{window.percent}%</strong>
+          <small>Resets {window.reset}</small>
+        </span>
+      ))}
+    </div>
   );
 }
 

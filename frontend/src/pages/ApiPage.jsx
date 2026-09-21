@@ -1,10 +1,9 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   CaretDown,
   Check,
   Copy,
-  DotsThree,
   Key,
   Plus,
   ShieldCheck,
@@ -29,7 +28,6 @@ export function ApiPage() {
   const [copied, setCopied] = useState("");
   const [logKey, setLogKey] = useState("all");
   const [logStatus, setLogStatus] = useState("all");
-  const [expandedLog, setExpandedLog] = useState(null);
 
   const selectedKey =
     keys.find((item) => item.id === selectedKeyId) || keys[0] || null;
@@ -56,7 +54,8 @@ export function ApiPage() {
     const name = form.get("name").trim();
     const dailyLimit = Number(form.get("dailyLimit")) || 0;
     const monthlyLimit = Number(form.get("monthlyLimit")) || 0;
-    const created = createMockApiKey(name, dailyLimit, monthlyLimit, keys.length + 1);
+    const expires = form.get("expires") || "Never";
+    const created = createMockApiKey(name, dailyLimit, monthlyLimit, expires, keys.length + 1);
 
     setKeys((current) => [...current, created.key]);
     setSelectedKeyId(created.key.id);
@@ -106,12 +105,12 @@ export function ApiPage() {
         <div className="code-block">
           <div className="code-top">
             <span>Base URL</span>
-            <button onClick={() => copyText("https://api.maxshot.ai/v1", "base-url")}>
+            <button onClick={() => copyText("https://api.maxshot.ai/llm/v1", "base-url")}>
               {copied === "base-url" ? <Check size={15} /> : <Copy size={15} />}
               {copied === "base-url" ? "Copied" : "Copy"}
             </button>
           </div>
-          <code>https://api.maxshot.ai/v1</code>
+          <code>https://api.maxshot.ai/llm/v1</code>
           <small>Authorization: Bearer YOUR_API_KEY</small>
         </div>
       </section>
@@ -145,13 +144,14 @@ export function ApiPage() {
                 </div>
                 <div className="key-limit">
                   <span>
-                    ${item.spent.toFixed(2)} of {item.monthlyLimit ? `$${item.monthlyLimit}` : "no limit"}
+                    {formatNumber(item.spent)} of {item.monthlyLimit ? `${formatNumber(item.monthlyLimit)} Credits` : "no limit"}
                   </span>
                   <i><b style={{ width: `${limitPercent}%` }} /></i>
                 </div>
                 <div className="key-meta">
                   <span>Created {item.created}</span>
                   <span>Last used {item.lastUsed}</span>
+                  <span>Expires {item.expires}</span>
                 </div>
                 <div className="key-actions">
                   <button
@@ -188,23 +188,23 @@ export function ApiPage() {
               <ApiMetric label="Output tokens" value={formatNumber(selectedKey.outputTokens)} />
               <ApiMetric
                 label="Daily remaining"
-                value={selectedKey.dailyLimit ? `$${Math.max(selectedKey.dailyLimit - selectedKey.dailySpent, 0).toFixed(2)}` : "Unlimited"}
+                value={selectedKey.dailyLimit ? `${formatNumber(Math.max(selectedKey.dailyLimit - selectedKey.dailySpent, 0))} Credits` : "Unlimited"}
               />
               <ApiMetric
                 label="Monthly remaining"
-                value={selectedKey.monthlyLimit ? `$${Math.max(selectedKey.monthlyLimit - selectedKey.spent, 0).toFixed(2)}` : "Unlimited"}
+                value={selectedKey.monthlyLimit ? `${formatNumber(Math.max(selectedKey.monthlyLimit - selectedKey.spent, 0))} Credits` : "Unlimited"}
               />
             </div>
             <form className="spending-limit-form" onSubmit={updateLimit}>
               <label>
-                Daily limit
+                Daily Credit limit
                 <span className="currency-input">
-                  <i>$</i>
+                  <i>Cr</i>
                   <input
                     name="dailyLimit"
                     type="number"
                     min="0"
-                    step="1"
+                    step="100000"
                     defaultValue={selectedKey.dailyLimit}
                     key={`${selectedKey.id}-daily`}
                     aria-label="Daily spending limit"
@@ -212,14 +212,14 @@ export function ApiPage() {
                 </span>
               </label>
               <label>
-                Monthly limit
+                Monthly Credit limit
                 <span className="currency-input">
-                  <i>$</i>
+                  <i>Cr</i>
                   <input
                     name="monthlyLimit"
                     type="number"
                     min="0"
-                    step="1"
+                    step="100000"
                     defaultValue={selectedKey.monthlyLimit}
                     key={selectedKey.id}
                     aria-label="Monthly spending limit"
@@ -227,6 +227,7 @@ export function ApiPage() {
                 </span>
               </label>
               <button className="secondary-button compact" type="submit">Save limits</button>
+              <p>Limits apply to all API usage.</p>
             </form>
           </section>
 
@@ -264,54 +265,25 @@ export function ApiPage() {
                     <th>Time</th>
                     <th>Key</th>
                     <th>Requested model</th>
-                    <th>Serving provider</th>
                     <th>Tokens in / out</th>
                     <th>Latency</th>
                     <th>Cost</th>
+                    <th>Funding source</th>
                     <th>Status</th>
-                    <th />
                   </tr>
                 </thead>
                 <tbody>
                   {filteredLogs.map((item) => (
-                    <Fragment key={item.id}>
-                      <tr className={expandedLog === item.id ? "expanded" : ""}>
+                      <tr key={item.id}>
                         <td>{item.timestamp}</td>
                         <td>{item.keyName}</td>
                         <td><code>{item.model}</code></td>
-                        <td>
-                          <span className="provider-cell">
-                            {item.provider}
-                            {item.failover && <b>Failover</b>}
-                          </span>
-                        </td>
                         <td>{formatNumber(item.inputTokens)} / {formatNumber(item.outputTokens)}</td>
                         <td>{item.latency}</td>
                         <td>{item.cost}</td>
+                        <td>{item.funding}</td>
                         <td><span className={`status-pill ${item.status === "Succeeded" ? "success" : "failed"}`}><i /> {item.status}</span></td>
-                        <td>
-                          <button
-                            className="log-detail-button"
-                            aria-label={`Show details for ${item.id}`}
-                            onClick={() => setExpandedLog((current) => current === item.id ? null : item.id)}
-                          >
-                            <DotsThree size={18} weight="bold" />
-                          </button>
-                        </td>
                       </tr>
-                      {expandedLog === item.id && (
-                        <tr className="request-detail-row" key={`${item.id}-detail`}>
-                          <td colSpan="9">
-                            <div>
-                              <span><b>Request ID</b><code>{item.id}</code></span>
-                              <span><b>Route</b>{item.failover ? `${item.primaryProvider} → ${item.provider}` : item.provider}</span>
-                              <span><b>Failover</b>{item.failover ? item.failoverReason : "No failover event"}</span>
-                              <span><b>Content logging</b>Disabled</span>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -329,8 +301,9 @@ export function ApiPage() {
             <h2 id="create-key-title">Create API key</h2>
             <form onSubmit={createKey}>
               <label>Key name<input name="name" placeholder="Production API" required autoFocus /></label>
-              <label>Daily limit<span className="currency-input"><i>$</i><input name="dailyLimit" type="number" min="0" step="1" defaultValue="25" /></span></label>
-              <label>Monthly limit<span className="currency-input"><i>$</i><input name="monthlyLimit" type="number" min="0" step="1" defaultValue="100" /></span></label>
+              <label>Daily Credit limit<span className="currency-input"><i>Cr</i><input name="dailyLimit" type="number" min="0" step="100000" defaultValue="25000000" /></span></label>
+              <label>Monthly Credit limit<span className="currency-input"><i>Cr</i><input name="monthlyLimit" type="number" min="0" step="100000" defaultValue="100000000" /></span></label>
+              <label>Expiry<select name="expires" defaultValue="Never"><option>Never</option><option>30 days</option><option>90 days</option><option>1 year</option></select></label>
               <div className="form-actions">
                 <button type="button" className="secondary-button" onClick={() => setCreateOpen(false)}>Cancel</button>
                 <button type="submit" className="primary-button compact">Create key</button>
