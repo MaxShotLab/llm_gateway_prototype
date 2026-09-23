@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** September 21, 2026
+**Updated:** September 23, 2026
 
 ## 1. Purpose
 
@@ -153,12 +153,14 @@ Creations.
 Studio extends the same Maxshot shell defined in
 [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.1 — same account
 session, same credit balance display, same navigation frame. It adds a
-single routed surface, Studio, which stacks three sections on one
-scrollable page, in this order: the generation composer, My Creations
-directly below it (P0.2 — a Liked tab joins it once P1.6 ships), and the
-Discover feed (P1.3) below that. My Creations, Liked, and Discover are
-never their own route or nav item — Studio is the only entry point — and
-none of this introduces a second design system or a second credit balance.
+single routed surface, Studio, which stacks sections on one scrollable page,
+in this order: the generation composer, a Pending module (P0.5) directly
+below it whenever a video is Pending — otherwise absent entirely — My
+Creations below that (P0.2 — a Liked tab joins it once P1.6 ships), and the
+Discover feed (P1.3) below that. The Pending module, My Creations, Liked, and
+Discover are never their own route or nav item — Studio is the only entry
+point — and none of this introduces a second design system or a second
+credit balance.
 
 The current prototype ([studio-prototype/index.html](./studio-prototype/index.html))
 is a single static HTML/CSS/JS file with mocked generation (results are
@@ -171,12 +173,25 @@ describes for the Gateway prototype.
 The prototype also simulates the generation-failure behavior in P0.1/P1.1: a
 prompt or edit description containing one of three keywords resolves to a
 failed result instead of a successful one, so the inline error message and
-its clearing behavior can be exercised without a real provider. `test-error-
-policy` simulates a content-policy rejection, `test-error-image` simulates a
-restricted reference image, and `test-error-fail` simulates a generic
-provider failure. This keyword trigger is prototype-only scaffolding, not a
-production requirement — a real provider integration reports its own failure
-reasons.
+its clearing behavior can be exercised without a real provider. This keyword
+trigger is prototype-only scaffolding, not a production requirement — a real
+provider integration reports its own failure reasons. The keyword is matched
+as a case-insensitive substring anywhere in the prompt/description, so it can
+sit alongside real prompt text (for example, "a sunset test-error-fail"); the
+same three keywords drive both an ordinary (non-Pending) generation/edit
+failure and a Pending video (P0.5) resolving to a failure instead of success:
+
+| Keyword | Simulated failure |
+|---|---|
+| `test-error-policy` | Content-policy rejection — the prompt is treated as disallowed. |
+| `test-error-image` | A reference image is treated as restricted/unusable. |
+| `test-error-fail` | A generic provider failure — the model returns no result. |
+
+For Pending video generation specifically (P0.5), the prototype resolves a
+submission — success or, via the keywords above, failure — after a fixed
+20-second delay, compressed from the "up to several minutes" a real video
+provider can take, so the Pending state is easy to see and test without a
+long wait.
 
 A separate proof-of-concept ([live-demo/](../live-demo)) wires text-to-image
 and text-to-video composer actions to fal.ai for real generation, proving the
@@ -376,6 +391,48 @@ Acceptance:
 
 - A freshly generated asset's preview shows today's date and its
   resolution/aspect.
+
+### P0.5 Pending Video Generation
+
+- Unlike image generation, a video generation doesn't lock the composer for
+  the whole request — some video models can take several minutes to return a
+  result, far too long to hold the user in an indeterminate "Generating…"
+  state (P0.1). Submitting a video instead creates the asset immediately in a
+  Pending state, clears the composer, and lets the user keep working —
+  submit another generation, navigate elsewhere — while it resolves in the
+  background.
+- Pending videos show in a dedicated Pending module on the Studio page,
+  positioned above My Creations (P0.2) — not mixed into that gallery. The
+  module is visible only while at least one video is Pending, and hidden
+  entirely otherwise; it never sits there empty. A Pending card shows a
+  generating status, not a result — it isn't downloadable, editable, or
+  openable yet — and an info affordance explains that it will move into My
+  Creations automatically once ready.
+- Up to 3 videos may be Pending at once. Submitting a fourth while 3 are
+  already Pending is blocked, using the same inline error-message location
+  and clearing behavior P0.1 defines for a failed generation.
+- Credit is deducted only once a Pending video actually succeeds, same as any
+  other generation (P0.3). A Pending video that fails is removed with no
+  charge, and the failure shows as the same inline error message (P0.1) any
+  other generation failure uses — the fact that it resolved in the
+  background, after the user may have moved on to something else, doesn't
+  change where or how the failure is shown.
+- A successful Pending video moves automatically into My Creations (P0.2);
+  the Pending module then hides again once nothing remains Pending.
+
+Acceptance:
+
+- Submitting a video generation clears the composer and doesn't block further
+  composer use while it's Pending.
+- A Pending video appears only in the Pending module above My Creations,
+  never inside My Creations itself, until it resolves.
+- The Pending module is absent from the page whenever there are no Pending
+  videos.
+- A fourth concurrent video submission is blocked, with the same inline
+  error-message treatment P0.1 uses, until fewer than 3 videos are Pending.
+- A successful Pending video deducts credit and appears in My Creations; a
+  failed one deducts nothing, is removed from the Pending module, and shows
+  the same inline error message a failed non-Pending generation would.
 
 ## 8. Phase 2 Requirements
 
@@ -672,14 +729,21 @@ not this PRD's to make.
   one click from the gallery card or read-only preview, or a Generate click
   if selected from inside the editing view (P1.1). Not an edit — it starts a
   new generation, billed as a normal video generation.
+- **Pending:** The state of a video generation that has been submitted but
+  hasn't resolved yet (P0.5). Shown in its own module directly below the
+  composer, above the Assets section — present only while at least one video
+  is Pending. Distinct from the in-progress state P0.1 defines for image
+  generation: a Pending video doesn't lock the composer, since it can take
+  much longer to resolve.
 - **My Creations:** The current user's private gallery of their own assets;
   one of the two tabs in the Assets section, and the only one available in
   Phase 1.
 - **Assets:** The private, tab-switched section — My Creations and (once
-  P1.6 ships) Liked — embedded on the Studio page directly below the
-  composer. Not a route or nav item; Studio is the only entry point.
-  Introduced in Phase 1 as My Creations only; the Liked tab is a Phase 2
-  addition.
+  P1.6 ships) Liked — embedded on the Studio page below the composer
+  (directly below it, or below the Pending module (P0.5) on the rare page
+  load where a video is Pending). Not a route or nav item; Studio is the
+  only entry point. Introduced in Phase 1 as My Creations only; the Liked
+  tab is a Phase 2 addition.
 - **Discover:** The public feed combining every user's published generations
   with community- and Maxshot-published examples, sortable by Most recent or
   Most viewed. Read-only — no edit, delete, or "mine vs. theirs" filter.
@@ -754,3 +818,4 @@ into production.
 | 2026-09-11 | First & last frame, draggable references, prompt limit | Added First & last frame as a mode toggle inside Image-to-Video (not a separate tab), with its own info affordance and role-tagged references ("first" vs. "last") in Reference used/Try this; toggling it preserves both modes' uploads independently (P1.5, §11). Reference-image thumbnails can now be reordered by dragging (P0.1). Added a shared 2,500-character prompt limit with a live counter that blocks Generate/Apply until the prompt is shortened, covering both generation and every edit description (P0.1, P1.1). |
 | 2026-09-18 | Assets merged into Studio, no separate nav item | Assets (My Creations, and Liked once it ships) is no longer a routed surface or nav item — it's an embedded section on the Studio page, directly below the composer and above Discover (P0.2, P1.3, §5.1, §10, §11). Corrected every place that still described Assets as its own route: the navigation list (now just "Studio"), the frontend surfaces count, the Assets/My Creations/Liked/Discover terminology entries, the Creator (reuse) path, and the editing view's "hides Discover" behavior (now hides My Creations too, since both sit below the composer). |
 | 2026-09-21 | Generation-failure error message | Defined the inline error message shown when a generation or edit fails (content policy, restricted reference image, or generic provider failure) — no credit deducted, input left untouched for retry, and the message clears on prompt edit or on leaving the current context rather than persisting into an unrelated view (P0.1, P1.1). Documented the prototype's keyword-based failure simulation (§5.1) used to exercise this without a real provider. |
+| 2026-09-23 | Pending video generation | Added P0.5: video generation no longer locks the composer — a submission creates the asset as Pending immediately, the composer clears, and it resolves in the background (some video models can take several minutes). Pending videos show in their own module above My Creations, hidden entirely when empty; up to 3 may be Pending at once, and a fourth is blocked using the same inline error-message location/behavior as a failed generation (P0.1). Credit is only deducted on success; a failed Pending video is removed with no charge and shows the same inline error message. Documented the keyword table (§5.1) driving both ordinary and Pending failures, and the prototype's 20-second compressed Pending delay. |

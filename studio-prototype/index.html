@@ -300,6 +300,14 @@
   .studio-canvas .card.is-video:hover .play { opacity: 0; }
   .studio-canvas .card.is-video:hover .thumb { animation: st-video-preview 1.8s ease-in-out infinite; }
   @keyframes st-video-preview { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.06); filter: brightness(1.15); } }
+  .studio-canvas .card.is-pending { cursor: default; }
+  .studio-canvas .card.is-pending .thumb { filter: brightness(0.45) saturate(0.7); }
+  .studio-canvas .card .pending-badge { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #fff; font-size: 12px; font-weight: 600; background: rgba(10,10,15,0.25); text-align: center; padding: 0 10px; }
+  .studio-canvas .card .pending-badge .pending-spinner { width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: st-spin 0.8s linear infinite; }
+  /* Instant hover tooltip explaining the Pending state — no transition, so it appears immediately
+     rather than lagging like a native title attribute. */
+  .studio-canvas .card .pending-tooltip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); width: 200px; background: var(--panel); color: var(--text); border: 1px solid var(--border-2); border-radius: 8px; padding: 8px 10px; font-size: 11.5px; line-height: 1.5; font-weight: 400; text-align: left; box-shadow: 0 4px 14px rgba(0,0,0,0.18); opacity: 0; visibility: hidden; pointer-events: none; z-index: 20; }
+  .studio-canvas .card.is-pending:hover .pending-tooltip { opacity: 1; visibility: visible; }
   .studio-canvas .sound-badge { position: absolute; bottom: 10px; right: 10px; display: flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 20px; background: rgba(10,10,15,0.65); color: #fff; font-size: 10.5px; }
   .studio-canvas .sound-badge svg { width: 12px; height: 12px; flex-shrink: 0; }
   @keyframes st-spin { to { transform: rotate(360deg); } }
@@ -317,6 +325,7 @@
 
   .studio-canvas #materialsCanvas { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
   .studio-canvas #assetsCanvas { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
+  .studio-canvas #pendingModule { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
   .studio-canvas .view-title { font-size: 18px; font-weight: 600; margin: 4px auto 18px; max-width: 900px; }
   .studio-canvas .view-title:has(+ .materials-subtitle) { margin-bottom: 2px; }
   .studio-canvas .materials-subtitle { font-size: 12.5px; color: var(--muted); margin: 0 auto 16px; max-width: 900px; }
@@ -952,6 +961,16 @@ const I18N = {
   genErrorPolicy: { en: 'This prompt may violate our content policy and can’t be generated. Try rephrasing it.', zh: '该 Prompt 可能违反内容政策，无法生成，请修改描述后重试。' },
   genErrorImage: { en: 'One of your reference images can’t be used — it may contain restricted content. Try a different image.', zh: '参考图片中有一张无法使用，可能包含受限内容，请更换图片后重试。' },
   genErrorFail: { en: 'Generation failed — the model didn’t return a result. You haven’t been charged; please try again.', zh: '生成失败，模型未能返回结果。本次未扣除 Credit，请重试。' },
+  // Video generation can take much longer than image (some models take up to ~10 minutes), so a
+  // submitted video sits in a Pending state instead of blocking the composer — see PENDING_VIDEO_LIMIT.
+  pendingLabel: { en: 'Pending', zh: '生成中' },
+  pendingSectionTitle: { en: 'Pending', zh: '生成中' },
+  pendingModuleSubtitle: { en: 'Videos still generating — they’ll move into My Creations automatically once ready.', zh: '正在生成的视频 — 生成完成后将自动进入 My Creations。' },
+  pendingTooltip: { en: 'This video is still generating. Once it’s ready, it’ll move into My Creations.', zh: '视频正在生成中，生成完成后将自动进入 My Creations 列表。' },
+  pendingClickToast: { en: 'Still generating — check back in a bit', zh: '视频生成中，请稍候' },
+  pendingVideoLimitToast: { en: 'Up to 3 videos can generate at once — wait for one to finish before starting another.', zh: '最多同时生成 3 个视频，请等待其中一个完成后再试。' },
+  videoSubmittedToast: { en: 'Video submitted — it’ll appear in My Creations as Pending until it’s ready', zh: '视频已提交生成，可在 My Creations 中查看生成进度' },
+  videoReadyToast: { en: 'Video ready', zh: '视频已生成' },
   needPromptToast: { en: 'Type a prompt first', zh: '请先输入提示词' },
   enhanceSuffix: { en: ', ultra detailed, soft lighting, professional composition', zh: '，超高细节，柔和光影，专业构图' },
   enhanceDoneToast: { en: 'Prompt enhanced', zh: '已优化提示词' },
@@ -1230,6 +1249,7 @@ $('studioCanvas').innerHTML = `
       </button>
     </div>
   </div>
+  <div id="pendingModule" style="display:none;"></div>
   <div id="assetsCanvas"></div>
   <div id="materialsCanvas"></div>
 `;
@@ -1322,6 +1342,14 @@ function updatePromptCounter() {
   el.classList.toggle('over', len > PROMPT_MAX);
 }
 $('promptInput').addEventListener('input', updatePromptCounter);
+
+// Video generation can block on a slow provider (some models take up to ~10 minutes), so a
+// submitted video generation doesn't lock the composer — it sits as a Pending asset in My Creations
+// until it resolves. Cap concurrent Pending videos so a user can't queue an unbounded backlog.
+const PENDING_VIDEO_LIMIT = 3;
+function countPendingVideos() {
+  return state.assets.filter(a => a.type === 'video' && a.status === 'pending').length;
+}
 
 // ---------------- mock generation failures ----------------
 // The real backend would reject a request for reasons like these; this prototype has no such
@@ -1713,8 +1741,11 @@ function handleGenerate() {
   if (needsUpload && state.uploadedImgs.length === 0) { toast(t('needUploadToast')); return; }
   if (needsFirstLast && (!state.firstLastImgs[0] || !state.firstLastImgs[1])) { toast(t('needFirstLastToast')); return; }
   if (!prompt && !needsUpload && !needsFirstLast) { toast(t('needPromptToast')); return; }
+  if (state.mode === 'video' && countPendingVideos() >= PENDING_VIDEO_LIMIT) { showGenError(t('pendingVideoLimitToast')); return; }
   const cost = costFor();
   if (shell.credits < cost) { toast(t('notEnoughCreditsToast') + ' ' + formatK(cost)); return; }
+
+  if (state.mode === 'video') { handleGenerateVideo(prompt, cost); return; }
 
   setComposerBusy(true);
 
@@ -1739,8 +1770,41 @@ function handleGenerate() {
   }, 3000 + Math.random() * 2000);
 }
 
+// Some video models (for example, providers like OpenAI's) can take up to ~10 minutes to return a
+// result — far too long to lock the composer for. Instead, submit immediately: the asset is created
+// right away in a Pending state (visible in My Creations, countPendingVideos()-capped at
+// PENDING_VIDEO_LIMIT), the composer clears and stays usable, and credits are only deducted once the
+// job actually succeeds — a failed pending job is removed with no charge, same as any other failure.
+function handleGenerateVideo(prompt, cost) {
+  const asset = makeAsset(prompt, { pending: true });
+  renderPendingModule();
+  if ($('materialsGrid')) renderMaterialsGrid();
+  resetComposer();
+  toast(t('videoSubmittedToast'));
+  const assetId = asset.id;
+  setTimeout(() => {
+    const pendingAsset = state.assets.find(a => a.id === assetId);
+    if (!pendingAsset) return; // deleted while pending
+    const mockError = findMockError(prompt);
+    if (mockError) {
+      state.assets = state.assets.filter(a => a.id !== assetId);
+      // Same banner, same spot as every other generation failure — not a toast — even though this
+      // one resolves in the background, well after the user has moved on from this exact prompt.
+      showGenError(mockError);
+    } else {
+      shell.credits -= cost;
+      updateShellCredits();
+      pendingAsset.status = 'ready';
+      toast(t('videoReadyToast') + ' — ' + t('usedToast') + ' ' + formatK(cost) + ' ' + t('creditsWord'));
+    }
+    renderPendingModule();
+    if ($('creationsGrid')) renderCreationsGrid();
+    if ($('materialsGrid')) renderMaterialsGrid();
+  }, 20000); // stretched out (vs. the 3-5s image flow) so a Pending video is easy to see and test
+}
+
 let assetSeq = 1;
-function makeAsset(prompt) {
+function makeAsset(prompt, { pending = false } = {}) {
   const isVideo = state.mode === 'video';
   const isFirstLast = state.tab === 'img2vid' && state.img2vidRefMode === 'firstlast';
   const needsUpload = (state.tab === 'img2img' || state.tab === 'img2vid') && !isFirstLast;
@@ -1764,7 +1828,7 @@ function makeAsset(prompt) {
     audio: isVideo ? state.audio === 'on' : false,
     audioDesc: isVideo && state.audio === 'on' ? $('audioDescInput').value.trim() : '',
     style: state.style, strength, resolution: state.resolution, createdAt: new Date().toISOString(),
-    parentId: null, editType: null, views: 0,
+    parentId: null, editType: null, views: 0, status: pending ? 'pending' : 'ready',
     // Remember every reference image used (img2vid can be made from more than one, first/last-frame
     // always exactly two with a role each), so the result can show "Reference used" and be reloaded
     // later via "Try this".
@@ -1804,6 +1868,17 @@ function buildCard(asset, { previewOnly = false, returnView = 'studio', returnTo
   thumb.className = 'thumb';
   setThumbBackground(thumb, asset);
   card.appendChild(thumb);
+  if (asset.status === 'pending') {
+    // Still generating — no edit/delete/Try this/preview yet, and no click-through; just the status.
+    card.classList.add('is-pending');
+    const pendingBadge = document.createElement('div');
+    pendingBadge.className = 'pending-badge';
+    pendingBadge.innerHTML = '<div class="pending-spinner"></div><span>' + t('pendingLabel') + '</span>' +
+      '<span class="pending-tooltip">' + t('pendingTooltip') + '</span>';
+    card.appendChild(pendingBadge);
+    card.addEventListener('click', () => toast(t('pendingClickToast')));
+    return card;
+  }
   const badge = document.createElement('div');
   badge.className = 'badge';
   badge.textContent = asset.type === 'video' ? t('videoBadge') : t('imageBadge');
@@ -1961,12 +2036,31 @@ function renderCreationsGrid(filter) {
   chips[0].textContent = t('filterAll'); chips[1].textContent = t('filterImages'); chips[2].textContent = t('filterVideos');
   const grid = $('creationsGrid');
   grid.innerHTML = '';
-  const list = state.assets.filter(a => filter === 'all' || a.type === filter);
+  // Pending items live in their own module above Assets entirely (see renderPendingModule) — not here.
+  const list = state.assets.filter(a => a.status !== 'pending' && (filter === 'all' || a.type === filter));
   if (!list.length) {
     grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted-2);font-size:13px;padding:40px 0;text-align:center;">' + t('emptyCreations') + '</div>';
     return;
   }
   list.forEach(a => grid.appendChild(buildCard(a, { returnView: 'assets' })));
+}
+
+// A generating video gets its own module, above the Assets section (My Creations/Liked) entirely —
+// not nested inside it — so it reads as its own distinct step in the page, not a stray line inside
+// My Creations. Hidden completely when nothing is generating.
+function renderPendingModule() {
+  const mod = $('pendingModule');
+  if (!mod) return;
+  const pending = state.assets.filter(a => a.status === 'pending');
+  if (!pending.length) { mod.style.display = 'none'; mod.innerHTML = ''; return; }
+  mod.style.display = '';
+  mod.innerHTML = `
+    <div class="view-title">${t('pendingSectionTitle')} (${pending.length})</div>
+    <div class="materials-subtitle">${t('pendingModuleSubtitle')}</div>
+    <div class="gallery-grid" id="pendingGrid"></div>
+  `;
+  const grid = $('pendingGrid');
+  pending.forEach(a => grid.appendChild(buildCard(a, { returnView: 'assets' })));
 }
 
 /* ---------------- Liked: assets (own or community) the user has saved from Discover ---------------- */
@@ -2004,6 +2098,7 @@ function renderLikedGrid(filter) {
 
 /* ---------------- Assets: My Creations and Liked, switched by sub-tab ---------------- */
 function renderAssetsView() {
+  renderPendingModule();
   if (!LIKES_ENABLED) state.assetsTab = 'mine';
   if (!$('assetSubtabs')) {
     $('assetsCanvas').innerHTML = `
@@ -2043,8 +2138,9 @@ function showAssetsSection() {
 /* ---------------- Discover: everything anyone has published, ranked by popularity ---------------- */
 function assetPool() {
   // Discover and Liked share one flat stream — everyone's published work, the current user's
-  // included. Sortable by Most recent (creation date) or Most viewed (view count).
-  const pool = state.assets.concat(COMMUNITY_ASSETS).slice();
+  // included. Sortable by Most recent (creation date) or Most viewed (view count). A still-Pending
+  // video isn't a real result yet, so it stays out of Discover/Liked until it's ready.
+  const pool = state.assets.filter(a => a.status !== 'pending').concat(COMMUNITY_ASSETS).slice();
   if (state.discoverSort === 'views') return pool.sort((a, b) => (b.views || 0) - (a.views || 0));
   return pool.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 }
@@ -2219,6 +2315,7 @@ $('materialPreviewBack').addEventListener('click', () => {
   if (target === 'assets') { showAssetsSection(); return; }
   document.querySelectorAll('.gw-nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === target));
   SHELL_VIEWS.forEach(v => $('view-' + v).classList.toggle('hidden', v !== target));
+  renderPendingModule();
   renderMaterialsGrid();
 });
 // Reload an asset's own recipe (its reference image + its prompt) into the composer, ready to tweak and regenerate —
