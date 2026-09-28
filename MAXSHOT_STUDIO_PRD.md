@@ -3,7 +3,7 @@
 **Status:** Proposed — not yet part of the approved product baseline
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** September 23, 2026
+**Updated:** September 28, 2026
 
 ## 1. Purpose
 
@@ -109,8 +109,11 @@ each phase.
 1. Choose Image or Video mode, then Text-to-\* or Image-to-\*.
 2. Write a prompt, and for Image-to-\* attach one or more reference images.
 3. Choose model, aspect ratio, resolution, and (image) style.
-4. Review the credit cost and generate.
-5. Find the result in My Creations.
+4. Review the credit cost and generate — this opens the new asset's Review
+   page straight away, showing what's known and a generating state until the
+   result exists.
+5. Find the asset in My Creations, where it moves from Pending to Generated
+   (or Failed).
 
 ### Creator (edit) — Phase 2
 
@@ -153,14 +156,14 @@ Creations.
 Studio extends the same Maxshot shell defined in
 [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.1 — same account
 session, same credit balance display, same navigation frame. It adds a
-single routed surface, Studio, which stacks sections on one scrollable page,
-in this order: the generation composer, a Pending module (P0.5) directly
-below it whenever a video is Pending — otherwise absent entirely — My
-Creations below that (P0.2 — a Liked tab joins it once P1.6 ships), and the
-Discover feed (P1.3) below that. The Pending module, My Creations, Liked, and
-Discover are never their own route or nav item — Studio is the only entry
-point — and none of this introduces a second design system or a second
-credit balance.
+single routed surface, Studio, which stacks three sections on one
+scrollable page, in this order: the generation composer, My Creations
+directly below it (P0.2 — a Liked tab joins it once P1.6 ships), and the
+Discover feed (P1.3) below that. My Creations, Liked, and Discover are never
+their own route or nav item — Studio is the only entry point — and none of
+this introduces a second design system or a second credit balance. Every
+asset a user generates, whatever its status (Pending, Generated, Failed —
+P0.5), lives in My Creations; there is no separate module for in-flight work.
 
 The current prototype ([studio-prototype/index.html](./studio-prototype/index.html))
 is a single static HTML/CSS/JS file with mocked generation (results are
@@ -178,8 +181,8 @@ trigger is prototype-only scaffolding, not a production requirement — a real
 provider integration reports its own failure reasons. The keyword is matched
 as a case-insensitive substring anywhere in the prompt/description, so it can
 sit alongside real prompt text (for example, "a sunset test-error-fail"); the
-same three keywords drive both an ordinary (non-Pending) generation/edit
-failure and a Pending video (P0.5) resolving to a failure instead of success:
+same three keywords drive a generation resolving to Failed instead of
+Generated (P0.5), for images and videos alike, and a failed edit (P1.1):
 
 | Keyword | Simulated failure |
 |---|---|
@@ -187,11 +190,14 @@ failure and a Pending video (P0.5) resolving to a failure instead of success:
 | `test-error-image` | A reference image is treated as restricted/unusable. |
 | `test-error-fail` | A generic provider failure — the model returns no result. |
 
-For Pending video generation specifically (P0.5), the prototype resolves a
-submission — success or, via the keywords above, failure — after a fixed
-20-second delay, compressed from the "up to several minutes" a real video
-provider can take, so the Pending state is easy to see and test without a
-long wait.
+The prototype resolves a Pending generation (P0.5) — to Generated or, via the
+keywords above, Failed — after a simulated delay: 3–5 seconds for an image,
+and a fixed 20 seconds for a video, compressed from the "up to several
+minutes" a real video provider can take, so the Pending state is easy to see
+and test without a long wait. To exercise each state: submit any ordinary
+prompt for Generated; add a keyword above for Failed; leave the Review page
+(or watch it) during the delay for Pending; and submit a fourth video while
+three are Pending to hit the concurrency cap.
 
 A separate proof-of-concept ([live-demo/](../live-demo)) wires text-to-image
 and text-to-video composer actions to fal.ai for real generation, proving the
@@ -283,29 +289,35 @@ Nothing here depends on anything in §8.
 - Prompt-enhance action.
 - Visible credit cost before generating, matching the amount actually
   deducted.
-- Generating shows an in-progress state for the whole request — the Generate
-  control becomes indeterminate and its cost readout reads "Generating…" —
-  without resetting or navigating away from the composer. A real model can
-  take several seconds or more; the user always has visible confirmation that
-  the request is running, not silence.
-- A completed generation opens directly into the new result's read-only
-  preview (P0.2) — the user isn't left looking at the composer they just
-  generated from and required to go find the result themselves. Returning
-  ("Back") from that preview clears the composer's prompt and any reference
-  image(s), so it starts blank rather than showing the input that was just
-  used.
+- Generating never locks the composer. Clicking Generate creates the asset
+  immediately in a Pending status (P0.5), clears the composer's prompt and
+  reference image(s), and opens the new asset's Review page — the same
+  read-only preview P0.2 defines — straight away. The Review page shows
+  everything already known (prompt, model, aspect ratio, resolution, duration,
+  reference image(s)); the only difference from a finished result's page is
+  the media area, which shows a generating state (an indeterminate indicator
+  and a line on what to expect) until the result exists, and no
+  download/edit/Animate actions yet.
+- The user may stay on the Review page or leave it: the asset remains in My
+  Creations as Pending and resolves in the background. If they're still on
+  its Review page when the result arrives, the page updates in place to the
+  finished result; otherwise a brief notification tells them it's ready.
 - A failed generation (for example, a prompt or reference image flagged by
-  content policy, or a provider that simply fails to return a result) shows
-  an inline error message in the composer, near the prompt field, explaining
-  what went wrong and what to do next — not a silent failure and not a
-  disruptive modal. No credit is deducted, and the prompt and any uploaded
-  reference images are left exactly as they were, so the user can adjust and
-  retry without starting over. The message reflects only the most recent
-  attempt — it clears as soon as the user edits the prompt, or moves on to a
-  different context (switching mode/tab, entering or leaving edit view,
-  navigating elsewhere) — rather than persisting indefinitely or following
-  the user into an unrelated view. Edit actions (P1.1) show a failure the
-  same way, in the same location, with the same clearing behavior.
+  content policy, or a provider that simply fails to return a result) does
+  not disappear: the asset becomes Failed and stays in My Creations. Its
+  Review page (and its card, on hover) explains what went wrong and what to
+  do next; no credit is deducted; and the user can retry by reloading the
+  asset's prompt and reference image(s) into the composer (the same reload
+  Try this offers, P1.4) or delete it. If the user has already left the
+  Review page, a brief notification tells them a generation failed.
+- A submission can also be blocked before it starts — for example the
+  concurrent-video limit (P0.5). That shows as an inline error message in the
+  composer, near the prompt field, and leaves the prompt and reference
+  image(s) untouched. The same inline message is used for a failed edit
+  (P1.1). It reflects only the most recent attempt — it clears as soon as the
+  user edits the prompt or moves to a different context (switching
+  mode/tab, entering or leaving edit view, navigating elsewhere) — rather
+  than persisting or following the user into an unrelated view.
 
 Acceptance:
 
@@ -315,23 +327,22 @@ Acceptance:
 - The upload limit appears for both Image-to-\* tabs; the reference-strength
   control and the style picker appear only where §11 defines them (strength:
   Image-to-Image only; style: image modes only).
-- The Generate control is disabled and shows its in-progress state for the
-  entire duration of a request; nothing else on screen changes until the
-  result is ready.
-- After a successful generation, the user lands on the new result's preview
-  without any extra action; the composer is empty — no prompt text, no
-  reference images — when they return to it.
+- Clicking Generate opens the new asset's Review page immediately, with the
+  composer already empty; the page shows the known info plus a generating
+  state in place of the media, and the composer is never locked.
+- When the result arrives while the user is on the Review page, it updates in
+  place to the finished result without any extra action.
 - Dragging a reference thumbnail to a new position reorders it without
   re-uploading.
 - Typing past 2,500 characters turns the counter into a warning; Generate is
   blocked with a message until the prompt is back under the limit.
-- A failed generation shows its error message in place, deducts no credit,
-  and leaves the prompt and any uploaded reference images untouched for
-  retry.
-- An error message shown after a failed generation or edit does not follow
-  the user into an unrelated context — editing the prompt, switching mode or
-  tab, entering or leaving edit view, or navigating elsewhere (sidebar,
-  gallery card, a different item's preview) all clear it.
+- A failed generation becomes a Failed asset in My Creations, deducts no
+  credit, and explains the failure on its Review page; its prompt and
+  reference image(s) can be reloaded into the composer to retry.
+- An inline error message (a blocked submission or a failed edit) does not
+  follow the user into an unrelated context — editing the prompt, switching
+  mode or tab, entering or leaving edit view, or navigating elsewhere
+  (sidebar, gallery card, a different item's preview) all clear it.
 
 ### P0.2 My Creations
 
@@ -341,8 +352,18 @@ Acceptance:
 - A private, filterable-by-type (all/image/video) gallery of the current
   user's own generations, listed newest first by creation date. There is no
   view-count signal to sort by yet — that arrives with Discover (P1.3).
+- Every generation lives here from the moment it's submitted, whatever its
+  status: Pending (still generating), Generated (has a result), or Failed
+  (P0.5). A status filter — a dropdown alongside the type filter, so the two
+  read as separate controls — narrows the gallery to All status, Generated,
+  Pending, or Failed, and combines with the type filter. Pending and Failed
+  cards carry a status marker and, on hover, a short explanation (that it's
+  still generating; or why it failed).
 - Opening an item shows a read-only preview: the media, its prompt, its
-  reference image(s) if any, and its metadata (P0.4).
+  reference image(s) if any, and its metadata (P0.4). A Pending or Failed
+  item opens the same page in its own state (P0.1, P0.5) — no result-only
+  actions (download, edit, Animate) — and only Generated results appear in
+  Discover, Liked, and the reference-image picker.
 - Per-item actions, both as a direct shortcut on the gallery card and inside
   the preview: download, delete.
 - Delete asks for confirmation — a Cancel/Delete prompt — before removing
@@ -355,9 +376,12 @@ Acceptance:
 
 Acceptance:
 
-- A user can find any of their own past generations by type filter.
-- Opening an item shows the read-only preview; there is no edit, Animate, or
-  Try this control anywhere in Phase 1.
+- A user can find any of their own past generations by type filter and by
+  status filter, and the two combine.
+- Opening a Generated item shows the read-only preview; there is no edit,
+  Animate, or Try this control on it anywhere in Phase 1. (A Failed item's
+  retry — reloading its prompt and reference image(s) into the composer — is
+  the one reload available in Phase 1, since there is no result to keep.)
 - Deletion only affects the deleted asset and its own gallery entry.
 - Clicking delete shows a confirm/cancel prompt first; the asset is only
   removed after the user explicitly confirms.
@@ -392,47 +416,37 @@ Acceptance:
 - A freshly generated asset's preview shows today's date and its
   resolution/aspect.
 
-### P0.5 Pending Video Generation
+### P0.5 Generation Status
 
-- Unlike image generation, a video generation doesn't lock the composer for
-  the whole request — some video models can take several minutes to return a
-  result, far too long to hold the user in an indeterminate "Generating…"
-  state (P0.1). Submitting a video instead creates the asset immediately in a
-  Pending state, clears the composer, and lets the user keep working —
-  submit another generation, navigate elsewhere — while it resolves in the
-  background.
-- Pending videos show in a dedicated Pending module on the Studio page,
-  positioned above My Creations (P0.2) — not mixed into that gallery. The
-  module is visible only while at least one video is Pending, and hidden
-  entirely otherwise; it never sits there empty. A Pending card shows a
-  generating status, not a result — it isn't downloadable, editable, or
-  openable yet — and an info affordance explains that it will move into My
-  Creations automatically once ready.
+- Every generation has a status, shown wherever it appears in My Creations
+  (P0.2) and on its Review page (P0.1):
+  - **Pending:** submitted, no result yet. Image usually resolves in seconds;
+    a video can take several minutes, so the user is never held on the
+    composer waiting.
+  - **Generated:** the result exists and is charged (P0.3).
+  - **Failed:** the request could not produce a result. Not charged; the
+    reason is kept with the asset (P0.1).
+- Pending and Failed assets sit in My Creations alongside Generated ones —
+  there is no separate module for in-flight work. Only Generated assets are
+  downloadable, editable, or eligible for Discover (P1.3), Liked (P1.6), and
+  the reference-image picker.
 - Up to 3 videos may be Pending at once. Submitting a fourth while 3 are
-  already Pending is blocked, using the same inline error-message location
-  and clearing behavior P0.1 defines for a failed generation.
-- Credit is deducted only once a Pending video actually succeeds, same as any
-  other generation (P0.3). A Pending video that fails is removed with no
-  charge, and the failure shows as the same inline error message (P0.1) any
-  other generation failure uses — the fact that it resolved in the
-  background, after the user may have moved on to something else, doesn't
-  change where or how the failure is shown.
-- A successful Pending video moves automatically into My Creations (P0.2);
-  the Pending module then hides again once nothing remains Pending.
+  already Pending is blocked with the inline error message P0.1 defines, and
+  the prompt is left untouched. Images have no such limit.
+- Credit is deducted only when a generation becomes Generated, never for
+  Pending or Failed (P0.3).
 
 Acceptance:
 
-- Submitting a video generation clears the composer and doesn't block further
-  composer use while it's Pending.
-- A Pending video appears only in the Pending module above My Creations,
-  never inside My Creations itself, until it resolves.
-- The Pending module is absent from the page whenever there are no Pending
-  videos.
-- A fourth concurrent video submission is blocked, with the same inline
-  error-message treatment P0.1 uses, until fewer than 3 videos are Pending.
-- A successful Pending video deducts credit and appears in My Creations; a
-  failed one deducts nothing, is removed from the Pending module, and shows
-  the same inline error message a failed non-Pending generation would.
+- A submitted generation appears in My Creations as Pending immediately, then
+  becomes Generated or Failed without the user doing anything.
+- The status filter (P0.2) returns exactly the assets in the chosen status.
+- A fourth concurrent video submission is blocked, with the inline error
+  message, until fewer than 3 videos are Pending.
+- A Generated asset deducts credit and gains its result-only actions; a
+  Failed one deducts nothing and keeps its reason.
+- Pending and Failed assets never appear in Discover, Liked, or the
+  reference-image picker.
 
 ## 8. Phase 2 Requirements
 
@@ -477,20 +491,19 @@ Discover (P1.3), so it needs Discover live first.
   feed (P1.3) below the composer — a user editing a result isn't also
   scrolling past their own gallery or unrelated published work. Both
   reappear once editing exits.
-- Applying an edit shows the same in-progress state as generating (P0.1) —
-  but the editing view itself (the result, the tool selection, the mask, the
-  typed description) stays exactly as the user left it, locked against
-  further input, for the whole request. Nothing is reset, and the user is
+- Applying an edit shows an in-progress state — the Generate control becomes
+  indeterminate and its cost readout reads "Generating…" — and the editing
+  view itself (the result, the tool selection, the mask, the typed
+  description) stays exactly as the user left it, locked against further
+  input, for the whole request. Nothing is reset, and the user is
   never shown a blank composer mid-request; the editing view only tears down
   once the result exists, in the same step as opening its preview.
-- A completed edit opens directly into the new result's read-only preview,
-  the same as a fresh generation (P0.1). Returning ("Back") from that preview
+- A completed edit opens directly into the new result's read-only preview. Returning ("Back") from that preview
   goes back to wherever the edit was opened from — My Creations if that's
   where the gallery card or preview's edit shortcut was — not always to the
   Studio composer.
-- A failed edit shows the same inline error message, in the same location and
-  with the same clearing behavior, as a failed generation (P0.1) — no credit
-  is deducted, and the editing view (image, tool selection, mask, typed
+- A failed edit shows the inline error message P0.1 defines, in the same
+  location and with the same clearing behavior — no credit is deducted, and the editing view (image, tool selection, mask, typed
   description) is left exactly as it was for the user to retry.
 - Deleting the currently-edited result (P0.2) asks for confirmation first,
   the same as everywhere else delete appears.
@@ -542,8 +555,9 @@ Acceptance:
 - A single feed combining the current user's own generations with community-
   and Maxshot-published examples — no "mine vs. theirs" filter, only a type
   filter (all/image/video).
-- Every generation is included automatically the moment it's created — there
-  is no publish step, review queue, or opt-out (see §3, §9).
+- Every generation is included automatically the moment it's Generated (P0.5)
+  — there is no publish step, review queue, or opt-out (see §3, §9). Pending
+  and Failed assets are never included.
 - Two sort modes: Most recent (by creation date) and Most viewed (by view
   count). Most recent ships first — it needs nothing beyond the creation date
   Phase 1 already records. Most viewed follows as a fast-follow once view
@@ -729,20 +743,17 @@ not this PRD's to make.
   one click from the gallery card or read-only preview, or a Generate click
   if selected from inside the editing view (P1.1). Not an edit — it starts a
   new generation, billed as a normal video generation.
-- **Pending:** The state of a video generation that has been submitted but
-  hasn't resolved yet (P0.5). Shown in its own module directly below the
-  composer, above the Assets section — present only while at least one video
-  is Pending. Distinct from the in-progress state P0.1 defines for image
-  generation: a Pending video doesn't lock the composer, since it can take
-  much longer to resolve.
+- **Pending / Generated / Failed:** The three statuses of a generation
+  (P0.5). Pending — submitted, no result yet, and the composer stays free;
+  Generated — the result exists and is charged; Failed — no result, not
+  charged, with the reason kept on the asset. All three live in My Creations
+  and can be filtered by status (P0.2).
 - **My Creations:** The current user's private gallery of their own assets;
   one of the two tabs in the Assets section, and the only one available in
   Phase 1.
 - **Assets:** The private, tab-switched section — My Creations and (once
-  P1.6 ships) Liked — embedded on the Studio page below the composer
-  (directly below it, or below the Pending module (P0.5) on the rare page
-  load where a video is Pending). Not a route or nav item; Studio is the
-  only entry point. Introduced in Phase 1 as My Creations only; the Liked
+  P1.6 ships) Liked — embedded on the Studio page directly below the
+  composer. Not a route or nav item; Studio is the only entry point. Introduced in Phase 1 as My Creations only; the Liked
   tab is a Phase 2 addition.
 - **Discover:** The public feed combining every user's published generations
   with community- and Maxshot-published examples, sortable by Most recent or
@@ -819,3 +830,4 @@ into production.
 | 2026-09-18 | Assets merged into Studio, no separate nav item | Assets (My Creations, and Liked once it ships) is no longer a routed surface or nav item — it's an embedded section on the Studio page, directly below the composer and above Discover (P0.2, P1.3, §5.1, §10, §11). Corrected every place that still described Assets as its own route: the navigation list (now just "Studio"), the frontend surfaces count, the Assets/My Creations/Liked/Discover terminology entries, the Creator (reuse) path, and the editing view's "hides Discover" behavior (now hides My Creations too, since both sit below the composer). |
 | 2026-09-21 | Generation-failure error message | Defined the inline error message shown when a generation or edit fails (content policy, restricted reference image, or generic provider failure) — no credit deducted, input left untouched for retry, and the message clears on prompt edit or on leaving the current context rather than persisting into an unrelated view (P0.1, P1.1). Documented the prototype's keyword-based failure simulation (§5.1) used to exercise this without a real provider. |
 | 2026-09-23 | Pending video generation | Added P0.5: video generation no longer locks the composer — a submission creates the asset as Pending immediately, the composer clears, and it resolves in the background (some video models can take several minutes). Pending videos show in their own module above My Creations, hidden entirely when empty; up to 3 may be Pending at once, and a fourth is blocked using the same inline error-message location/behavior as a failed generation (P0.1). Credit is only deducted on success; a failed Pending video is removed with no charge and shows the same inline error message. Documented the keyword table (§5.1) driving both ordinary and Pending failures, and the prototype's 20-second compressed Pending delay. |
+| 2026-09-28 | Generation status replaces the Pending module | Superseded the 2026-09-23 design: there is no separate Pending module. Every generation is an asset with a status — Pending, Generated, or Failed — that lives in My Creations, filterable by a status dropdown beside the type filter (P0.2, P0.5). Clicking Generate now opens the new asset's Review page immediately (image and video alike) showing the known info plus a generating state in the media area, instead of locking the composer; the page updates in place when the result arrives (P0.1). A failed generation becomes a Failed asset with its reason (retry via reloading its prompt/references, or delete) rather than disappearing; the inline composer error message remains for blocked submissions (e.g. the 3-concurrent-video cap) and failed edits (P0.1, P1.1). Only Generated assets reach Discover, Liked, and the reference picker. §5.1 documents the prototype's per-state test recipe and delays (image 3–5s, video 20s). |
