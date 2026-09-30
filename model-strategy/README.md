@@ -25,6 +25,7 @@ npm run start
 
 ## Developer reference
 
+- Media Strategy page: [`MEDIA_STRATEGY_REFERENCE.md`](./MEDIA_STRATEGY_REFERENCE.md)
 - All Models page: [`ALL_MODELS_REFERENCE.md`](./ALL_MODELS_REFERENCE.md)
 - Source of facts: [`ALGORITHM_REFERENCE.md`](./ALGORITHM_REFERENCE.md)
 - Executable reference: [`reference-implementation.js`](./reference-implementation.js)

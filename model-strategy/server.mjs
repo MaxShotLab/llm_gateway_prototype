@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { hasSystemicRateLimit, parseInferenceResponse, summarizeInferenceAttempts } from "./src/lib/inference.js";
+import { selectMediaModels } from "./src/lib/media-strategy.js";
 import { applyFreeInferenceHealth, buildChatModelsJson, DEFAULT_STRATEGY, MODEL_COUNT, prepareCandidates, selectionRefreshFingerprint, selectPortfolio, strategyDataFingerprint, validateStrategy } from "./src/lib/strategy.js";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
@@ -40,6 +41,8 @@ const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
 let allModelsReference = null;
 let allModelsReferencePromise = null;
+let mediaSnapshot = null;
+let mediaPromise = null;
 let updatePromise = null;
 let freeProbePromise = null;
 let updateTimer = null;
@@ -458,6 +461,43 @@ async function getAllModelsReference() {
   }
 }
 
+async function getMediaStrategy() {
+  if (mediaSnapshot && Date.now() - Date.parse(mediaSnapshot.dataUpdatedAt) < refreshIntervalMs) return mediaSnapshot;
+  if (!mediaPromise) {
+    mediaPromise = (async () => {
+      const window = rankingsWindow();
+      const [catalog, images, videos, imageUsage] = await Promise.all([
+        openRouterFetch("/models?output_modalities=all", 45_000),
+        openRouterFetch("/images/models", 45_000),
+        openRouterFetch("/videos/models", 45_000),
+        openRouterFetch(`/datasets/rankings-daily?start_date=${window.start}&end_date=${window.end}&modality=image_output`, 45_000),
+      ]);
+      if (![catalog, images, videos, imageUsage].every((source) => Array.isArray(source?.data)) || !imageUsage.meta?.end_date) {
+        throw new Error("OpenRouter media model data is incomplete.");
+      }
+      const selection = selectMediaModels({
+        models: catalog.data,
+        imageModels: images.data,
+        videoModels: videos.data,
+        imageUsage,
+      });
+      mediaSnapshot = {
+        dataUpdatedAt: new Date().toISOString(),
+        usageAsOf: imageUsage.meta.as_of ?? null,
+        usageWindow: { start: imageUsage.meta.start_date, end: imageUsage.meta.end_date },
+        ...selection,
+      };
+      return mediaSnapshot;
+    })().finally(() => { mediaPromise = null; });
+  }
+  try {
+    return await mediaPromise;
+  } catch (error) {
+    if (mediaSnapshot) return { ...mediaSnapshot, error: error.message };
+    throw error;
+  }
+}
+
 async function readRequestBody(request) {
   const chunks = [];
   let size = 0;
@@ -486,6 +526,14 @@ async function handleApi(request, response, url) {
     } catch (error) {
       const status = error.code === "MAXSHOT_API_KEY_MISSING" ? 503 : 502;
       json(response, status, { error: { code: error.code || "GATEWAY_MODELS_FAILED", message: error.message } });
+    }
+    return true;
+  }
+  if (request.method === "GET" && url.pathname === "/api/media-strategy") {
+    try {
+      json(response, 200, await getMediaStrategy());
+    } catch (error) {
+      json(response, error.code === "OPENROUTER_API_KEY_MISSING" ? 503 : 502, { error: { code: error.code || "MEDIA_STRATEGY_FAILED", message: error.message } });
     }
     return true;
   }

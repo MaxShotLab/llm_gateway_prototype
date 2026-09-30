@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import GatewayModelsPage from "./GatewayModelsPage.jsx";
+import MediaStrategyPage from "./MediaStrategyPage.jsx";
 import { CATEGORY_ORDER, compareSelectedModels, DEFAULT_STRATEGY, MODEL_COUNT, totalValues, validateStrategy } from "./lib/strategy.js";
 
 const CATEGORY_LABELS = {
@@ -567,13 +568,15 @@ function ModelStrategyPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState(() => window.location.hash === "#all-models" ? "models" : "strategy");
+  const [page, setPage] = useState(() => window.location.hash === "#all-models" ? "models" : window.location.hash === "#media-strategy" ? "media" : "strategy");
   const [modelsVisited, setModelsVisited] = useState(page === "models");
+  const [mediaVisited, setMediaVisited] = useState(page === "media");
 
   const navigate = (nextPage) => {
-    window.location.hash = nextPage === "models" ? "all-models" : "model-strategy";
+    window.location.hash = nextPage === "models" ? "all-models" : nextPage === "media" ? "media-strategy" : "model-strategy";
     setPage(nextPage);
     if (nextPage === "models") setModelsVisited(true);
+    if (nextPage === "media") setMediaVisited(true);
   };
 
   return (
@@ -581,10 +584,12 @@ export default function App() {
       <nav className="product-nav" aria-label="Prototype pages">
         <strong>Maxshot Gateway</strong>
         <button type="button" aria-current={page === "strategy" ? "page" : undefined} onClick={() => navigate("strategy")}>Model Strategy</button>
+        <button type="button" aria-current={page === "media" ? "page" : undefined} onClick={() => navigate("media")}>Media Strategy</button>
         <button type="button" aria-current={page === "models" ? "page" : undefined} onClick={() => navigate("models")}>All Models</button>
       </nav>
       {page === "strategy" ? <ModelStrategyPage /> : null}
       {modelsVisited ? <div hidden={page !== "models"}><GatewayModelsPage /></div> : null}
+      {mediaVisited ? <div hidden={page !== "media"}><MediaStrategyPage /></div> : null}
     </div>
   );
 }
