@@ -2,7 +2,7 @@
 
 **Status:** Draft feature extraction for team discussion
 **Scope:** Phase 2 advanced LLM Gateway features
-**Updated:** September 21, 2026
+**Updated:** October 12, 2026
 
 ## 1. Source And Consistency Check
 
@@ -124,9 +124,12 @@ Dollar-funded pay-as-you-go + optional subscription plan
 ```
 
 Pay-as-you-go remains the default usage model. Dollars represent user-funded
-value; Credits measure LLM usage and subscription or promotional allowances.
+value; Credits measure text and media usage and subscription or promotional
+allowances.
 Subscription is an optional account entitlement that grants a configured
-monthly Credit allowance. It does not change per-request pricing.
+monthly Credit allowance shared by eligible Chat, API, image, and video
+usage. It does not change per-request or per-generation pricing. Image/video
+routes must already exist to be eligible.
 
 Must-do features:
 
@@ -143,8 +146,9 @@ Must-do features:
 - Keep subscription allowance, free Credits, referral Credits, and Dollar
   balance as separate ledger buckets.
 - Show Credit cost and actual Dollar debit separately.
-- Show configurable 5-hour and weekly subscription limits in the expandable
-  account menu and full remaining amounts and reset times in Usage.
+- Show configurable 5-hour and weekly text-usage limits in the expandable
+  account menu, plus the shared monthly allowance and feature-level usage in
+  Usage. Image/video jobs have firm quotes and separate job limits.
 - Warn in-app at 90% consumption for each subscription window.
 - Separate subscription usage, payments, and invoices from pay-as-you-go usage,
   top-ups, and receipts.
@@ -170,6 +174,9 @@ Implementation contract:
 - Request charging consumes subscription Credits, free Credits, referral
   Credits, then Dollar balance and records Credit cost separately from Dollar
   debit.
+- Media jobs reserve their upfront Credit quote while Pending, charge it once
+  when Generated, and release the hold without charge when Failed. Dollar
+  overage for media requires confirmation in the UI or an API-key opt-in.
 
 Minimum ledger buckets:
 
@@ -257,6 +264,7 @@ These need product discussion before Phase 2 requirements are finalized:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-12 | Multimodal subscription alignment | Extended the shared allowance to eligible Chat, API, image, and video usage; separated text windows from media job controls and delegated media quote/settlement details to the subscription requirements. |
 | 2026-09-21 | Subscription implementation contract | Added canonical states, identical initial/renewal payment rules, idempotent charge-and-allowance creation, billing records, and fixed-point precision; made the standalone subscription requirements authoritative for implementation details. |
 | 2026-09-21 | Two-unit billing model | Defined Dollar balance for user-funded value and Credits for metering and allowances; added Dollar-balance-first subscription payment, card fallback, and no split payment. |
 | 2026-09-21 | Account usage summary alignment | Moved the compact usage summary from Chat to the expandable account menu and retained full details in Usage. |

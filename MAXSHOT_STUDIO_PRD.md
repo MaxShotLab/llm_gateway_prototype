@@ -388,17 +388,25 @@ Acceptance:
 
 ### P0.3 Credit Integration
 
-- Generation deducts from the same usable-credit balance
-  [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.4 defines, using one
-  configured cost per generation type (image vs. video). Phase 2 edit actions
-  each get their own configured cost when they ship (P1.1).
-- The credits page's funding flow ([MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md)
-  §P0.6) is unchanged by Studio; Studio only spends from the balance it funds.
+- Generation uses the same Gateway ledger and funding order defined in
+  [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.4. Its exact user-facing
+  Credit price is configured for the model, generation path, and billable
+  settings, and shown before submission. A successful result deducts that
+  quoted price. Phase 2 edit actions use the same quoting rule when they ship
+  (P1.1).
+- Eligible generations may draw from the shared monthly subscription
+  allowance under [Subscription Feature Requirements](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md)
+  §3.1 and §4.3; the remainder follows the existing promotional-Credit and
+  Dollar-balance order. A Pending job holds its quoted funding until it
+  becomes Generated or Failed.
+- Studio adds no separate funding flow; it uses the Gateway's existing Credits
+  page and account ledger ([MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md)
+  §P0.6).
 
 Acceptance:
 
-- Studio and Gateway usage draw from and report to one combined balance, not
-  two.
+- Studio and Gateway usage draw from one ledger with separate subscription
+  allowance, promotional-Credit, and Dollar-balance buckets.
 - A failed generation is not charged.
 
 ### P0.4 Result Metadata Display
@@ -819,6 +827,7 @@ into production.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-12 | Multimodal subscription alignment | Replaced one cost per media type with firm model-and-settings quotes; linked eligible Studio jobs to the shared subscription allowance and clarified two-unit ledger and Pending holds. |
 | 2026-08-13 | Initial PRD | Defined the four generation paths, inline editing, lineage, credits, and the Assets library. |
 | 2026-08-14 | Assets → reuse-only | Assets opens a read-only preview (Try this/download); edit and delete live only in My Creations. |
 | 2026-08-17 | Discover + Liked split | Split Assets into a public Discover feed and a private Assets surface (My Creations + Liked). |
