@@ -2,7 +2,7 @@
 
 **Status:** Authoritative delivery specification
 **Baseline:** [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
-**Updated:** September 21, 2026
+**Updated:** October 13, 2026
 
 ## 1. Purpose
 
@@ -10,7 +10,9 @@ Maxshot is a multi-model chat and API gateway with prepaid Dollar balance,
 configurable promotional Credits, account funding, referral rewards, and
 spending limits. It gives
 individuals and developers one account for using configured models through a
-web chat or an OpenAI-compatible API.
+web chat or an OpenAI-compatible API. The developing product also includes
+Studio generation; [MAXSHOT_STUDIO_PRD.md](./MAXSHOT_STUDIO_PRD.md) owns its
+detailed feature and charging requirements.
 
 This PRD is the single source of truth for product and engineering
 collaboration. It defines:
@@ -376,14 +378,14 @@ Acceptance:
 
 - Implement the contract in
   [SUBSCRIPTION_FEATURE_REQUIREMENTS.md](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md).
-- Keep Dollar balance, subscription Credits, free Credits, and referral Credits
-  as separate ledger buckets.
+- Keep Dollar balance, basic-chat Credits, premium Credits, free Credits, and
+  referral Credits as separate ledger buckets.
 - Support Dollar-balance-first renewal with a tokenized card fallback and no
   split payment.
 - Keep subscription usage, billing, and invoices separate from PAYG records.
 - Use the same full-source rule for initial purchase and renewal, and create the
-  payment, invoice, period, and allowance exactly once under one idempotency
-  key.
+  payment, invoice, period, and both subscription allowances exactly once under
+  one idempotency key.
 - Use fixed-point integer ledger units: cents for funded amounts and plan
   prices, microdollars for sub-cent request debits, and integers for Credits.
 
@@ -431,6 +433,11 @@ clearly labeled as deferred and not part of Phase 1 production scope:
 
 Phase 2 prototype screens may remain accessible during development but must not
 be represented as Phase 1 production scope.
+
+The developing product also places Studio after Chat. Its four generation
+paths are supported, while this Gateway prototype uses a static Studio page
+to demonstrate subscription funding. This does not change the original
+Phase 1 acceptance list above.
 
 ## 11. Terminology
 
@@ -489,6 +496,8 @@ chat interaction layer; Maxshot owns the rest of the application.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-13 | Subscription bucket alignment | Named separate basic-chat and premium Credit buckets and required both grants exactly once per paid period. |
+| 2026-10-13 | Developing Studio alignment | Recorded Studio and its four supported generation paths in the developing product while keeping original Phase 1 acceptance separate. |
 | 2026-09-21 | Subscription implementation contract | Added identical initial/renewal source rules, idempotent period creation, and fixed-point monetary units. |
 | 2026-09-21 | Two-unit billing model | Defined Dollars as user-funded value and Credits as usage/allowance units; top-ups now add Dollar balance, request records show Credit cost and Dollar debit, and spending limits use dollar-equivalent cost. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |

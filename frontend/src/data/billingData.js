@@ -3,7 +3,8 @@ export const subscriptionPlans = [
     id: "core",
     name: "Core",
     priceCents: 1_200,
-    allowance: 15_000_000,
+    basicAllowance: 8_000_000,
+    premiumAllowance: 7_000_000,
     policyVersion: "2026-09-v1",
     limits: { fiveHour: 3_000_000, weekly: 12_000_000 },
   },
@@ -11,7 +12,8 @@ export const subscriptionPlans = [
     id: "plus",
     name: "Plus",
     priceCents: 2_000,
-    allowance: 30_000_000,
+    basicAllowance: 10_000_000,
+    premiumAllowance: 20_000_000,
     policyVersion: "2026-09-v1",
     limits: { fiveHour: 5_000_000, weekly: 25_000_000 },
   },
@@ -22,6 +24,8 @@ export const billingScenarioOptions = [
   { id: "checkout", label: "Plan selection" },
   { id: "active", label: "Active subscription" },
   { id: "low", label: "Allowance low" },
+  { id: "basic_exhausted", label: "Basic Chat exhausted" },
+  { id: "premium_exhausted", label: "Premium exhausted" },
   { id: "exhausted", label: "Allowance exhausted" },
   { id: "insufficient", label: "No usable funding" },
   { id: "cancelled", label: "Cancelled at period end" },
@@ -49,7 +53,9 @@ export function createBillingScenario(scenario = "active") {
       subscription: {
         ...plan,
         status: "active",
-        used: plan.allowance,
+        basicUsed: plan.basicAllowance,
+        premiumUsed: plan.premiumAllowance,
+        premiumReserved: 0,
         windowUsage: { fiveHour: plan.limits.fiveHour, weekly: plan.limits.weekly },
         renewsAt: "Oct 12, 2026",
       },
@@ -65,9 +71,13 @@ export function createBillingScenario(scenario = "active") {
       status: scenario === "past_due"
         ? "past_due"
         : scenario === "cancelled" ? "cancel_at_period_end" : "active",
-      used: scenario === "active" || scenario === "cancelled"
-        ? 12_200_000
-        : scenario === "low" ? 28_000_000 : plan.allowance,
+      basicUsed: scenario === "active" || scenario === "cancelled" || scenario === "premium_exhausted"
+        ? 2_200_000
+        : scenario === "low" ? 9_200_000 : plan.basicAllowance,
+      premiumUsed: scenario === "active" || scenario === "cancelled" || scenario === "basic_exhausted"
+        ? 10_000_000
+        : scenario === "low" ? 18_400_000 : plan.premiumAllowance,
+      premiumReserved: ["active", "cancelled", "basic_exhausted", "low"].includes(scenario) ? 800_000 : 0,
       windowUsage: scenario === "low"
         ? { fiveHour: 4_600_000, weekly: 22_800_000 }
         : scenario === "exhausted"
@@ -79,23 +89,33 @@ export function createBillingScenario(scenario = "active") {
 }
 
 export function getBillingTotals(billing) {
-  const subscriptionRemaining = ["active", "cancel_at_period_end"].includes(billing.subscription?.status)
-    ? Math.max(billing.subscription.allowance - billing.subscription.used, 0)
+  const active = ["active", "cancel_at_period_end"].includes(billing.subscription?.status);
+  const basicRemaining = active
+    ? Math.max(billing.subscription.basicAllowance - billing.subscription.basicUsed, 0)
+    : 0;
+  const premiumRemaining = active
+    ? Math.max(billing.subscription.premiumAllowance - billing.subscription.premiumUsed - (billing.subscription.premiumReserved || 0), 0)
+    : 0;
+  const basicPercent = active
+    ? Math.min(Math.floor((billing.subscription.basicUsed / billing.subscription.basicAllowance) * 100), 100)
+    : 0;
+  const premiumPercent = active
+    ? Math.min(Math.floor(((billing.subscription.premiumUsed + (billing.subscription.premiumReserved || 0)) / billing.subscription.premiumAllowance) * 100), 100)
     : 0;
   const windowRemaining = getSubscriptionWindows(billing.subscription)
     .map((window) => Math.max(window.limit - window.used, 0));
-  const subscriptionAvailable = windowRemaining.length
-    ? Math.min(subscriptionRemaining, ...windowRemaining)
-    : 0;
+  const textWindowRemaining = windowRemaining.length ? Math.min(...windowRemaining) : 0;
   const promotionalCredits = billing.balances.free + billing.balances.referral;
   const dollarBalanceCents = billing.balances.dollarCents;
 
   return {
-    subscriptionRemaining,
-    subscriptionAvailable,
+    basicRemaining,
+    premiumRemaining,
+    basicPercent,
+    premiumPercent,
+    textWindowRemaining,
     promotionalCredits,
     dollarBalanceCents,
-    hasUsableFunds: subscriptionAvailable > 0 || promotionalCredits > 0 || dollarBalanceCents > 0,
   };
 }
 

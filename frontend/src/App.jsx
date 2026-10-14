@@ -37,6 +37,7 @@ import { createBillingScenario, getBillingTotals, getSubscriptionWindows } from 
 
 const phaseOneNavItems = [
   { id: "chat", label: "Chat", Icon: ChatsCircle },
+  { id: "studio", label: "Studio", Icon: MagicWand },
   { id: "usage", label: "Usage", Icon: Gauge },
   { id: "api", label: "API", Icon: Key },
   { id: "topup", label: "Credits", Icon: Wallet },
@@ -53,6 +54,10 @@ const protectedPageCopy = {
   usage: {
     label: "Usage",
     description: "Usage records and Credit balances are tied to your account.",
+  },
+  studio: {
+    label: "Studio",
+    description: "Generation paths and funding are available after login.",
   },
   api: {
     label: "API",
@@ -88,6 +93,7 @@ const mockUsage = [
     input: "2,481",
     output: "3,147",
     subscriptionCost: 5_628,
+    subscriptionBucket: "Basic Chat",
     paygCreditCost: 0,
     dollarDebitMicros: 0,
     funding: "Subscription (Phase 2)",
@@ -100,6 +106,7 @@ const mockUsage = [
     input: "1,907",
     output: "2,642",
     subscriptionCost: 4_549,
+    subscriptionBucket: "Premium",
     paygCreditCost: 0,
     dollarDebitMicros: 0,
     funding: "Subscription (Phase 2)",
@@ -112,10 +119,51 @@ const mockUsage = [
     input: "4,221",
     output: "9,885",
     subscriptionCost: 10_000,
+    subscriptionBucket: "Premium",
     paygCreditCost: 4_106,
     dollarDebitMicros: 4_106,
     funding: "Dollar balance",
     status: "Charged",
+  },
+  {
+    time: "Jun 10, 15:22",
+    source: "Studio",
+    model: "Image model",
+    input: "—",
+    output: "1 image",
+    subscriptionCost: 120_000,
+    subscriptionBucket: "Premium",
+    paygCreditCost: 0,
+    dollarDebitMicros: 0,
+    funding: "Premium Credits",
+    status: "Charged",
+  },
+  {
+    time: "Jun 10, 14:55",
+    source: "Studio",
+    model: "Video model",
+    input: "—",
+    output: "8 sec",
+    subscriptionCost: 0,
+    subscriptionReserved: 800_000,
+    subscriptionBucket: "Premium",
+    paygCreditCost: 0,
+    dollarDebitMicros: 0,
+    funding: "Premium Credits",
+    status: "Pending",
+  },
+  {
+    time: "Jun 10, 14:22",
+    source: "Studio",
+    model: "Video model",
+    input: "—",
+    output: "—",
+    subscriptionCost: 0,
+    subscriptionBucket: "Premium",
+    paygCreditCost: 0,
+    dollarDebitMicros: 0,
+    funding: "No charge",
+    status: "Failed",
   },
   {
     time: "Jun 10, 14:06",
@@ -405,6 +453,8 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
                         </button>
                         {usageOpen && (
                           <div className="account-usage-details" id="account-usage-details">
+                            <div><span>Basic Chat</span><strong>{getBillingTotals(billing).basicRemaining.toLocaleString()}</strong><small>Credits remaining</small></div>
+                            <div><span>Premium</span><strong>{getBillingTotals(billing).premiumRemaining.toLocaleString()}</strong><small>Credits available</small></div>
                             {subscriptionWindows.map((window) => (
                               <div className={window.percent >= 90 ? "warning" : ""} key={window.id}>
                                 <span>{window.label === "5-hour limit" ? "5 hours" : "Weekly"}</span>
@@ -683,18 +733,44 @@ function ReferralPage() {
   );
 }
 
+function StudioPage({ billing }) {
+  const plan = billing.subscription?.name || "PAYG";
+  const videoFunding = plan === "Plus" && billing.subscription?.status !== "past_due"
+    ? "Premium → free → referral → Dollars"
+    : "PAYG: free → referral → Dollars";
+
+  return (
+    <main className="content-page studio-page">
+      <PageHeader title="Studio" description="Image and video generation is supported in the developing product. This prototype is a static subscription overview." />
+      <section className="metric-grid">
+        <MetricCard label="Text to image" value="Supported" note="Image generation" />
+        <MetricCard label="Image to image" value="Supported" note="Image generation" />
+        <MetricCard label="Text to video" value="Supported" note="Video generation" />
+        <MetricCard label="Image to video" value="Supported" note="Video generation" />
+      </section>
+      <section className="panel">
+        <div className="panel-heading"><div><h2>Subscription funding examples</h2><p>Illustrative Credit quotes only. Actual prices depend on the model and settings.</p></div></div>
+        <p>Image: 120,000 Credits · Premium → free → referral → Dollars on Core and Plus.</p>
+        <p>Video: 800,000 Credits · {videoFunding}. Core video is PAYG only.</p>
+        <p>Basic Chat Credits never fund Studio. Pending jobs reserve the quote; Generated jobs charge it, and Failed jobs release it without a charge.</p>
+      </section>
+    </main>
+  );
+}
+
 function UsagePage({ billing }) {
   const periods = ["7 days", "30 days", "All"];
   const [activePeriod, setActivePeriod] = useState("30 days");
   const chartData = dashboardChartData[activePeriod];
   const totals = getBillingTotals(billing);
   const windows = getSubscriptionWindows(billing.subscription);
-  const [billingView, setBillingView] = useState("subscription");
-  const [usageTypes, setUsageTypes] = useState({ Chat: true, API: true });
+  const [selectedBillingView, setBillingView] = useState(billing.subscription ? "subscription" : "payg");
+  const billingView = billing.subscription ? selectedBillingView : "payg";
+  const [usageTypes, setUsageTypes] = useState({ Chat: true, Studio: true, API: true });
   const visibleUsage = mockUsage.filter((row) =>
     usageTypes[row.source] && (
       billingView === "subscription"
-        ? row.subscriptionCost > 0
+        ? row.subscriptionCost > 0 || row.subscriptionReserved > 0 || row.status === "Failed" && row.source === "Studio"
         : row.paygCreditCost > 0 || row.funding === "Free model"
     ),
   );
@@ -706,22 +782,24 @@ function UsagePage({ billing }) {
       />
 
       <div className="billing-scope-tabs" role="tablist" aria-label="Usage billing source">
-        <button className={billingView === "subscription" ? "active" : ""} onClick={() => setBillingView("subscription")} role="tab" aria-selected={billingView === "subscription"}>Subscription</button>
+        {billing.subscription && <button className={billingView === "subscription" ? "active" : ""} onClick={() => setBillingView("subscription")} role="tab" aria-selected={billingView === "subscription"}>Subscription</button>}
         <button className={billingView === "payg" ? "active" : ""} onClick={() => setBillingView("payg")} role="tab" aria-selected={billingView === "payg"}>PAYG</button>
       </div>
 
       {billingView === "subscription" ? (
         <>
           <section className="metric-grid subscription-usage-metrics">
-            <MetricCard label="Period allowance" value={totals.subscriptionRemaining.toLocaleString()} note="Credits remaining" />
+            <MetricCard label="Basic Chat" value={totals.basicRemaining.toLocaleString()} note="Credits remaining · eligible web Chat" />
+            <MetricCard label="Premium" value={totals.premiumRemaining.toLocaleString()} note={`${(billing.subscription?.premiumReserved || 0).toLocaleString()} reserved · Chat, API, Studio`} />
             {windows.map((window) => (
               <MetricCard key={window.id} label={window.label} value={`${window.percent}% used`} note={`Resets ${window.reset}`} />
             ))}
-            <MetricCard label="Next renewal" value={billing.subscription?.renewsAt || "No plan"} note="Cancellation stops next billing" />
           </section>
           {windows.some((window) => window.percent >= 90) && (
-            <div className="usage-limit-alert" role="status">A subscription usage window is above 90%. PAYG funding takes over when the limit is reached.</div>
+            <div className="usage-limit-alert" role="status">A text usage window is above 90%. PAYG funding takes over when the limit is reached.</div>
           )}
+          {totals.basicPercent >= 90 && <div className="usage-limit-alert" role="status">Basic Chat Credits {totals.basicPercent === 100 ? "are exhausted" : `are ${totals.basicPercent}% used`}. Eligible Chat uses {totals.premiumRemaining > 0 && totals.textWindowRemaining > 0 ? "Premium Credits" : "PAYG funding"} next.</div>}
+          {totals.premiumPercent >= 90 && <div className="usage-limit-alert" role="status">Premium Credits {totals.premiumPercent === 100 ? "are exhausted" : `are ${totals.premiumPercent}% used, including reservations`}. PAYG funds eligible overage.</div>}
         </>
       ) : (
         <section className="metric-grid payg-usage-metrics">
@@ -736,7 +814,7 @@ function UsagePage({ billing }) {
         <div className="panel-heading">
           <div>
             <h2>{billingView === "subscription" ? "Subscription usage" : "PAYG usage"}</h2>
-            <p>Chat and API usage are metered separately by funding source.</p>
+            <p>Chat, Studio, and API usage are metered by funding source. Studio examples are simulated.</p>
           </div>
           <div className="period-tabs" aria-label="Usage period">
             {Object.keys(usageTypes).map((type) => (
@@ -767,20 +845,22 @@ function UsagePage({ billing }) {
             <span>
               <i className="legend-dot api-dot" /> API
             </span>
+            {billingView === "subscription" && <span><i className="legend-dot studio-dot" /> Studio</span>}
           </div>
         </div>
         <div className="chart" aria-label={`Mock ${activePeriod} usage chart`}>
           {chartData.map(
             (height, index) => (
               <div className="bar-column" key={index}>
-                <span
+                {usageTypes.API && <span
                   className="chart-bar api-bar"
                   style={{ height: `${height * 0.45}%` }}
-                />
-                <span
+                />}
+                {billingView === "subscription" && usageTypes.Studio && <span className="chart-bar studio-bar" style={{ height: `${height * 0.26}%` }} />}
+                {usageTypes.Chat && <span
                   className="chart-bar chat-bar"
                   style={{ height: `${height}%` }}
-                />
+                />}
               </div>
             ),
           )}
@@ -791,7 +871,7 @@ function UsagePage({ billing }) {
         <div className="panel-heading">
           <div>
             <h2>Recent activity</h2>
-            <p>Per-request token and credit records.</p>
+            <p>Example text and generation records, including Pending reservations and Failed jobs.</p>
           </div>
         </div>
         <div className="table-scroll">
@@ -802,7 +882,7 @@ function UsagePage({ billing }) {
                 <th>Source</th>
                 <th>Model</th>
                 <th>Input</th>
-                <th>Output</th>
+                <th>Output / units</th>
                 <th>Credit cost</th>
                 <th>Dollar debit</th>
                 <th>Funding source</th>
@@ -813,7 +893,7 @@ function UsagePage({ billing }) {
               {visibleUsage.map((row) => {
                 const viewCost = billingView === "subscription" ? row.subscriptionCost : row.paygCreditCost;
                 const dollarDebitMicros = billingView === "subscription" ? 0 : row.dollarDebitMicros;
-                const funding = billingView === "subscription" ? "Subscription" : row.funding;
+                const funding = billingView === "subscription" ? row.status === "Failed" ? "No charge" : `${row.subscriptionBucket} Credits` : row.funding;
                 return (
                 <tr key={`${billingView}-${row.time}-${row.model}`}>
                   <td>{row.time}</td>
@@ -821,11 +901,11 @@ function UsagePage({ billing }) {
                   <td>{row.model}</td>
                   <td>{row.input}</td>
                   <td>{row.output}</td>
-                  <td>{viewCost.toLocaleString()}</td>
+                  <td>{row.subscriptionReserved && billingView === "subscription" ? `0 (${row.subscriptionReserved.toLocaleString()} reserved)` : viewCost.toLocaleString()}</td>
                   <td>${(dollarDebitMicros / 1_000_000).toFixed(6)}</td>
                   <td>{funding}</td>
                   <td>
-                    <span className={`status-pill ${row.status === "Free" ? "neutral" : "success"}`}>
+                    <span className={`status-pill ${row.status === "Failed" ? "failed" : row.status === "Free" || row.status === "Pending" ? "neutral" : "success"}`}>
                       <i /> {row.status}
                     </span>
                   </td>
@@ -1381,6 +1461,7 @@ export function App() {
   const [theme, setTheme] = useState("light");
   const [authHint, setAuthHint] = useState("");
   const [billing, setBilling] = useState(() => createBillingScenario("active"));
+  const [freeRequestsUsed, setFreeRequestsUsed] = useState(0);
 
   const navigate = (nextPage) => {
     const protectedCopy = protectedPageCopy[nextPage];
@@ -1413,6 +1494,7 @@ export function App() {
       );
     }
     if (active === "usage") return <UsagePage billing={billing} />;
+    if (active === "studio") return <StudioPage billing={billing} />;
     if (active === "api") return <ApiPage />;
     if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} />;
     if (active === "referral") return <ReferralPage />;
@@ -1427,10 +1509,12 @@ export function App() {
           setLoginOpen(true);
         }}
         billing={billing}
+        freeRequestsUsed={freeRequestsUsed}
+        onFreeRequest={() => setFreeRequestsUsed((used) => used + 1)}
         onCreditsRequired={() => navigate("topup")}
       />
     );
-  }, [active, billing, chatSeed, user]);
+  }, [active, billing, chatSeed, freeRequestsUsed, user]);
 
   return (
     <div className={`app-theme theme-${theme}`}>

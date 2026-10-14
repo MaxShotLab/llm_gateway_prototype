@@ -45,7 +45,7 @@ export const starterRequestLogs = [
     latency: "1.84s",
     creditCost: "36,200",
     dollarEquivalentMicros: 36_200,
-    funding: "Subscription (Phase 2)",
+    funding: "Premium Credits (Phase 2)",
     status: "Succeeded",
   },
   {
@@ -59,7 +59,7 @@ export const starterRequestLogs = [
     latency: "2.31s",
     creditCost: "12,800",
     dollarEquivalentMicros: 12_800,
-    funding: "Subscription (Phase 2)",
+    funding: "Premium Credits (Phase 2)",
     status: "Succeeded",
   },
   {

@@ -85,6 +85,7 @@ export const starterConversations = [
 export const chatModels = [
   {
     name: "MiniMax-M3",
+    eligibilityIndex: "B",
     provider: "MiniMax",
     tier: "Flagship",
     price: "$0.24 / 1M tokens",
@@ -97,6 +98,7 @@ export const chatModels = [
   },
   {
     name: "Claude Sonnet 4.6",
+    eligibilityIndex: "P",
     provider: "Anthropic",
     tier: "Flagship",
     price: "$3.00 / 1M input",
@@ -109,6 +111,7 @@ export const chatModels = [
   },
   {
     name: "Gemini 3.1 Pro",
+    eligibilityIndex: "P",
     provider: "Google",
     tier: "Flagship",
     price: "$1.25 / 1M input",
@@ -121,6 +124,7 @@ export const chatModels = [
   },
   {
     name: "GPT-5 mini",
+    eligibilityIndex: "F",
     provider: "OpenAI",
     tier: "Free",
     price: "$0 during free quota",

@@ -6457,6 +6457,72 @@ body {
   background: #f8f5ee;
 }
 
+.studio-dot,
+.studio-bar {
+  background: #8fa6c2;
+}
+
+.studio-page .panel > p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.usage-chart-panel .panel-heading {
+  flex-wrap: wrap;
+}
+
+.usage-chart-panel .period-tabs button {
+  white-space: nowrap;
+}
+
+.usage-chart-panel .legend {
+  margin-left: auto;
+}
+
+.theme-light .chat-dot,
+.theme-light .chat-bar {
+  background: #647b9a;
+}
+
+.model-menu {
+  width: 270px;
+}
+
+.model-eligibility-index {
+  display: inline-grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: rgba(143, 166, 194, 0.18);
+  color: #cbd9e8;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.model-eligibility-legend {
+  padding: 9px 10px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.theme-light .model-eligibility-index {
+  background: #e4eaf2;
+  color: #35465c;
+}
+
+.theme-light .model-eligibility-legend {
+  border-color: rgba(43, 60, 83, 0.12);
+  color: #67758a;
+}
+
 /* Production-aligned existing surfaces */
 .starter-prompts {
   width: 100%;

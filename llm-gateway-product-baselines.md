@@ -2,7 +2,7 @@
 
 **Status:** Authoritative product specification
 **Scope:** Phase 1 usage-based release and Phase 2 advanced features
-**Updated:** September 21, 2026
+**Updated:** October 13, 2026
 
 This document is the single source of truth for Maxshot LLM Gateway product
 design. It defines the product, users, framework decisions, feature scope,
@@ -27,6 +27,7 @@ Governance:
 Maxshot provides:
 
 - Multi-model web chat.
+- Studio image and video generation in the developing product.
 - An OpenAI-compatible API gateway.
 - Prepaid Dollar balance, promotional Credits, account funding, referral
   rewards, and spending limits.
@@ -65,7 +66,7 @@ prompts, agents, skills, memory, or product navigation.
 The Maxshot web application owns:
 
 - Product navigation and Maxshot visual design.
-- Chat, Dashboard, API, Credits, Referral, and Profile screens.
+- Chat, Studio, Dashboard, API, Credits, Referral, and Profile screens.
 - Experimental Agents and Toolkits prototype surfaces when enabled.
 - assistant-ui composition and runtime adapters.
 - Product-specific validation and frontend state.
@@ -264,13 +265,19 @@ Anthropic- or Gemini-compatible customer APIs are not included in Phase 2.
 ### 5.7 Subscription
 
 - Offer optional recurring plans alongside pay-as-you-go.
-- Grant a configured monthly Credit allowance without changing per-request
-  pricing.
+- Display a web Chat eligibility index for every listed model: `B` for the
+  Basic Chat allowance, `P` for Premium Credits, or `F` for an existing free
+  quota. This index does not change API or Studio funding rules.
+- Grant a capped low-cost web Chat Credit allowance and one premium Credit
+  allowance shared across eligible Chat, API, image, and video, without
+  changing per-request pricing.
 - Charge renewals from Dollar balance first when enabled and sufficient;
   otherwise use a tokenized saved card. Do not split one renewal.
-- Apply the same rule to initial purchase and create each paid period and
-  allowance exactly once.
-- Keep subscription Credits, promotional Credits, and Dollar balance separate.
+- Apply the same rule to initial purchase and create each paid period and both
+  allowances exactly once.
+- Keep basic-chat Credits, premium Credits, promotional Credits, and Dollar
+  balance separate; both subscription benefits are Credit buckets, not new
+  units.
 - Show subscription usage windows, renewal state, invoices, and PAYG fallback.
 
 ## 6. Navigation
@@ -289,6 +296,13 @@ clearly labeled as deferred and not part of Phase 1 production scope:
 
 7. Agents
 8. Toolkits
+
+The developing product also exposes Studio after Chat. All four generation
+paths (text-to-image, image-to-image, text-to-video, image-to-video) are
+supported there. Their detailed behavior is owned by
+[MAXSHOT_STUDIO_PRD.md](./MAXSHOT_STUDIO_PRD.md); the Gateway prototype may
+show only a static Studio overview. This does not retroactively change the
+original Phase 1 acceptance scope above.
 
 ## 7. Required Definitions
 
@@ -353,6 +367,8 @@ Required alignment work:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-13 | Developing Studio and eligibility index | Recorded four supported Studio generation paths in the developing product and added B/P/F web Chat eligibility labels without changing historical Phase 1 acceptance. |
+| 2026-10-13 | Basic and premium subscription allowances | Added a capped low-cost web Chat Credit bucket alongside the shared premium pool, retaining Dollar/Credit units. |
 | 2026-09-21 | Subscription implementation contract | Clarified that initial purchase and renewal share one full-source payment rule and create each period and allowance exactly once. |
 | 2026-09-21 | Two-unit billing model | Replaced funded Credits with Dollar balance while retaining Credits for usage metering and promotional allowances. |
 | 2026-07-02 | File upload scope revision | Promoted capability-aware chat file upload into Phase 1 must-do scope. |

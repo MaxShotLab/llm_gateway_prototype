@@ -126,28 +126,33 @@ Dollar-funded pay-as-you-go + optional subscription plan
 Pay-as-you-go remains the default usage model. Dollars represent user-funded
 value; Credits measure text and media usage and subscription or promotional
 allowances.
-Subscription is an optional account entitlement that grants a configured
-monthly Credit allowance shared by eligible Chat, API, image, and video
-usage. It does not change per-request or per-generation pricing. Image/video
+Subscription is an optional account entitlement that grants a capped,
+low-cost web Chat Credit allowance and one premium Credit allowance shared by
+eligible Chat, API, image, and video usage. The basic-chat allowance is a
+restricted Credit bucket, not a new unit or unlimited chat. Subscription does
+not change per-request or per-generation pricing. Image/video
 routes must already exist to be eligible.
 
 Must-do features:
 
 - View available plans.
+- Show B/P/F web Chat eligibility on each model; the index does not change API
+  or Studio funding.
 - Subscribe to a plan.
 - Change plan.
 - Cancel renewal.
-- Show current plan, renewal date, allowance, used amount, and remaining
-  amount.
-- Apply subscription allowance before promotional Credits and Dollar balance.
+- Show current plan, renewal date, and used and remaining Credits in both
+  allowances.
+- Apply basic Credits to eligible low-cost web Chat first, then premium
+  Credits; all other eligible requests use premium Credits only.
 - Fall back to free Credits, referral Credits, then Dollar balance when the
-  subscription allowance is exhausted.
+  eligible subscription allowances are exhausted.
 - Block usage when all eligible Credit and Dollar sources are insufficient.
-- Keep subscription allowance, free Credits, referral Credits, and Dollar
+- Keep both subscription allowances, free Credits, referral Credits, and Dollar
   balance as separate ledger buckets.
 - Show Credit cost and actual Dollar debit separately.
 - Show configurable 5-hour and weekly text-usage limits in the expandable
-  account menu, plus the shared monthly allowance and feature-level usage in
+  account menu, plus both monthly allowances and premium feature-level usage in
   Usage. Image/video jobs have firm quotes and separate job limits.
 - Warn in-app at 90% consumption for each subscription window.
 - Separate subscription usage, payments, and invoices from pay-as-you-go usage,
@@ -166,12 +171,12 @@ Implementation contract:
 - Initial purchase and renewal use the same full-source rule: Dollar balance
   first when enabled and sufficient, otherwise saved card; never split.
 - One idempotent billing operation creates exactly one successful payment,
-  invoice, subscription period, and allowance bucket.
+  invoice, subscription period, and both allowance buckets.
 - Subscription states are `pending_payment`, `active`,
   `cancel_at_period_end`, `past_due`, and `ended`.
 - Credits are integers. User-funded amounts and plan prices use integer cents;
   sub-cent request debits use integer microdollars.
-- Request charging consumes subscription Credits, free Credits, referral
+- Request charging consumes eligible subscription Credits, free Credits, referral
   Credits, then Dollar balance and records Credit cost separately from Dollar
   debit.
 - Media jobs reserve their upfront Credit quote while Pending, charge it once
@@ -182,12 +187,13 @@ Minimum ledger buckets:
 
 | Bucket | Source | Expiry | Consumption order |
 |---|---|---|---|
-| Subscription allowance | Active plan period | End of billing period | First |
-| Free credits | Registered-user grant | Configured policy | Second |
-| Referral rewards | Confirmed referral reward | Configured policy | Third |
+| Basic-chat allowance | Active plan period; low-cost web Chat only | End of billing period | First for eligible basic Chat |
+| Premium allowance | Active plan period; eligible Chat, API, image, video | End of billing period | First otherwise; second for eligible basic Chat |
+| Free credits | Registered-user grant | Configured policy | After subscription allowances |
+| Referral rewards | Confirmed referral reward | Configured policy | After free Credits |
 | Dollar balance (USD) | User top-up | No expiry | Last; converted at the versioned request rate |
 
-Subscription allowance is not withdrawable, refundable as credits, or
+Subscription allowances are not withdrawable, refundable as credits, or
 redeemable back to fiat or crypto.
 
 There are no trials, refunds, split payments, or subscription referral rewards.
@@ -256,7 +262,7 @@ These need product discussion before Phase 2 requirements are finalized:
 - Knowledge-file limits, supported file types, and retention policy.
 - Code interpreter execution limits and safety boundaries.
 - Per-agent usage detail level and billing presentation.
-- Subscription plan price and monthly allowance.
+- Subscription plan price and both monthly allowances.
 - Recurring card billing provider.
 - Exact versioned 5-hour and weekly Credit limits.
 
@@ -264,6 +270,8 @@ These need product discussion before Phase 2 requirements are finalized:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-13 | Model eligibility index | Added visible Basic Chat, Premium, and free-quota model labels without introducing a new subscription bucket. |
+| 2026-10-13 | Basic and premium allowances | Added capped low-cost web Chat Credits alongside one shared premium allowance; preserved Dollar/Credit units and PAYG fallback. |
 | 2026-10-12 | Multimodal subscription alignment | Extended the shared allowance to eligible Chat, API, image, and video usage; separated text windows from media job controls and delegated media quote/settlement details to the subscription requirements. |
 | 2026-09-21 | Subscription implementation contract | Added canonical states, identical initial/renewal payment rules, idempotent charge-and-allowance creation, billing records, and fixed-point precision; made the standalone subscription requirements authoritative for implementation details. |
 | 2026-09-21 | Two-unit billing model | Defined Dollar balance for user-funded value and Credits for metering and allowances; added Dollar-balance-first subscription payment, card fallback, and no split payment. |

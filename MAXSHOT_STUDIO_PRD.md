@@ -1,9 +1,9 @@
 # Maxshot Studio Product Requirements Document
 
-**Status:** Proposed — not yet part of the approved product baseline
+**Status:** Developing product — four generation paths supported; later Studio features remain staged
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** September 28, 2026
+**Updated:** October 13, 2026
 
 ## 1. Purpose
 
@@ -15,7 +15,8 @@ shared library of prompts and reference material — their own and the
 community's — to start faster next time.
 
 This PRD is the working source of truth for Studio product and engineering
-collaboration while it is evaluated for the product baseline. It defines:
+collaboration. The four generation paths are in the developing-product baseline;
+editing, reuse, and social features remain staged. It defines:
 
 - The four generation paths and their required behavior.
 - Inline editing and asset-lineage requirements.
@@ -24,14 +25,13 @@ collaboration while it is evaluated for the product baseline. It defines:
 - Phase 1 and Phase 2 scope and priorities.
 - Terminology and acceptance conditions.
 
-Studio is not yet part of
-[llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md).
-Nothing in this document authorizes navigation, credit-model, or account
-changes beyond what the baseline already approves. Adding Studio to Phase 1 or
-Phase 2 production scope requires a baseline update first, following the same
-governance [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) already
-establishes: product-design changes start in the baseline; this PRD carries
-requirements, ownership, and acceptance.
+The developing product supports text-to-image, image-to-image, text-to-video,
+and image-to-video generation. Studio's place in the developing product is
+recorded in [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md).
+This PRD retains the staged requirements for editing, asset reuse, and social
+features; it does not change the Gateway's original Phase 1 acceptance scope.
+Product-design changes still start in the baseline, while this PRD carries
+Studio requirements and acceptance details.
 
 ## 2. Goals
 
@@ -394,8 +394,8 @@ Acceptance:
   settings, and shown before submission. A successful result deducts that
   quoted price. Phase 2 edit actions use the same quoting rule when they ship
   (P1.1).
-- Eligible generations may draw from the shared monthly subscription
-  allowance under [Subscription Feature Requirements](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md)
+- Eligible generations may draw from the shared monthly premium subscription
+  allowance, never the basic-chat allowance, under [Subscription Feature Requirements](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md)
   §3.1 and §4.3; the remainder follows the existing promotional-Credit and
   Dollar-balance order. A Pending job holds its quoted funding until it
   becomes Generated or Failed.
@@ -405,8 +405,9 @@ Acceptance:
 
 Acceptance:
 
-- Studio and Gateway usage draw from one ledger with separate subscription
-  allowance, promotional-Credit, and Dollar-balance buckets.
+- Studio and Gateway usage draw from one ledger with separate basic-chat,
+  premium, promotional-Credit, and Dollar-balance buckets; Studio uses only
+  eligible premium, promotional, or Dollar funding.
 - A failed generation is not charged.
 
 ### P0.4 Result Metadata Display
@@ -827,6 +828,8 @@ into production.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-13 | Developing-product status | Recorded all four generation paths as supported in the developing product; retained staged requirements for later Studio features. |
+| 2026-10-13 | Subscription pool clarification | Studio uses the premium allowance, not restricted basic-chat Credits. |
 | 2026-10-12 | Multimodal subscription alignment | Replaced one cost per media type with firm model-and-settings quotes; linked eligible Studio jobs to the shared subscription allowance and clarified two-unit ledger and Pending holds. |
 | 2026-08-13 | Initial PRD | Defined the four generation paths, inline editing, lineage, credits, and the Assets library. |
 | 2026-08-14 | Assets → reuse-only | Assets opens a read-only preview (Try this/download); edit and delete live only in My Creations. |

@@ -54,6 +54,7 @@ export function FundingPage({ billing, setBilling }) {
   const totals = getBillingTotals(billing);
   const subscription = billing.subscription;
   const subscriptionWindows = getSubscriptionWindows(subscription);
+  const basicFallback = totals.premiumRemaining > 0 && totals.textWindowRemaining > 0 ? "Premium Credits" : "PAYG funding";
 
   const formatCents = (cents) => `$${(cents / 100).toFixed(2)}`;
   const paymentAmount = formatCents(amountCents);
@@ -104,7 +105,9 @@ export function FundingPage({ billing, setBilling }) {
         subscription: {
           ...plan,
           status: "active",
-          used: 0,
+          basicUsed: 0,
+          premiumUsed: 0,
+          premiumReserved: 0,
           windowUsage: { fiveHour: 0, weekly: 0 },
           renewsAt: "Oct 12, 2026",
         },
@@ -171,7 +174,7 @@ export function FundingPage({ billing, setBilling }) {
           <div>
             <span className="eyebrow">Phase 2 proposal · simulated</span>
             <h2>Subscription</h2>
-            <p>Monthly allowance first, then promotional Credits and Dollar balance. Per-request pricing stays the same.</p>
+            <p>Basic Chat Credits cover eligible web chat. Premium Credits cover eligible Chat, API, image, and video; promotional Credits and Dollars remain the fallback.</p>
           </div>
           <label className="prototype-scenario">
             <span>Prototype state</span>
@@ -191,7 +194,7 @@ export function FundingPage({ billing, setBilling }) {
                   <i /> {subscription.status === "past_due" ? "Renewal failed" : subscription.status === "cancel_at_period_end" ? "Ends this period" : "Active"}
                 </span>
                 <h3>{subscription.name}</h3>
-                <p>{formatCents(subscription.priceCents)}/month · {subscription.allowance.toLocaleString()} Credits</p>
+                <p>{formatCents(subscription.priceCents)}/month · example allowances</p>
               </div>
               <div className="subscription-renewal">
                 <CalendarBlank size={18} />
@@ -201,11 +204,16 @@ export function FundingPage({ billing, setBilling }) {
                 </span>
               </div>
             </div>
-            <div className="subscription-progress">
-              <div><span>Monthly allowance</span><strong>{totals.subscriptionRemaining.toLocaleString()} remaining</strong></div>
-              <i><b style={{ width: `${Math.min((subscription.used / subscription.allowance) * 100, 100)}%` }} /></i>
-              <small>{subscription.used.toLocaleString()} of {subscription.allowance.toLocaleString()} Credits used</small>
-            </div>
+            {[
+              { label: "Basic Chat", used: subscription.basicUsed, allowance: subscription.basicAllowance, remaining: totals.basicRemaining },
+              { label: "Premium", used: subscription.premiumUsed, reserved: subscription.premiumReserved, allowance: subscription.premiumAllowance, remaining: totals.premiumRemaining },
+            ].map((bucket) => (
+              <div className="subscription-progress" key={bucket.label}>
+                <div><span>{bucket.label} Credits</span><strong>{bucket.remaining.toLocaleString()} remaining</strong></div>
+                <i><b style={{ width: `${Math.min(((bucket.used + (bucket.reserved || 0)) / bucket.allowance) * 100, 100)}%` }} /></i>
+                <small>{bucket.used.toLocaleString()} used{bucket.reserved ? ` · ${bucket.reserved.toLocaleString()} reserved` : ""} of {bucket.allowance.toLocaleString()} Credits</small>
+              </div>
+            ))}
             <div className="subscription-window-grid">
               {subscriptionWindows.map((window) => (
                 <article className={window.percent >= 90 ? "warning" : ""} key={window.id}>
@@ -215,9 +223,9 @@ export function FundingPage({ billing, setBilling }) {
                 </article>
               ))}
             </div>
-            {subscriptionWindows.some((window) => window.percent >= 90) && <p className="billing-state-note">A subscription usage window is above 90%. An in-app warning has been sent.</p>}
-            {billing.scenario === "low" && <p className="billing-state-note">Monthly allowance is low. PAYG funding will be used automatically after it is exhausted.</p>}
-            {billing.scenario === "exhausted" && <p className="billing-state-note">Allowance exhausted. Requests now use available PAYG funding.</p>}
+            {subscriptionWindows.some((window) => window.percent >= 90) && <p className="billing-state-note">A text usage window is at or above 90%.</p>}
+            {totals.basicPercent >= 90 && <p className="billing-state-note">Basic Chat Credits {totals.basicPercent === 100 ? `are exhausted; eligible Chat now uses ${basicFallback}` : `are ${totals.basicPercent}% used`}.</p>}
+            {totals.premiumPercent >= 90 && <p className="billing-state-note">Premium Credits {totals.premiumPercent === 100 ? "are exhausted; eligible requests use PAYG funding" : `are ${totals.premiumPercent}% used, including reservations`}.</p>}
             {billing.scenario === "insufficient" && <p className="billing-state-note danger">No usable funding remains. Add funds to continue.</p>}
             {subscription.status === "past_due" && <p className="billing-state-note">No new allowance was created. Existing PAYG funding remains available.</p>}
             {subscription.status === "cancel_at_period_end" && <p className="billing-state-note">Renewal is cancelled. Current allowance remains available through {subscription.renewsAt}.</p>}
@@ -237,7 +245,7 @@ export function FundingPage({ billing, setBilling }) {
           </div>
         ) : (
           <div className="subscription-empty">
-            <div><h3>Use PAYG without a plan</h3><p>A subscription only adds a monthly Credit allowance. It is not required to use Maxshot.</p></div>
+            <div><h3>Use PAYG without a plan</h3><p>A subscription adds Basic Chat and Premium Credit allowances. It is not required to use Maxshot.</p></div>
             <button className="primary-button compact" onClick={() => setShowPlans(true)}>View plans</button>
           </div>
         )}
@@ -247,7 +255,8 @@ export function FundingPage({ billing, setBilling }) {
             {subscriptionPlans.map((plan) => (
               <article key={plan.id}>
                 <div><h3>{plan.name}</h3><strong>{formatCents(plan.priceCents)}<small>/month</small></strong></div>
-                <p>{plan.allowance.toLocaleString()} Credits each month</p>
+                <p>{plan.basicAllowance.toLocaleString()} Basic Chat · {plan.premiumAllowance.toLocaleString()} Premium Credits/month</p>
+                <p>{plan.id === "core" ? "Image included · video PAYG" : "Image and video included in Premium"}</p>
                 <p>{plan.limits.fiveHour.toLocaleString()} / 5 hours · {plan.limits.weekly.toLocaleString()} / week</p>
                 <button className="secondary-button compact" onClick={() => setSubscriptionCheckout(plan)}>
                   {subscription ? "Choose for next renewal" : "Choose plan"}
@@ -513,7 +522,8 @@ export function FundingPage({ billing, setBilling }) {
             <p>Simulated recurring payment. No funds will be transmitted.</p>
             <div className="checkout-review">
               <span><b>Plan</b>{subscriptionCheckout.name}</span>
-              <span><b>Monthly allowance</b>{subscriptionCheckout.allowance.toLocaleString()} Credits</span>
+              <span><b>Basic Chat</b>{subscriptionCheckout.basicAllowance.toLocaleString()} Credits</span>
+              <span><b>Premium</b>{subscriptionCheckout.premiumAllowance.toLocaleString()} Credits</span>
               <span><b>Usage limits</b>{subscriptionCheckout.limits.fiveHour.toLocaleString()} / 5 hours · {subscriptionCheckout.limits.weekly.toLocaleString()} / week</span>
               <span><b>Monthly payment</b>{formatCents(subscriptionCheckout.priceCents)}</span>
               <span><b>Payment source</b>{renewalSource(subscriptionCheckout)}</span>

@@ -36,6 +36,9 @@ const starterPrompts = [
   "Brainstorm ideas",
 ];
 
+const eligibilityLabels = { B: "Basic Chat", P: "Premium", F: "Free quota" };
+const demoFreeQuota = 3;
+
 function createConversation(model) {
   return {
     id: `conversation-${Date.now()}`,
@@ -61,7 +64,7 @@ function addMockFile(currentFiles, setFiles) {
   if (nextFile) setFiles((current) => [...current, nextFile]);
 }
 
-export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired, billing, onCreditsRequired }) {
+export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired, billing, freeRequestsUsed, onFreeRequest, onCreditsRequired }) {
   const [conversations, setConversations] = useState(starterConversations);
   const [activeId, setActiveId] = useState(null);
   const [value, setValue] = useState("");
@@ -84,14 +87,22 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const selectedModel = chatModels.find((item) => item.name === model);
   const activeMessages = activeConversation?.messages || [];
   const billingTotals = getBillingTotals(billing);
-  const billingNotice = billing.scenario === "insufficient"
+  const billingNotice = selectedModel?.eligibilityIndex === "F"
+    ? freeRequestsUsed >= demoFreeQuota
+      ? { tone: "danger", text: "Free demo quota used. Choose another model.", showCreditsAction: false }
+      : null
+    : billing.scenario === "insufficient"
     ? { tone: "danger", text: "No usable funding. Add funds to continue." }
     : billing.scenario === "past_due"
       ? { tone: "neutral", text: "Renewal failed. Requests continue with available PAYG funding." }
-      : billing.scenario === "low"
-        ? { tone: "neutral", text: "Monthly allowance is low. PAYG funding will take over automatically." }
+      : billing.scenario === "basic_exhausted" && selectedModel?.eligibilityIndex === "B" && !searchEnabled
+        ? { tone: "neutral", text: "Basic Chat Credits are used. This model now uses Premium Credits." }
+      : billing.scenario === "premium_exhausted" && (selectedModel?.eligibilityIndex !== "B" || searchEnabled)
+        ? { tone: "neutral", text: "Premium Credits are used. This request uses available PAYG funding." }
+      : searchEnabled && selectedModel?.eligibilityIndex === "B"
+        ? { tone: "neutral", text: "Web search uses Premium Credits, not Basic Chat Credits." }
       : billing.scenario === "exhausted"
-        ? { tone: "neutral", text: "Monthly allowance used. Requests continue with available PAYG funding." }
+        ? { tone: "neutral", text: "Subscription Credits are used. Requests continue with available PAYG funding." }
         : billing.scenario === "cancelled"
           ? { tone: "neutral", text: `Subscription ends ${billing.subscription.renewsAt}. Current Credits remain usable.` }
           : null;
@@ -203,10 +214,15 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
       onLoginRequired?.();
       return;
     }
-    if (!billingTotals.hasUsableFunds) {
+    if (selectedModel?.eligibilityIndex === "F" && freeRequestsUsed >= demoFreeQuota) return;
+    const eligibleBasic = selectedModel?.eligibilityIndex === "B" && !searchEnabled;
+    const subscriptionAvailable = billingTotals.textWindowRemaining > 0 &&
+      ((eligibleBasic && billingTotals.basicRemaining > 0) || billingTotals.premiumRemaining > 0);
+    if (selectedModel?.eligibilityIndex !== "F" && !subscriptionAvailable && !billingTotals.promotionalCredits && !billingTotals.dollarBalanceCents) {
       onCreditsRequired?.();
       return;
     }
+    if (selectedModel?.eligibilityIndex === "F") onFreeRequest?.();
     const prompt = promptOverride || value.trim();
     const userMessage = {
       role: "user",
@@ -403,6 +419,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
               >
                 <span className="model-dot" />
                 {model}
+                <span className="model-eligibility-index" title={eligibilityLabels[selectedModel?.eligibilityIndex]}>{selectedModel?.eligibilityIndex}</span>
                 <CaretDown size={13} />
               </button>
               {modelMenuOpen && (
@@ -414,13 +431,14 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                       key={item.name}
                     >
                       <span>
-                        <strong>{item.name}</strong>
+                        <strong>{item.name} <span className="model-eligibility-index" title={eligibilityLabels[item.eligibilityIndex]}>{item.eligibilityIndex}</span></strong>
                         <small>{item.provider} · {item.tier}</small>
                         <b>{modelCapabilityText(item)}</b>
                       </span>
                       {item.name === model && <Check size={15} />}
                     </button>
                   ))}
+                  <div className="model-eligibility-legend">B Basic Chat · P Premium · F Free quota</div>
                 </div>
               )}
             </div>
@@ -525,7 +543,7 @@ function BillingNotice({ notice, onCreditsRequired }) {
   return (
     <div className={`chat-billing-notice ${notice.tone}`}>
       <span>{notice.text}</span>
-      {notice.tone === "danger" && <button onClick={onCreditsRequired}>Add Credits</button>}
+      {notice.tone === "danger" && notice.showCreditsAction !== false && <button onClick={onCreditsRequired}>Add Credits</button>}
     </div>
   );
 }
