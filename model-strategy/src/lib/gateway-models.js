@@ -1,24 +1,25 @@
-export function readGatewayModels(payload) {
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.data?.items)) return payload.data.items;
-  return [];
-}
-
 export function modelId(model) {
-  return String(model?.id ?? model?.model_name ?? model?.name ?? "");
-}
-
-export function modelProvider(model) {
-  return String(model?.owned_by ?? "—");
+  return String(model?.id ?? "");
 }
 
 export function readReferenceModel(payload, model) {
   return payload?.reference?.models?.[modelId(model)] ?? null;
 }
 
-export function modelsWithReference(models, payload) {
-  return models.filter((model) => readReferenceModel(payload, model) !== null);
+export function allOpenRouterModels(payload) {
+  return Object.keys(payload?.reference?.models ?? {}).map((id) => ({ id }));
+}
+
+export function groupBatchModels(models, availableModels = models) {
+  const byId = new Map(availableModels.map((model) => [modelId(model), model]));
+  const groups = new Map();
+  for (const model of models) {
+    const id = modelId(model);
+    const primary = (id.endsWith(":batch") && byId.get(id.slice(0, -6))) || model;
+    const primaryId = modelId(primary);
+    if (!groups.has(primaryId)) groups.set(primaryId, { model: primary, batch: byId.get(`${primaryId}:batch`) ?? null });
+  }
+  return [...groups.values()];
 }
 
 export function pricePerMillion(value) {
@@ -42,6 +43,75 @@ export function formatUsdPerMillion(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 8 }).format(price);
 }
 
+export function tokenRateForDisplay(reference, field) {
+  const pricing = reference?.pricing;
+  if (reference?.outputModalities?.some((value) => value === "image" || value === "video") && Number(pricing?.input) === 0 && Number(pricing?.output) === 0) return null;
+  return pricing?.[field] ?? null;
+}
+
+export function mediaAbilities(reference) {
+  const input = reference?.inputModalities ?? [];
+  const output = reference?.outputModalities ?? [];
+  return {
+    t2i: output.includes("image") && input.includes("text") && !(Number(reference?.imageInputReferencesMin) > 0),
+    i2i: output.includes("image") && input.includes("image"),
+    t2v: output.includes("video") && input.includes("text"),
+    i2v: output.includes("video") && input.includes("image"),
+    v2v: output.includes("video") && input.includes("video"),
+  };
+}
+
+export function formatDurationOptions(values) {
+  if (!values?.length) return "Not reported";
+  const ordered = [...values].map(Number).sort((a, b) => a - b);
+  return ordered.length > 2 && ordered.every((value, index) => index === 0 || value === ordered[index - 1] + 1)
+    ? `${ordered[0]}–${ordered.at(-1)}s`
+    : ordered.map((value) => `${value}s`).join(", ");
+}
+
+export function describeVideoSku(key) {
+  const group = key.startsWith("text_to_video_") ? "T2V"
+    : key.startsWith("image_to_video_") ? "I2V"
+      : key.startsWith("video_to_video_") || key.includes("with_video_input") || key.includes("video_continuation") ? "V2V"
+        : key.includes("image_input") || key.includes("input_images") || key === "reference_images" ? "Input charges"
+          : key.startsWith("reference_") ? "Reference mode" : "Mode unspecified";
+  const sourceResolution = key.match(/(?:^|_)(\d+(?:\.\d+)?k|\d+p)(?:_|$)/i)?.[1];
+  const resolution = sourceResolution?.toLowerCase().endsWith("p") ? sourceResolution.toLowerCase() : sourceResolution?.toUpperCase() ?? null;
+  const detail = key.includes("without_audio") ? "No audio" : key.includes("with_audio") ? "With audio"
+    : key.includes("creative") ? "Creative" : key.includes("precise") ? "Precise" : null;
+  const label = [resolution, detail].filter(Boolean).join(" · ")
+    || (group === "Input charges" ? "Reference image" : "Base rate");
+  return { group, label };
+}
+
+export function formatVideoSkuPrice(key, value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "—";
+  const cents = key.startsWith("cents_per_") || key === "minimum_cents_per_generation";
+  const price = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 8 }).format(cents ? amount / 100 : amount);
+  const unit = key.includes("megapixel_second") ? "/megapixel-second"
+    : key.includes("second") ? "/second"
+      : key.includes("video_tokens") ? "/video token"
+        : key.includes("image") ? "/image"
+          : key.includes("generation") ? "/generation" : "";
+  return `${price}${key.startsWith("minimum_") ? " minimum" : ""}${unit}`;
+}
+
+export function formatEndpointPricing(pricing) {
+  const usd = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 8 }).format(Number(value));
+  if (Array.isArray(pricing)) return pricing.map(({ billable, cost_usd, unit, variant }) => `${variant ? `${variant}: ` : ""}${billable}: ${usd(cost_usd)}/${unit}`).join(" · ") || "Pricing not reported";
+  if (!pricing || typeof pricing !== "object") return "Pricing not reported";
+  const tokenFields = { prompt: "Input", completion: "Output", input_cache_read: "Cache read", input_cache_write: "Cache write" };
+  const parts = Object.entries(tokenFields).filter(([key]) => pricing[key] != null).map(([key, label]) => `${label} ${formatUsdPerMillion(pricing[key])}/1M`);
+  parts.push(...Object.entries(pricing).filter(([key, value]) => !(key in tokenFields) && key !== "discount" && key !== "overrides" && value != null && typeof value !== "object").map(([key, value]) => `${key}: ${usd(value)}`));
+  if (Number(pricing.discount) > 0) parts.push(`${Number(pricing.discount) * 100}% off`);
+  for (const override of pricing.overrides ?? []) {
+    const { min_prompt_tokens, ...rates } = override;
+    parts.push(`≥${formatTokenCount(min_prompt_tokens)} prompt: ${formatEndpointPricing(rates)}`);
+  }
+  return parts.join(" · ") || "Pricing not reported";
+}
+
 export function formatSourceDate(value) {
   if (value === null || value === undefined || value === "") return "—";
   const date = /^\d+$/.test(String(value)) ? new Date(Number(value) * 1_000) : new Date(value);
@@ -52,24 +122,22 @@ export function formatSourceDate(value) {
 export function searchableModelText(model, reference) {
   return [
     modelId(model),
-    model?.displayName,
     reference?.name,
     reference?.description,
-    model?.tags,
     reference?.inputModalities,
     reference?.outputModalities,
     reference?.supportedParameters,
   ].filter(Boolean).map((value) => typeof value === "object" ? JSON.stringify(value) : String(value)).join(" ").toLowerCase();
 }
 
-export function filterAndSortGatewayModels(models, payload, filters) {
+export function filterAndSortModels(models, payload, filters) {
   const query = filters.query.trim().toLowerCase();
   const filtered = models.filter((model) => {
     const reference = readReferenceModel(payload, model);
-    const inputPrice = pricePerMillion(reference?.pricing?.input);
+    const inputPrice = pricePerMillion(tokenRateForDisplay(reference, "input"));
     if (query && !searchableModelText(model, reference).includes(query)) return false;
-    if (filters.provider !== "all" && modelProvider(model) !== filters.provider) return false;
     if (filters.inputModality !== "all" && !reference?.inputModalities?.includes(filters.inputModality)) return false;
+    if (filters.outputModality !== "all" && !reference?.outputModalities?.includes(filters.outputModality)) return false;
     if (filters.minContext && !(Number(reference?.contextLength) >= filters.minContext)) return false;
     if (filters.maxInputPrice !== "" && (inputPrice === null || inputPrice > Number(filters.maxInputPrice))) return false;
     return true;
@@ -77,7 +145,10 @@ export function filterAndSortGatewayModels(models, payload, filters) {
   const metric = (model) => {
     const reference = readReferenceModel(payload, model);
     if (filters.sort === "context") return Number(reference?.contextLength) || null;
-    if (filters.sort === "price") return reference?.pricing?.input == null ? null : Number(reference.pricing.input);
+    if (filters.sort === "price") {
+      const price = tokenRateForDisplay(reference, "input");
+      return price == null ? null : Number(price);
+    }
     if (filters.sort === "newest") return Number(reference?.created) || null;
     return null;
   };

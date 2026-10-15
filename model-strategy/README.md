@@ -8,7 +8,7 @@ A standalone dashboard that demonstrates the Maxshot model-selection strategy wi
 cp .env.example .env.local
 ```
 
-Set `OPENROUTER_API_KEY` in `.env.local`. To use the **All Models** page, set `MAXSHOT_API_KEY` in the ignored `.env` file. Then run:
+Set `OPENROUTER_API_KEY` in `.env.local`. Then run:
 
 ```bash
 npm install
@@ -16,6 +16,8 @@ npm run dev
 ```
 
 The app listens on `http://127.0.0.1:4175` by default. Set `PORT` or `OPENROUTER_REFRESH_INTERVAL_MS` in `.env.local` to override the defaults.
+
+The All Models page stores its last successful OpenRouter catalog and fetched image prices in ignored `all-models-data.json`. It loads this file on startup; use **Refresh** on the page to fetch and save current data.
 
 ```bash
 npm run test

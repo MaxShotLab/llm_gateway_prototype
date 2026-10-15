@@ -1,19 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { filterAndSortGatewayModels, formatSourceDate, formatTokenCount, formatUsdPerMillion, modelId, modelProvider, modelsWithReference, paginateModels, pricePerMillion, readGatewayModels, readReferenceModel, searchableModelText } from "../src/lib/gateway-models.js";
+import { allOpenRouterModels, describeVideoSku, filterAndSortModels, formatDurationOptions, formatEndpointPricing, formatSourceDate, formatTokenCount, formatUsdPerMillion, formatVideoSkuPrice, groupBatchModels, mediaAbilities, modelId, paginateModels, pricePerMillion, readReferenceModel, searchableModelText, tokenRateForDisplay } from "../src/lib/gateway-models.js";
 
-test("gateway models normalize documented and internal list envelopes", () => {
-  assert.deepEqual(readGatewayModels({ data: [{ id: "openai/gpt" }] }), [{ id: "openai/gpt" }]);
-  assert.deepEqual(readGatewayModels({ items: [{ model_name: "anthropic/claude" }] }), [{ model_name: "anthropic/claude" }]);
-});
-
-test("gateway model helpers search source fields without inferring provider", () => {
-  const model = { model_name: "openai/gpt", tags: ["reasoning"] };
+test("catalog search uses OpenRouter source fields", () => {
+  const model = { id: "openai/gpt" };
   assert.equal(modelId(model), "openai/gpt");
-  assert.equal(modelProvider(model), "—");
-  assert.equal(modelProvider({ id: "~anthropic/claude-latest", owned_by: "openrouter" }), "openrouter");
-  assert.match(searchableModelText(model), /reasoning/);
+  assert.match(searchableModelText(model, { supportedParameters: ["reasoning"] }), /reasoning/);
   assert.doesNotMatch(searchableModelText({ id: "anthropic/claude", supported_endpoint_types: ["openai"] }), /openai/);
 });
 
@@ -34,11 +27,55 @@ test("catalog references expose OpenRouter fields without derived labels or pric
   assert.match(searchableModelText(model, reference), /tools/);
 });
 
-test("catalog shows only Gateway models with exact OpenRouter records", () => {
-  const models = [{ id: "vendor/matched" }, { id: "vendor/unmatched" }];
-  const payload = { reference: { models: { "vendor/matched": { contextLength: 128_000, pricing: { input: "0.000001" } } } } };
-  assert.deepEqual(modelsWithReference(models, payload), [models[0]]);
-  assert.deepEqual(modelsWithReference(models, null), []);
+test("catalog includes every OpenRouter model without a gateway list", () => {
+  const payload = { reference: { models: { "vendor/text": { outputModalities: ["text"] }, "vendor/image": { outputModalities: ["image"] } } } };
+  assert.deepEqual(allOpenRouterModels(payload), [{ id: "vendor/text" }, { id: "vendor/image" }]);
+  assert.deepEqual(allOpenRouterModels(null), []);
+});
+
+test("catalog groups exact batch variants under their standard model", () => {
+  const standard = { id: "openai/gpt-5.6-sol" };
+  const batch = { id: "openai/gpt-5.6-sol:batch" };
+  const unmatched = { id: "other/model:batch" };
+  assert.deepEqual(groupBatchModels([batch, unmatched, standard]), [
+    { model: standard, batch },
+    { model: unmatched, batch: null },
+  ]);
+  assert.deepEqual(groupBatchModels([batch], [standard, batch]), [{ model: standard, batch }]);
+});
+
+test("endpoint prices retain OpenRouter units and long-context overrides", () => {
+  assert.equal(formatEndpointPricing({ prompt: "0.000001", completion: "0.000005", discount: 0.5, overrides: [{ min_prompt_tokens: 272000, prompt: "0.000002" }] }), "Input $1.00/1M · Output $5.00/1M · 50% off · ≥272K prompt: Input $2.00/1M");
+  assert.equal(formatEndpointPricing([{ billable: "output_image", cost_usd: 0.04, unit: "image" }]), "output_image: $0.04/image");
+  assert.equal(formatEndpointPricing([{ billable: "output_image", cost_usd: 0.041, unit: "image", variant: "768" }]), "768: output_image: $0.041/image");
+  assert.equal(formatVideoSkuPrice("duration_seconds_720p", "0.0988"), "$0.0988/second");
+  assert.equal(formatVideoSkuPrice("cents_per_video_output_second_720p", "3"), "$0.03/second");
+  assert.equal(formatVideoSkuPrice("video_tokens", "0.0000107"), "$0.0000107/video token");
+  assert.equal(formatVideoSkuPrice("reference_images", "0.04"), "$0.04/image");
+  assert.equal(formatVideoSkuPrice("minimum_cents_per_generation", "5"), "$0.05 minimum/generation");
+});
+
+test("media ability filters and price labels use reported modalities and SKU fields", () => {
+  assert.deepEqual(mediaAbilities({ inputModalities: ["text", "image"], outputModalities: ["image"], imageInputReferencesMin: 1 }), { t2i: false, i2i: true, t2v: false, i2v: false, v2v: false });
+  assert.deepEqual(mediaAbilities({ inputModalities: ["text", "image", "video"], outputModalities: ["video"] }), { t2i: false, i2i: false, t2v: true, i2v: true, v2v: true });
+  assert.deepEqual(describeVideoSku("image_to_video_duration_seconds_1080p"), { group: "I2V", label: "1080p" });
+  assert.deepEqual(describeVideoSku("video_tokens_4k_with_video_input"), { group: "V2V", label: "4K" });
+  assert.deepEqual(describeVideoSku("duration_seconds_with_audio_720p"), { group: "Mode unspecified", label: "720p · With audio" });
+  assert.equal(formatDurationOptions([5, 10]), "5s, 10s");
+  assert.equal(formatDurationOptions([4, 5, 6, 7]), "4–7s");
+});
+
+test("zero token placeholders on media models are not shown as free pricing", () => {
+  const media = { outputModalities: ["video"], pricing: { input: "0", output: "0" } };
+  assert.equal(tokenRateForDisplay(media, "input"), null);
+  assert.equal(tokenRateForDisplay(media, "output"), null);
+  assert.equal(tokenRateForDisplay({ outputModalities: ["image", "text"], pricing: { input: "0.000001", output: "0" } }, "input"), "0.000001");
+  assert.equal(tokenRateForDisplay({ outputModalities: ["text"], pricing: { input: "0", output: "0" } }, "input"), "0");
+  const models = [{ id: "vendor/media" }, { id: "vendor/text" }];
+  const payload = { reference: { models: { "vendor/media": media, "vendor/text": { outputModalities: ["text"], pricing: { input: "0.000001" } } } } };
+  const filters = { query: "", inputModality: "all", outputModality: "all", minContext: 0, maxInputPrice: "", sort: "price" };
+  assert.deepEqual(filterAndSortModels(models, payload, filters).map(modelId), ["vendor/text", "vendor/media"]);
+  assert.deepEqual(filterAndSortModels(models, payload, { ...filters, maxInputPrice: "2" }).map(modelId), ["vendor/text"]);
 });
 
 test("catalog formats source numbers for reading without changing their values", () => {
@@ -61,11 +98,13 @@ test("catalog filters and sorts known metadata without treating missing values a
       "other/expensive:batch": { contextLength: 256_000, pricing: { input: "0.000004" }, inputModalities: ["text"], outputModalities: ["text"], supportedParameters: [] },
     } },
   };
-  const base = { query: "", provider: "all", inputModality: "all", minContext: 0, maxInputPrice: "", sort: "price" };
-  assert.deepEqual(filterAndSortGatewayModels(models, payload, base).map(modelId), ["vendor/cheap", "other/expensive:batch", "vendor/unknown"]);
-  assert.deepEqual(filterAndSortGatewayModels(models, payload, { ...base, inputModality: "image" }).map(modelId), ["vendor/cheap"]);
-  assert.deepEqual(filterAndSortGatewayModels(models, payload, { ...base, maxInputPrice: "2" }).map(modelId), ["vendor/cheap"]);
-  assert.deepEqual(filterAndSortGatewayModels(models, payload, { ...base, minContext: 200_000 }).map(modelId), ["other/expensive:batch"]);
+  const base = { query: "", inputModality: "all", outputModality: "all", minContext: 0, maxInputPrice: "", sort: "price" };
+  assert.deepEqual(filterAndSortModels(models, payload, base).map(modelId), ["vendor/cheap", "other/expensive:batch", "vendor/unknown"]);
+  assert.deepEqual(filterAndSortModels(models, payload, { ...base, inputModality: "image" }).map(modelId), ["vendor/cheap"]);
+  assert.deepEqual(filterAndSortModels(models, payload, { ...base, outputModality: "text" }).map(modelId), ["vendor/cheap", "other/expensive:batch"]);
+  assert.deepEqual(filterAndSortModels(models, payload, { ...base, outputModality: "video" }).map(modelId), []);
+  assert.deepEqual(filterAndSortModels(models, payload, { ...base, maxInputPrice: "2" }).map(modelId), ["vendor/cheap"]);
+  assert.deepEqual(filterAndSortModels(models, payload, { ...base, minContext: 200_000 }).map(modelId), ["other/expensive:batch"]);
 });
 
 test("gateway pagination clamps page boundaries", () => {

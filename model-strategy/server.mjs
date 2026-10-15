@@ -36,16 +36,46 @@ const isProduction = process.argv.includes("--production");
 const port = Number(process.env.PORT || 4175);
 const refreshIntervalMs = Math.max(60_000, Number(process.env.OPENROUTER_REFRESH_INTERVAL_MS || 300_000));
 const openRouterBaseUrl = "https://openrouter.ai/api/v1";
-const maxshotGatewayBaseUrl = "https://api.maxshot.ai/v1";
+const allModelsDataPath = path.join(rootDir, "all-models-data.json");
 const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
 let allModelsReference = null;
 let allModelsReferencePromise = null;
+let allModelsSnapshot = null;
+let allModelsSnapshotPromise = null;
+let allModelsWritePromise = Promise.resolve();
+const endpointPrices = new Map();
+const endpointPricePromises = new Map();
+let endpointRateLimitedUntil = 0;
 let mediaSnapshot = null;
 let mediaPromise = null;
 let updatePromise = null;
 let freeProbePromise = null;
 let updateTimer = null;
+
+try {
+  const saved = JSON.parse(await fs.readFile(allModelsDataPath, "utf8"));
+  if (saved?.reference?.models) {
+    allModelsSnapshot = { reference: saved.reference };
+    allModelsReference = saved.reference;
+    for (const [id, value] of Object.entries(saved.endpointPrices ?? saved.imagePrices ?? {})) {
+      if (Array.isArray(value?.endpoints)) endpointPrices.set(id, value);
+    }
+  }
+} catch (error) {
+  if (error.code !== "ENOENT") console.warn(`Could not load ${allModelsDataPath}: ${error.message}`);
+}
+
+function saveAllModelsSnapshot() {
+  if (!allModelsSnapshot) return Promise.resolve();
+  const saved = JSON.stringify({ ...allModelsSnapshot, endpointPrices: Object.fromEntries(endpointPrices) });
+  allModelsWritePromise = allModelsWritePromise.catch(() => {}).then(async () => {
+    await fs.writeFile(`${allModelsDataPath}.tmp`, saved);
+    await fs.rename(`${allModelsDataPath}.tmp`, allModelsDataPath);
+  });
+  return allModelsWritePromise;
+}
+
 const updateStatus = {
   updating: false,
   updateStartedAt: null,
@@ -107,29 +137,6 @@ async function openRouterFetch(pathname, timeoutMs = 20_000) {
   if (!response.ok) {
     const error = new Error(body?.error?.message || `OpenRouter request failed with ${response.status}`);
     error.code = `OPENROUTER_${response.status}`;
-    throw error;
-  }
-  return body;
-}
-
-async function fetchGatewayModels() {
-  const apiKey = process.env.MAXSHOT_API_KEY?.trim();
-  if (!apiKey) {
-    const error = new Error("Set MAXSHOT_API_KEY in model-strategy/.env, then restart the server.");
-    error.code = "MAXSHOT_API_KEY_MISSING";
-    throw error;
-  }
-  const response = await fetch(`${maxshotGatewayBaseUrl}/models`, {
-    headers: {
-      accept: "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-    signal: AbortSignal.timeout(20_000),
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(body?.error?.message || body?.message || `Maxshot Gateway returned HTTP ${response.status}`);
-    error.code = `MAXSHOT_GATEWAY_${response.status}`;
     throw error;
   }
   return body;
@@ -428,14 +435,22 @@ function buildLiveStrategy(config) {
   };
 }
 
-async function getAllModelsReference() {
-  if (allModelsReference && Date.now() - Date.parse(allModelsReference.dataUpdatedAt) < refreshIntervalMs) return allModelsReference;
+async function getAllModelsReference(force = false) {
+  if (!force && allModelsReference && Date.now() - Date.parse(allModelsReference.dataUpdatedAt) < refreshIntervalMs) return allModelsReference;
   if (!allModelsReferencePromise) {
     allModelsReferencePromise = (async () => {
-      const payload = await openRouterFetch("/models?output_modalities=all", 45_000);
+      const [payload, imageResult, videoResult] = await Promise.all([
+        openRouterFetch("/models?output_modalities=all", 45_000),
+        openRouterFetch("/images/models", 45_000).then((source) => ({ data: source.data })).catch((error) => ({ error: error.message })),
+        openRouterFetch("/videos/models", 45_000).then((source) => ({ data: source.data })).catch((error) => ({ error: error.message })),
+      ]);
       if (!Array.isArray(payload?.data)) throw new Error("OpenRouter model list did not contain a data array.");
+      const images = new Map((Array.isArray(imageResult.data) ? imageResult.data : []).map((model) => [model.id, model]));
+      const videos = new Map((Array.isArray(videoResult.data) ? videoResult.data : []).map((model) => [model.id, model]));
       const reference = {
         dataUpdatedAt: new Date().toISOString(),
+        imageMetadataError: imageResult.error ?? null,
+        videoPricingError: videoResult.error ?? (Array.isArray(videoResult.data) ? null : "OpenRouter video price list is unavailable."),
         models: Object.fromEntries(payload.data.map((raw) => [raw.id, {
           name: raw.name ?? null,
           description: raw.description ?? null,
@@ -445,6 +460,11 @@ async function getAllModelsReference() {
           outputModalities: raw.architecture?.output_modalities ?? [],
           supportedParameters: raw.supported_parameters ?? [],
           pricing: { input: raw.pricing?.prompt ?? null, output: raw.pricing?.completion ?? null },
+          imageInputReferencesMin: imageResult.error ? allModelsReference?.models?.[raw.id]?.imageInputReferencesMin ?? null : images.get(raw.id)?.supported_parameters?.input_references?.min ?? null,
+          imageSupportedResolutions: imageResult.error ? allModelsReference?.models?.[raw.id]?.imageSupportedResolutions ?? [] : images.get(raw.id)?.supported_parameters?.resolution?.values ?? [],
+          videoPricingSkus: videoResult.error ? allModelsReference?.models?.[raw.id]?.videoPricingSkus ?? null : videos.get(raw.id)?.pricing_skus ?? null,
+          videoSupportedResolutions: videoResult.error ? allModelsReference?.models?.[raw.id]?.videoSupportedResolutions ?? [] : videos.get(raw.id)?.supported_resolutions ?? [],
+          videoSupportedDurations: videoResult.error ? allModelsReference?.models?.[raw.id]?.videoSupportedDurations ?? [] : videos.get(raw.id)?.supported_durations ?? [],
           created: raw.created ?? null,
           expirationDate: raw.expiration_date ?? null,
           canonicalSlug: raw.canonical_slug ?? null,
@@ -459,6 +479,21 @@ async function getAllModelsReference() {
   } catch (error) {
     return { ...(allModelsReference ?? { dataUpdatedAt: null, models: {} }), error: error.message };
   }
+}
+
+async function getAllModelsSnapshot(force = false) {
+  if (!force && allModelsSnapshot) return allModelsSnapshot;
+  if (!allModelsSnapshotPromise) {
+    allModelsSnapshotPromise = (async () => {
+      const reference = await getAllModelsReference(force);
+      if (reference.error) return { reference };
+      allModelsSnapshot = { reference };
+      for (const id of endpointPrices.keys()) if (!reference.models[id]) endpointPrices.delete(id);
+      await saveAllModelsSnapshot();
+      return allModelsSnapshot;
+    })().finally(() => { allModelsSnapshotPromise = null; });
+  }
+  return allModelsSnapshotPromise;
 }
 
 async function getMediaStrategy() {
@@ -520,12 +555,54 @@ async function handleApi(request, response, url) {
     return true;
   }
   if (request.method === "GET" && url.pathname === "/api/gateway-models") {
+    const snapshot = await getAllModelsSnapshot(url.searchParams.get("refresh") === "1");
+    json(response, 200, { reference: snapshot.reference, endpointPrices: Object.fromEntries(endpointPrices) });
+    return true;
+  }
+  if (request.method === "GET" && url.pathname === "/api/gateway-model-endpoints") {
+    const id = url.searchParams.get("model");
+    const reference = allModelsReference?.models?.[id];
+    if (!reference) {
+      json(response, 404, { error: "Model is not in the loaded OpenRouter catalog." });
+      return true;
+    }
+    if (reference.outputModalities.includes("video")) {
+      json(response, 422, { error: "OpenRouter does not publish per-provider video endpoint prices." });
+      return true;
+    }
+    const cached = endpointPrices.get(id);
+    if (cached && url.searchParams.get("refresh") !== "1" && Date.now() - cached.updatedAt < 3_600_000) {
+      json(response, 200, { endpoints: cached.endpoints, updatedAt: new Date(cached.updatedAt).toISOString() });
+      return true;
+    }
+    if (Date.now() < endpointRateLimitedUntil) {
+      json(response, 429, { error: "OpenRouter endpoint lookup is rate-limited; try again later." });
+      return true;
+    }
     try {
-      const payload = await fetchGatewayModels();
-      json(response, 200, { ...payload, reference: await getAllModelsReference() });
+      if (!endpointPricePromises.has(id)) {
+        const isImage = reference.outputModalities.includes("image");
+        const pathname = `${isImage ? "/images" : ""}${endpointPath(reference.canonicalSlug || id)}`;
+        const promise = openRouterFetch(pathname)
+          .then(async (payload) => {
+            const rows = isImage ? payload?.endpoints : payload?.data?.endpoints;
+            if (!Array.isArray(rows)) throw new Error("OpenRouter endpoint response is missing its endpoint list.");
+            const endpoints = rows.map(({ provider_name, provider_tag, tag, pricing }) => ({ providerName: provider_name, tag: tag ?? provider_tag, pricing }));
+            const updatedAt = Date.now();
+            endpointPrices.set(id, { endpoints, updatedAt });
+            await saveAllModelsSnapshot();
+            return { endpoints, updatedAt: new Date(updatedAt).toISOString() };
+          })
+          .catch((error) => {
+            if (error.code === "OPENROUTER_429") endpointRateLimitedUntil = Date.now() + 300_000;
+            throw error;
+          })
+          .finally(() => endpointPricePromises.delete(id));
+        endpointPricePromises.set(id, promise);
+      }
+      json(response, 200, await endpointPricePromises.get(id));
     } catch (error) {
-      const status = error.code === "MAXSHOT_API_KEY_MISSING" ? 503 : 502;
-      json(response, status, { error: { code: error.code || "GATEWAY_MODELS_FAILED", message: error.message } });
+      json(response, error.code === "OPENROUTER_429" ? 429 : 502, { error: error.message });
     }
     return true;
   }
