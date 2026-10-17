@@ -37,6 +37,7 @@ const port = Number(process.env.PORT || 4175);
 const refreshIntervalMs = Math.max(60_000, Number(process.env.OPENROUTER_REFRESH_INTERVAL_MS || 300_000));
 const openRouterBaseUrl = "https://openrouter.ai/api/v1";
 const allModelsDataPath = path.join(rootDir, "all-models-data.json");
+const veniceModelsDataPath = path.join(rootDir, "venice-models-data.json");
 const freeProbePoolSize = DEFAULT_STRATEGY.quotas.free * 2;
 let dataSnapshot = null;
 let allModelsReference = null;
@@ -44,6 +45,8 @@ let allModelsReferencePromise = null;
 let allModelsSnapshot = null;
 let allModelsSnapshotPromise = null;
 let allModelsWritePromise = Promise.resolve();
+let veniceSnapshot = null;
+let venicePromise = null;
 const endpointPrices = new Map();
 const endpointPricePromises = new Map();
 let endpointRateLimitedUntil = 0;
@@ -64,6 +67,13 @@ try {
   }
 } catch (error) {
   if (error.code !== "ENOENT") console.warn(`Could not load ${allModelsDataPath}: ${error.message}`);
+}
+
+try {
+  const saved = JSON.parse(await fs.readFile(veniceModelsDataPath, "utf8"));
+  if (Array.isArray(saved.data)) veniceSnapshot = saved;
+} catch (error) {
+  if (error.code !== "ENOENT") console.warn(`Could not load ${veniceModelsDataPath}: ${error.message}`);
 }
 
 function saveAllModelsSnapshot() {
@@ -140,6 +150,38 @@ async function openRouterFetch(pathname, timeoutMs = 20_000) {
     throw error;
   }
   return body;
+}
+
+async function veniceFetch(pathname, options = {}) {
+  const key = process.env.VENICE_API_KEY?.trim();
+  const response = await fetch(`https://api.venice.ai/api/v1${pathname}`, {
+    ...options,
+    headers: { ...(key ? { authorization: `Bearer ${key}` } : {}), ...options.headers },
+    signal: AbortSignal.timeout(30_000),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || `Venice returned HTTP ${response.status}`);
+  return body;
+}
+
+async function getVeniceModels(force = false) {
+  if (!force && veniceSnapshot) return veniceSnapshot;
+  if (!venicePromise) {
+    venicePromise = veniceFetch("/models?type=all").then(async (body) => {
+      if (!Array.isArray(body.data)) throw new Error("Venice model list is unavailable.");
+      const next = { data: body.data, updatedAt: new Date().toISOString() };
+      await fs.writeFile(`${veniceModelsDataPath}.tmp`, JSON.stringify(next));
+      await fs.rename(`${veniceModelsDataPath}.tmp`, veniceModelsDataPath);
+      veniceSnapshot = next;
+      return veniceSnapshot;
+    }).finally(() => { venicePromise = null; });
+  }
+  try {
+    return await venicePromise;
+  } catch (error) {
+    if (veniceSnapshot) return { ...veniceSnapshot, error: error.message };
+    throw error;
+  }
 }
 
 async function fetchSources() {
@@ -557,6 +599,29 @@ async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/gateway-models") {
     const snapshot = await getAllModelsSnapshot(url.searchParams.get("refresh") === "1");
     json(response, 200, { reference: snapshot.reference, endpointPrices: Object.fromEntries(endpointPrices) });
+    return true;
+  }
+  if (request.method === "GET" && url.pathname === "/api/venice-models") {
+    try {
+      json(response, 200, await getVeniceModels(url.searchParams.get("refresh") === "1"));
+    } catch (error) {
+      json(response, 502, { error: error.message });
+    }
+    return true;
+  }
+  if (request.method === "POST" && url.pathname === "/api/venice-video-quote") {
+    try {
+      const body = await readRequestBody(request);
+      const catalog = await getVeniceModels();
+      if (!catalog.data.some((model) => model.id === body.model && model.type === "video")) {
+        json(response, 400, { error: "Select a Venice video model." });
+        return true;
+      }
+      const input = Object.fromEntries(["model", "duration", "resolution", "aspect_ratio", "audio"].filter((key) => body[key] !== undefined).map((key) => [key, body[key]]));
+      json(response, 200, await veniceFetch("/video/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) }));
+    } catch (error) {
+      json(response, 502, { error: error.message });
+    }
     return true;
   }
   if (request.method === "GET" && url.pathname === "/api/gateway-model-endpoints") {

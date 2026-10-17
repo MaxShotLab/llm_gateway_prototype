@@ -19,6 +19,8 @@ The app listens on `http://127.0.0.1:4175` by default. Set `PORT` or `OPENROUTER
 
 The All Models page stores its last successful OpenRouter catalog and fetched image prices in ignored `all-models-data.json`. It loads this file on startup; use **Refresh** on the page to fetch and save current data.
 
+The Venice Models page likewise loads its last successful catalog from ignored `venice-models-data.json` at startup. **Refresh** fetches and saves a new catalog; a failed refresh keeps the saved data.
+
 ```bash
 npm run test
 npm run build

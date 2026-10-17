@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import GatewayModelsPage from "./GatewayModelsPage.jsx";
 import MediaStrategyPage from "./MediaStrategyPage.jsx";
+import VeniceModelsPage from "./VeniceModelsPage.jsx";
 import { CATEGORY_ORDER, compareSelectedModels, DEFAULT_STRATEGY, MODEL_COUNT, totalValues, validateStrategy } from "./lib/strategy.js";
 
 const CATEGORY_LABELS = {
@@ -568,15 +569,17 @@ function ModelStrategyPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState(() => window.location.hash === "#all-models" ? "models" : window.location.hash === "#media-strategy" ? "media" : "strategy");
+  const [page, setPage] = useState(() => window.location.hash === "#venice-models" ? "venice" : window.location.hash === "#all-models" ? "models" : window.location.hash === "#media-strategy" ? "media" : "strategy");
   const [modelsVisited, setModelsVisited] = useState(page === "models");
   const [mediaVisited, setMediaVisited] = useState(page === "media");
+  const [veniceVisited, setVeniceVisited] = useState(page === "venice");
 
   const navigate = (nextPage) => {
-    window.location.hash = nextPage === "models" ? "all-models" : nextPage === "media" ? "media-strategy" : "model-strategy";
+    window.location.hash = nextPage === "venice" ? "venice-models" : nextPage === "models" ? "all-models" : nextPage === "media" ? "media-strategy" : "model-strategy";
     setPage(nextPage);
     if (nextPage === "models") setModelsVisited(true);
     if (nextPage === "media") setMediaVisited(true);
+    if (nextPage === "venice") setVeniceVisited(true);
   };
 
   return (
@@ -586,10 +589,12 @@ export default function App() {
         <button type="button" aria-current={page === "strategy" ? "page" : undefined} onClick={() => navigate("strategy")}>Model Strategy</button>
         <button type="button" aria-current={page === "media" ? "page" : undefined} onClick={() => navigate("media")}>Media Strategy</button>
         <button type="button" aria-current={page === "models" ? "page" : undefined} onClick={() => navigate("models")}>All Models</button>
+        <button type="button" aria-current={page === "venice" ? "page" : undefined} onClick={() => navigate("venice")}>Venice Models</button>
       </nav>
       {page === "strategy" ? <ModelStrategyPage /> : null}
       {modelsVisited ? <div hidden={page !== "models"}><GatewayModelsPage /></div> : null}
       {mediaVisited ? <div hidden={page !== "media"}><MediaStrategyPage /></div> : null}
+      {veniceVisited ? <div hidden={page !== "venice"}><VeniceModelsPage /></div> : null}
     </div>
   );
 }

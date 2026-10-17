@@ -5,3 +5,5 @@ dist/
 *.log
 /all-models-data.json
 /all-models-data.json.tmp
+/venice-models-data.json
+/venice-models-data.json.tmp
