@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { allOpenRouterModels, describeVideoSku, filterAndSortModels, formatDurationOptions, formatEndpointPricing, formatSourceDate, formatTokenCount, formatUsdPerMillion, formatVideoSkuPrice, groupBatchModels, mediaAbilities, modelId, paginateModels, pricePerMillion, readReferenceModel, searchableModelText, tokenRateForDisplay } from "../src/lib/gateway-models.js";
+import { allOpenRouterModels, describeVideoSku, effectiveTokenPricing, filterAndSortModels, formatDurationOptions, formatEndpointPricing, formatSourceDate, formatTokenCount, formatUsdPerMillion, formatVideoSkuPrice, groupBatchModels, mediaAbilities, modelId, nextPricingChange, paginateModels, pricePerMillion, pricingScheduleRows, readReferenceModel, searchableModelText, tokenRateForDisplay } from "../src/lib/gateway-models.js";
 
 test("catalog search uses OpenRouter source fields", () => {
   const model = { id: "openai/gpt" };
@@ -45,7 +45,7 @@ test("catalog groups exact batch variants under their standard model", () => {
 });
 
 test("endpoint prices retain OpenRouter units and long-context overrides", () => {
-  assert.equal(formatEndpointPricing({ prompt: "0.000001", completion: "0.000005", discount: 0.5, overrides: [{ min_prompt_tokens: 272000, prompt: "0.000002" }] }), "Input $1.00/1M · Output $5.00/1M · 50% off · ≥272K prompt: Input $2.00/1M");
+  assert.equal(formatEndpointPricing({ prompt: "0.000001", completion: "0.000005", discount: 0.5, overrides: [{ min_prompt_tokens: 272000, prompt: "0.000002" }] }), "Input $1.00/1M · Output $5.00/1M · 50% off · >272K prompt: Input $2.00/1M");
   assert.equal(formatEndpointPricing([{ billable: "output_image", cost_usd: 0.04, unit: "image" }]), "output_image: $0.04/image");
   assert.equal(formatEndpointPricing([{ billable: "output_image", cost_usd: 0.041, unit: "image", variant: "768" }]), "768: output_image: $0.041/image");
   assert.equal(formatVideoSkuPrice("duration_seconds_720p", "0.0988"), "$0.0988/second");
@@ -53,6 +53,25 @@ test("endpoint prices retain OpenRouter units and long-context overrides", () =>
   assert.equal(formatVideoSkuPrice("video_tokens", "0.0000107"), "$0.0000107/video token");
   assert.equal(formatVideoSkuPrice("reference_images", "0.04"), "$0.04/image");
   assert.equal(formatVideoSkuPrice("minimum_cents_per_generation", "5"), "$0.05 minimum/generation");
+});
+
+test("UTC pricing overrides apply only in their window and preserve base fields", () => {
+  const pricing = {
+    prompt: "0.0000003", completion: "0.0000012", input_cache_read: "0.000000006",
+    overrides: [
+      { utc_days: ["saturday", "sunday"], prompt: "0.00000015", completion: "0.0000006", input_cache_read: "0.000000003" },
+      { utc_days: ["monday"], utc_start: 0, utc_end: 100, prompt: "0.00000015" },
+      { utc_days: ["monday"], utc_start: 100, utc_end: 400, prompt: "0.0000003" },
+      { utc_days: ["monday"], utc_start: 100, utc_end: 400, completion: "0.0000006" },
+    ],
+  };
+  assert.deepEqual(effectiveTokenPricing(pricing, new Date("2026-10-18T12:00:00Z")), { prompt: "0.00000015", completion: "0.0000006", input_cache_read: "0.000000003" });
+  assert.deepEqual(effectiveTokenPricing(pricing, new Date("2026-10-19T00:30:00Z")), { prompt: "0.00000015", completion: "0.0000012", input_cache_read: "0.000000006" });
+  assert.deepEqual(effectiveTokenPricing(pricing, new Date("2026-10-19T01:00:00Z")), { prompt: "0.0000003", completion: "0.0000006", input_cache_read: "0.000000006" });
+  assert.equal(nextPricingChange(pricing, new Date("2026-10-19T00:30:00Z")).toISOString(), "2026-10-19T01:00:00.000Z");
+  assert.match(formatEndpointPricing(pricing), /Sat–Sun all day UTC/);
+  assert.doesNotMatch(formatEndpointPricing(pricing), /≥— prompt|utc_start: \$/);
+  assert.equal(pricingScheduleRows(pricing).length, 4);
 });
 
 test("media ability filters and price labels use reported modalities and SKU fields", () => {

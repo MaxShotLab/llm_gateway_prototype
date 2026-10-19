@@ -501,7 +501,7 @@ async function getAllModelsReference(force = false) {
           inputModalities: raw.architecture?.input_modalities ?? [],
           outputModalities: raw.architecture?.output_modalities ?? [],
           supportedParameters: raw.supported_parameters ?? [],
-          pricing: { input: raw.pricing?.prompt ?? null, output: raw.pricing?.completion ?? null },
+          pricing: { input: raw.pricing?.prompt ?? null, output: raw.pricing?.completion ?? null, cacheRead: raw.pricing?.input_cache_read ?? null, overrides: raw.pricing?.overrides ?? [] },
           imageInputReferencesMin: imageResult.error ? allModelsReference?.models?.[raw.id]?.imageInputReferencesMin ?? null : images.get(raw.id)?.supported_parameters?.input_references?.min ?? null,
           imageSupportedResolutions: imageResult.error ? allModelsReference?.models?.[raw.id]?.imageSupportedResolutions ?? [] : images.get(raw.id)?.supported_parameters?.resolution?.values ?? [],
           videoPricingSkus: videoResult.error ? allModelsReference?.models?.[raw.id]?.videoPricingSkus ?? null : videos.get(raw.id)?.pricing_skus ?? null,

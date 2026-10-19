@@ -1,8 +1,8 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  allOpenRouterModels, describeVideoSku, filterAndSortModels, formatDurationOptions, formatEndpointPricing, formatSourceDate, formatTokenCount, formatUsdPerMillion, formatVideoSkuPrice, groupBatchModels, mediaAbilities, modelId,
-  paginateModels, readReferenceModel, tokenRateForDisplay,
+  allOpenRouterModels, describeVideoSku, effectiveTokenPricing, filterAndSortModels, formatDurationOptions, formatEndpointPricing, formatSourceDate, formatTokenCount, formatUsdPerMillion, formatVideoSkuPrice, groupBatchModels, isTimePricingOverride, mediaAbilities, modelId,
+  nextPricingChange, paginateModels, pricingScheduleRows, readReferenceModel, tokenRateForDisplay,
 } from "./lib/gateway-models.js";
 
 const PAGE_SIZES = [25, 50, 100];
@@ -27,6 +27,30 @@ function TokenValue({ value, detail = false }) {
 function PriceValue({ value, detail = false }) {
   if (value === null || value === undefined || value === "") return "—";
   return <span title={`OpenRouter: ${value} USD/token`}>{formatUsdPerMillion(value)}{detail ? <small className="catalog-raw-value">{value} USD/token</small> : null}</span>;
+}
+
+function ScheduledPricing({ pricing, modelLevel = false }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const current = effectiveTokenPricing(pricing, now);
+  const next = nextPricingChange(pricing, now);
+  const rates = (values) => Object.entries({ Input: values.prompt, Output: values.completion, "Cache read": values.input_cache_read, "Cache write": values.input_cache_write, "Cache write 1h": values.input_cache_write_1h })
+    .filter(([, value]) => value != null).map(([label, value]) => `${label} ${formatUsdPerMillion(value)}/1M`).join(" · ");
+  return <div className="catalog-scheduled-pricing">
+    <strong>Current reference rate · {new Intl.DateTimeFormat("en", { timeZone: "UTC", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now)} UTC</strong>
+    <div>{rates(current)}</div>
+    {next ? <small>Next rate change: {new Intl.DateTimeFormat("en", { timeZone: "UTC", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(next)} UTC</small> : null}
+    <details><summary>UTC pricing rules</summary>{pricingScheduleRows(pricing).map(({ conditions, rates: values }, index) => <div key={index} className="catalog-schedule-row"><span>{conditions.join("; ")}</span><span>{rates(values)}</span></div>)}</details>
+    {modelLevel ? <small>Model-level reference only. Provider endpoint prices may differ.</small> : null}
+  </div>;
+}
+
+function EndpointPricing({ pricing }) {
+  if (!pricing?.overrides?.some(isTimePricingOverride)) return formatEndpointPricing(pricing);
+  return <div><div>Base: {formatEndpointPricing({ ...pricing, overrides: pricing.overrides.filter((override) => !isTimePricingOverride(override)) })}</div><ScheduledPricing pricing={pricing} /></div>;
 }
 
 function DateValue({ value }) {
@@ -116,11 +140,12 @@ function ModelInspector({ model, reference, outputModality, imagePrices, imagePr
           ["Context window", <TokenValue value={Number(reference?.contextLength) > 0 ? reference.contextLength : null} detail />],
           ["Max output", <TokenValue value={Number(reference?.maxOutputTokens) > 0 ? reference.maxOutputTokens : null} detail />],
           ...(outputModality === "text" ? [
-            ["Input / 1M tokens", <PriceValue value={tokenRateForDisplay(reference, "input")} detail />],
-            ["Output / 1M tokens", <PriceValue value={tokenRateForDisplay(reference, "output")} detail />],
+            ["Base input / 1M tokens", <PriceValue value={tokenRateForDisplay(reference, "input")} detail />],
+            ["Base output / 1M tokens", <PriceValue value={tokenRateForDisplay(reference, "output")} detail />],
           ] : []),
         ]} />
         <p className="catalog-source-note">Prices are OpenRouter reference rates, not Maxshot Gateway billing.</p>
+        {outputModality === "text" && reference?.pricing?.overrides?.some(isTimePricingOverride) ? <ScheduledPricing pricing={{ prompt: reference.pricing.input, completion: reference.pricing.output, input_cache_read: reference.pricing.cacheRead, overrides: reference.pricing.overrides }} modelLevel /> : null}
       </section>
 
       {outputModality === "image" ? <section className="catalog-inspector-section"><h3>Image pricing · OpenRouter endpoints</h3><AbilityBadges reference={reference} outputModality="image" /><ImagePriceList result={imagePrices} resolutions={reference?.imageSupportedResolutions} paused={imagePricesPaused} /></section> : null}
@@ -305,18 +330,19 @@ export default function GatewayModelsPage() {
             {loading && !payload ? <div className="loading-state">Loading OpenRouter models…</div> : (
               <div className="gateway-table-scroll catalog-table-scroll">
                 <table className={`gateway-model-table catalog-table${outputModality === "text" ? "" : " catalog-media-table"}`}>
-                  <thead><tr><th>Model</th>{outputModality === "text" ? <><th>Context tokens</th><th>Input modalities</th><th>Output modalities</th><th>Input / 1M tokens</th><th>Output / 1M tokens</th></> : <><th>Abilities</th><th>Supported formats &amp; prices</th></>}</tr></thead>
+                  <thead><tr><th>Model</th>{outputModality === "text" ? <><th>Context tokens</th><th>Input modalities</th><th>Output modalities</th><th>Base input / 1M</th><th>Base output / 1M</th></> : <><th>Abilities</th><th>Supported formats &amp; prices</th></>}</tr></thead>
                   <tbody>{paginated.items.map(({ model, batch }) => {
                     const id = modelId(model);
                     const reference = readReferenceModel(payload, model);
                     const batchReference = batch ? readReferenceModel(payload, batch) : null;
+                    const endpointResult = endpointResults[id] ?? payload?.endpointPrices?.[id];
                     return (
                       <Fragment key={id}>
                       <tr data-selected={id === modelId(inspectedModel) || (batch && modelId(batch) === modelId(inspectedModel))} tabIndex={0} aria-label={`Inspect ${id}`} onClick={() => setSelectedId(id)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedId(id); } }}>
-                        <td><span className="catalog-model-name">{reference?.name || id}</span><span className="catalog-model-id">{id}</span>{batch ? <button className="catalog-batch-link" type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(modelId(batch)); }}>Batch · {modelId(batch)}</button> : null}{outputModality === "text" ? <button className="catalog-endpoints-toggle" type="button" aria-expanded={expandedEndpointsId === id} onClick={(event) => { event.stopPropagation(); toggleEndpoints(id); }}>{expandedEndpointsId === id ? "Hide endpoints" : "Show endpoint prices"}</button> : null}</td>
+                        <td><span className="catalog-model-name">{reference?.name || id}</span><span className="catalog-model-id">{id}</span>{outputModality === "text" && reference?.pricing?.overrides?.some(isTimePricingOverride) ? <span className="catalog-schedule-badge">Scheduled pricing</span> : null}{batch ? <button className="catalog-batch-link" type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(modelId(batch)); }}>Batch · {modelId(batch)}</button> : null}{outputModality === "text" ? <button className="catalog-endpoints-toggle" type="button" aria-expanded={expandedEndpointsId === id} onClick={(event) => { event.stopPropagation(); toggleEndpoints(id); }}>{expandedEndpointsId === id ? "Hide endpoints" : "Show endpoint prices"}</button> : null}</td>
                         {outputModality === "text" ? <><td className="numeric"><TokenValue value={Number(reference?.contextLength) > 0 ? reference.contextLength : null} /></td><td>{reference?.inputModalities?.join(", ") || "—"}</td><td>{reference?.outputModalities?.join(", ") || "—"}</td><td className="numeric catalog-money"><PriceValue value={tokenRateForDisplay(reference, "input")} />{batch ? <span className="catalog-batch-price" title="Batch price"><PriceValue value={tokenRateForDisplay(batchReference, "input")} /></span> : null}</td><td className="numeric catalog-money"><PriceValue value={tokenRateForDisplay(reference, "output")} />{batch ? <span className="catalog-batch-price" title="Batch price"><PriceValue value={tokenRateForDisplay(batchReference, "output")} /></span> : null}</td></> : <><td><AbilityBadges reference={reference} outputModality={outputModality} /></td><td className="catalog-media-pricing">{outputModality === "image" ? <ImagePriceList result={endpointResults[id] ?? payload?.endpointPrices?.[id]} resolutions={reference?.imageSupportedResolutions} paused={imagePricesPaused} /> : <VideoPriceList skus={reference?.videoPricingSkus} resolutions={reference?.videoSupportedResolutions} durations={reference?.videoSupportedDurations} />}</td></>}
                       </tr>
-                      {outputModality === "text" && expandedEndpointsId === id ? <tr className="catalog-endpoint-detail-row"><td colSpan={6}><div className="catalog-endpoints">{endpointResults[id]?.loading ? "Loading endpoints…" : endpointResults[id]?.error ? endpointResults[id].error : endpointResults[id]?.endpoints?.length ? endpointResults[id].endpoints.map((endpoint, index) => <div key={`${endpoint.tag}-${index}`} className="catalog-endpoint"><span>{endpoint.providerName || "Provider unreported"}</span><code>{endpoint.tag || "tag unreported"}</code><span>{formatEndpointPricing(endpoint.pricing)}</span></div>) : "No provider endpoints reported."}</div></td></tr> : null}
+                      {outputModality === "text" && expandedEndpointsId === id ? <tr className="catalog-endpoint-detail-row"><td colSpan={6}><div className="catalog-endpoints">{endpointResult?.loading ? "Loading endpoints…" : endpointResult?.error ? endpointResult.error : endpointResult?.endpoints?.length ? endpointResult.endpoints.map((endpoint, index) => <div key={`${endpoint.tag}-${index}`} className="catalog-endpoint"><span>{endpoint.providerName || "Provider unreported"}</span><code>{endpoint.tag || "tag unreported"}</code><span><EndpointPricing pricing={endpoint.pricing} /></span></div>) : "No provider endpoints reported."}</div></td></tr> : null}
                       </Fragment>
                     );
                   })}</tbody>

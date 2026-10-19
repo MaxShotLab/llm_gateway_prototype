@@ -97,17 +97,85 @@ export function formatVideoSkuPrice(key, value) {
   return `${price}${key.startsWith("minimum_") ? " minimum" : ""}${unit}`;
 }
 
+const TOKEN_PRICE_FIELDS = { prompt: "Input", completion: "Output", input_cache_read: "Cache read", input_cache_write: "Cache write", input_cache_write_1h: "Cache write 1h" };
+const UTC_WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+export function isTimePricingOverride(override) {
+  return Boolean(override?.utc_days?.length || (override?.utc_start != null && override?.utc_end != null));
+}
+
+function utcClock(value) {
+  return `${String(Math.floor(value / 100)).padStart(2, "0")}:${String(value % 100).padStart(2, "0")}`;
+}
+
+function overrideCondition(override) {
+  const days = override.utc_days?.map((day) => day.toLowerCase()) ?? [];
+  const dayLabel = days.length === 5 && ["monday", "tuesday", "wednesday", "thursday", "friday"].every((day) => days.includes(day)) ? "Mon–Fri"
+    : days.length === 2 && days.includes("saturday") && days.includes("sunday") ? "Sat–Sun"
+      : days.length ? days.map((day) => day.slice(0, 3).replace(/^./, (letter) => letter.toUpperCase())).join(", ") : "Every day";
+  const end = override.utc_end === 0 && override.utc_start > 0 ? "24:00" : utcClock(override.utc_end);
+  const window = override.utc_start != null && override.utc_end != null ? `${utcClock(override.utc_start)}–${end} UTC` : "all day UTC";
+  return [override.min_prompt_tokens != null ? `>${formatTokenCount(override.min_prompt_tokens)} prompt` : null, isTimePricingOverride(override) ? `${dayLabel} ${window}` : null].filter(Boolean).join(" · ") || "Conditional rate";
+}
+
+export function effectiveTokenPricing(pricing, now, promptTokens = null) {
+  const rates = Object.fromEntries(Object.keys(TOKEN_PRICE_FIELDS).filter((key) => pricing?.[key] != null).map((key) => [key, pricing[key]]));
+  const day = UTC_WEEKDAYS[now.getUTCDay()];
+  const clock = now.getUTCHours() * 100 + now.getUTCMinutes();
+  for (const override of pricing?.overrides ?? []) {
+    if (override.min_prompt_tokens != null && !(promptTokens > override.min_prompt_tokens)) continue;
+    if (override.utc_days?.length && !override.utc_days.includes(day)) continue;
+    if (override.utc_start != null && override.utc_end != null) {
+      const { utc_start: start, utc_end: end } = override;
+      if (!(start < end ? clock >= start && clock < end : clock >= start || clock < end)) continue;
+    }
+    for (const key of Object.keys(TOKEN_PRICE_FIELDS)) if (override[key] != null) rates[key] = override[key];
+  }
+  return rates;
+}
+
+export function pricingScheduleRows(pricing) {
+  const groups = new Map();
+  for (const override of pricing?.overrides ?? []) {
+    if (!isTimePricingOverride(override)) continue;
+    const rates = Object.fromEntries(Object.keys(TOKEN_PRICE_FIELDS).filter((key) => override[key] != null).map((key) => [key, override[key]]));
+    const signature = JSON.stringify(rates);
+    if (!groups.has(signature)) groups.set(signature, { rates, conditions: [] });
+    groups.get(signature).conditions.push(overrideCondition(override));
+  }
+  return [...groups.values()];
+}
+
+export function nextPricingChange(pricing, now) {
+  const boundaries = new Set();
+  const dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  for (let day = 0; day <= 7; day++) {
+    const midnight = dayStart + day * 86_400_000;
+    boundaries.add(midnight);
+    for (const override of pricing?.overrides ?? []) {
+      if (!isTimePricingOverride(override)) continue;
+      for (const clock of [override.utc_start, override.utc_end]) {
+        if (clock != null) boundaries.add(midnight + (Math.floor(clock / 100) * 60 + clock % 100) * 60_000);
+      }
+    }
+  }
+  const current = JSON.stringify(effectiveTokenPricing(pricing, now));
+  for (const time of [...boundaries].sort((left, right) => left - right)) {
+    if (time > now.getTime() && JSON.stringify(effectiveTokenPricing(pricing, new Date(time))) !== current) return new Date(time);
+  }
+  return null;
+}
+
 export function formatEndpointPricing(pricing) {
   const usd = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 8 }).format(Number(value));
   if (Array.isArray(pricing)) return pricing.map(({ billable, cost_usd, unit, variant }) => `${variant ? `${variant}: ` : ""}${billable}: ${usd(cost_usd)}/${unit}`).join(" · ") || "Pricing not reported";
   if (!pricing || typeof pricing !== "object") return "Pricing not reported";
-  const tokenFields = { prompt: "Input", completion: "Output", input_cache_read: "Cache read", input_cache_write: "Cache write" };
-  const parts = Object.entries(tokenFields).filter(([key]) => pricing[key] != null).map(([key, label]) => `${label} ${formatUsdPerMillion(pricing[key])}/1M`);
-  parts.push(...Object.entries(pricing).filter(([key, value]) => !(key in tokenFields) && key !== "discount" && key !== "overrides" && value != null && typeof value !== "object").map(([key, value]) => `${key}: ${usd(value)}`));
+  const parts = Object.entries(TOKEN_PRICE_FIELDS).filter(([key]) => pricing[key] != null).map(([key, label]) => `${label} ${formatUsdPerMillion(pricing[key])}/1M`);
+  parts.push(...Object.entries(pricing).filter(([key, value]) => !(key in TOKEN_PRICE_FIELDS) && key !== "discount" && key !== "overrides" && value != null && typeof value !== "object").map(([key, value]) => `${key}: ${usd(value)}`));
   if (Number(pricing.discount) > 0) parts.push(`${Number(pricing.discount) * 100}% off`);
   for (const override of pricing.overrides ?? []) {
-    const { min_prompt_tokens, ...rates } = override;
-    parts.push(`≥${formatTokenCount(min_prompt_tokens)} prompt: ${formatEndpointPricing(rates)}`);
+    const rates = Object.fromEntries(Object.entries(override).filter(([key]) => key in TOKEN_PRICE_FIELDS));
+    parts.push(`${overrideCondition(override)}: ${formatEndpointPricing(rates)}`);
   }
   return parts.join(" · ") || "Pricing not reported";
 }

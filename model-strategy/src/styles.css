@@ -191,6 +191,7 @@ tbody tr[data-selected="true"][data-change] { background: #f7f5d8; box-shadow: i
 .catalog-table td:first-child, .catalog-table td:nth-child(3) { white-space: normal; }
 .catalog-model-name { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
 .catalog-model-id { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; color: var(--muted); font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
+.catalog-schedule-badge { display: block; width: fit-content; margin-top: 3px; padding: 1px 5px; border-radius: 3px; background: #fff4d7; color: #805d1b; font-size: 10px; }
 .catalog-batch-link { display: block; max-width: 100%; overflow: hidden; padding: 2px 0 0; border: 0; background: none; color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .catalog-batch-link:hover { text-decoration: underline; }
 .catalog-batch-price { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
@@ -201,6 +202,13 @@ tbody tr[data-selected="true"][data-change] { background: #f7f5d8; box-shadow: i
 .catalog-endpoint:first-child { border-top: 0; }
 .catalog-endpoint span { overflow-wrap: anywhere; }
 .catalog-endpoint code { font-size: inherit; }
+.catalog-scheduled-pricing { display: grid; gap: 4px; margin-top: 9px; padding: 8px; border: 1px solid var(--border); border-radius: 5px; background: #fffdf7; color: var(--ink); font-size: 11px; line-height: 1.45; }
+.catalog-scheduled-pricing > strong { font-size: 11px; }
+.catalog-scheduled-pricing > small { color: var(--muted); }
+.catalog-scheduled-pricing summary { color: var(--green); cursor: pointer; }
+.catalog-schedule-row { display: grid; gap: 2px; padding: 5px 0; border-top: 1px solid var(--border); }
+.catalog-schedule-row:first-of-type { margin-top: 6px; }
+.catalog-schedule-row span:first-child { color: var(--muted); }
 .catalog-media-pricing { color: var(--muted); vertical-align: top; }
 .catalog-ability-badges { display: flex; flex-wrap: wrap; gap: 3px; margin: 3px 0; }
 .catalog-ability-badges span { padding: 1px 4px; border-radius: 3px; background: var(--green-soft); color: var(--green); font-size: 10px; font-weight: 600; }
