@@ -234,6 +234,7 @@ export default function GatewayModelsPage() {
   const [sort, setSort] = useState("id");
   const [batchFilter, setBatchFilter] = useState("all");
   const [discountOnly, setDiscountOnly] = useState(false);
+  const [referenceRateOnly, setReferenceRateOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [selectedId, setSelectedId] = useState("");
@@ -336,8 +337,9 @@ export default function GatewayModelsPage() {
   const grouped = useMemo(() => {
     const groups = groupBatchModels(filtered, catalogModels);
     const batchGroups = batchFilter === "unmatched" ? groups.filter(({ model }) => modelId(model).endsWith(":batch")) : groups;
-    return discountOnly ? batchGroups.filter(({ model, batch }) => maxDiscountByModel.has(modelId(model)) || (batch && maxDiscountByModel.has(modelId(batch)))) : batchGroups;
-  }, [filtered, catalogModels, batchFilter, discountOnly, maxDiscountByModel]);
+    const rateGroups = referenceRateOnly ? batchGroups.filter(({ model, batch }) => [model, batch].some((item) => item && readReferenceModel(payload, item)?.pricing?.overrides?.some(isTimePricingOverride))) : batchGroups;
+    return discountOnly ? rateGroups.filter(({ model, batch }) => maxDiscountByModel.has(modelId(model)) || (batch && maxDiscountByModel.has(modelId(batch)))) : rateGroups;
+  }, [filtered, catalogModels, payload, batchFilter, referenceRateOnly, discountOnly, maxDiscountByModel]);
   const paginated = useMemo(() => paginateModels(grouped, page, pageSize), [grouped, page, pageSize]);
   const selectedGroup = grouped.find(({ model, batch }) => modelId(model) === selectedId || (batch && modelId(batch) === selectedId));
   const inspectedModel = selectedGroup ? (modelId(selectedGroup.batch) === selectedId ? selectedGroup.batch : selectedGroup.model) : paginated.items[0]?.model ?? null;
@@ -346,7 +348,7 @@ export default function GatewayModelsPage() {
     ? referenceCount ? "OpenRouter update failed · showing cached data" : "OpenRouter request failed"
     : payload?.reference?.videoPricingError ? "Video prices unavailable · No availability probes" : "No availability probes on this page";
 
-  useEffect(() => { setPage(1); }, [query, inputModality, outputModality, abilityFilter, minContext, maxInputPrice, sort, batchFilter, discountOnly, pageSize]);
+  useEffect(() => { setPage(1); }, [query, inputModality, outputModality, abilityFilter, minContext, maxInputPrice, sort, batchFilter, discountOnly, referenceRateOnly, pageSize]);
 
   return (
     <div className="gateway-models-page">
@@ -377,9 +379,10 @@ export default function GatewayModelsPage() {
               <label className="catalog-select"><span>Batch models</span><select value={batchFilter} onChange={(event) => setBatchFilter(event.target.value)}><option value="all">All</option><option value="unmatched">Without standard model</option></select></label>
               {outputModality === "text" ? <label className="catalog-price-filter"><span>Max input $/1M</span><input type="number" min="0" step="any" value={maxInputPrice} onChange={(event) => setMaxInputPrice(event.target.value)} placeholder="Any" /></label> : null}
               <label className="catalog-discount-filter" title="Only discounts reported by loaded provider endpoint prices; unchecked models are not scanned."><input type="checkbox" checked={discountOnly} onChange={(event) => setDiscountOnly(event.target.checked)} />Reported discounts</label>
+              <label className="catalog-discount-filter" title="Models with a time-window pricing override in OpenRouter model-level reference rates."><input type="checkbox" checked={referenceRateOnly} onChange={(event) => setReferenceRateOnly(event.target.checked)} />Report Reference Rate</label>
               <label className="catalog-select"><span>Rows</span><select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>{PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
               <span className="catalog-result-count">{grouped.length} matching rows</span>
-              <button className="catalog-clear" type="button" onClick={() => { setQuery(""); setInputModality("all"); setOutputModality("text"); setAbilityFilter("all"); setMinContext(0); setMaxInputPrice(""); setSort("id"); setBatchFilter("all"); setDiscountOnly(false); }}>Clear filters</button>
+              <button className="catalog-clear" type="button" onClick={() => { setQuery(""); setInputModality("all"); setOutputModality("text"); setAbilityFilter("all"); setMinContext(0); setMaxInputPrice(""); setSort("id"); setBatchFilter("all"); setDiscountOnly(false); setReferenceRateOnly(false); }}>Clear filters</button>
             </div>
 
             {loading && !payload ? <div className="loading-state">Loading OpenRouter models…</div> : (
