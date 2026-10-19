@@ -108,7 +108,7 @@ function utcClock(value) {
   return `${String(Math.floor(value / 100)).padStart(2, "0")}:${String(value % 100).padStart(2, "0")}`;
 }
 
-function overrideCondition(override) {
+export function overrideCondition(override) {
   const days = override.utc_days?.map((day) => day.toLowerCase()) ?? [];
   const dayLabel = days.length === 5 && ["monday", "tuesday", "wednesday", "thursday", "friday"].every((day) => days.includes(day)) ? "Mon–Fri"
     : days.length === 2 && days.includes("saturday") && days.includes("sunday") ? "Sat–Sun"

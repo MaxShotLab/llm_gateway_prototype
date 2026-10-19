@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 
 import {
   allOpenRouterModels, describeVideoSku, effectiveTokenPricing, filterAndSortModels, formatDurationOptions, formatEndpointPricing, formatSourceDate, formatTokenCount, formatUsdPerMillion, formatVideoSkuPrice, groupBatchModels, isTimePricingOverride, mediaAbilities, modelId,
-  nextPricingChange, paginateModels, pricingScheduleRows, readReferenceModel, tokenRateForDisplay,
+  nextPricingChange, overrideCondition, paginateModels, pricingScheduleRows, readReferenceModel, tokenRateForDisplay,
 } from "./lib/gateway-models.js";
 
 const PAGE_SIZES = [25, 50, 100];
@@ -29,6 +29,11 @@ function PriceValue({ value, detail = false }) {
   return <span title={`OpenRouter: ${value} USD/token`}>{formatUsdPerMillion(value)}{detail ? <small className="catalog-raw-value">{value} USD/token</small> : null}</span>;
 }
 
+function DiscountBadge({ value }) {
+  if (!value) return null;
+  return <span className="catalog-discount-badge" title="Highest explicit discount among loaded provider endpoints; applies only to that endpoint.">{new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value * 100)}% off</span>;
+}
+
 function ScheduledPricing({ pricing, modelLevel = false }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -48,9 +53,53 @@ function ScheduledPricing({ pricing, modelLevel = false }) {
   </div>;
 }
 
+const ENDPOINT_PRICE_FIELDS = [
+  ["prompt", "Input", "/M"], ["completion", "Output", "/M"],
+  ["input_cache_read", "Cache read", "/M"], ["input_cache_write", "Cache write", "/M"],
+  ["input_cache_write_1h", "Cache write 1h", "/M"], ["web_search", "Web search", "/call"],
+];
+
+function EndpointRateItems({ pricing }) {
+  const known = new Set(ENDPOINT_PRICE_FIELDS.map(([key]) => key));
+  const extras = Object.entries(pricing).filter(([key, value]) => !known.has(key) && !["discount", "overrides", "min_prompt_tokens", "utc_days", "utc_start", "utc_end"].includes(key) && value != null && typeof value !== "object");
+  const items = [...ENDPOINT_PRICE_FIELDS.filter(([key]) => pricing[key] != null), ...extras.map(([key]) => [key, key.replaceAll("_", " "), ""])];
+  const dollars = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 8 }).format(Number(value));
+  return <span className="catalog-price-items">
+    {items.map(([key, label, unit]) => <span className="catalog-price-item" key={key}><small>{label}</small><strong>{unit === "/M" ? formatUsdPerMillion(pricing[key]) : dollars(pricing[key])}{unit}</strong></span>)}
+    {Number(pricing.discount) > 0 ? <span className="catalog-price-discount">{Number(pricing.discount) * 100}% off</span> : null}
+  </span>;
+}
+
 function EndpointPricing({ pricing }) {
-  if (!pricing?.overrides?.some(isTimePricingOverride)) return formatEndpointPricing(pricing);
-  return <div><div>Base: {formatEndpointPricing({ ...pricing, overrides: pricing.overrides.filter((override) => !isTimePricingOverride(override)) })}</div><ScheduledPricing pricing={pricing} /></div>;
+  if (!pricing || typeof pricing !== "object" || Array.isArray(pricing)) return formatEndpointPricing(pricing);
+  const overrides = pricing.overrides ?? [];
+  return <div className="catalog-endpoint-prices">
+    <div className="catalog-price-tier">{overrides.length ? <span className="catalog-price-condition">Base</span> : null}<EndpointRateItems pricing={pricing} /></div>
+    {overrides.filter((override) => !isTimePricingOverride(override)).map((override, index) => <div className="catalog-price-tier" key={index}><span className="catalog-price-condition">{overrideCondition(override)}</span><EndpointRateItems pricing={override} /></div>)}
+    {overrides.some(isTimePricingOverride) ? <ScheduledPricing pricing={pricing} /> : null}
+  </div>;
+}
+
+function EndpointRow({ endpoint, provider }) {
+  const prefix = provider.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const tag = endpoint.tag?.startsWith(`${prefix}/`) ? `/${endpoint.tag.slice(prefix.length + 1)}` : endpoint.tag === prefix ? "" : endpoint.tag;
+  return <div className="catalog-endpoint">
+    <code className="catalog-endpoint-tag" title={endpoint.tag || undefined}>{tag || (endpoint.tag ? "root" : "tag unreported")}</code>
+    <EndpointPricing pricing={endpoint.pricing} />
+  </div>;
+}
+
+function EndpointGroups({ endpoints }) {
+  const groups = new Map();
+  for (const endpoint of endpoints) {
+    const provider = endpoint.providerName || "Provider unreported";
+    if (!groups.has(provider)) groups.set(provider, []);
+    groups.get(provider).push(endpoint);
+  }
+  return [...groups].map(([provider, variants]) => <div className="catalog-provider-group" key={provider}>
+    <strong>{provider}</strong>
+    <div>{variants.map((endpoint, index) => <EndpointRow key={`${endpoint.tag}-${index}`} endpoint={endpoint} provider={provider} />)}</div>
+  </div>);
 }
 
 function DateValue({ value }) {
@@ -184,6 +233,7 @@ export default function GatewayModelsPage() {
   const [maxInputPrice, setMaxInputPrice] = useState("");
   const [sort, setSort] = useState("id");
   const [batchFilter, setBatchFilter] = useState("all");
+  const [discountOnly, setDiscountOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [selectedId, setSelectedId] = useState("");
@@ -252,6 +302,9 @@ export default function GatewayModelsPage() {
   }, [loadModels]);
 
   const catalogModels = useMemo(() => allOpenRouterModels(payload), [payload]);
+  const maxDiscountByModel = useMemo(() => new Map(Object.entries({ ...payload?.endpointPrices, ...endpointResults })
+    .map(([id, result]) => [id, Math.max(0, ...(result.endpoints ?? []).map(({ pricing }) => Number(pricing?.discount) || 0))])
+    .filter(([, discount]) => discount > 0)), [payload, endpointResults]);
 
   useEffect(() => {
     if (outputModality !== "image") return;
@@ -282,8 +335,9 @@ export default function GatewayModelsPage() {
   }).filter((model) => abilityFilter === "all" || mediaAbilities(readReferenceModel(payload, model))[abilityFilter]), [catalogModels, payload, query, inputModality, outputModality, abilityFilter, minContext, maxInputPrice, sort]);
   const grouped = useMemo(() => {
     const groups = groupBatchModels(filtered, catalogModels);
-    return batchFilter === "unmatched" ? groups.filter(({ model }) => modelId(model).endsWith(":batch")) : groups;
-  }, [filtered, catalogModels, batchFilter]);
+    const batchGroups = batchFilter === "unmatched" ? groups.filter(({ model }) => modelId(model).endsWith(":batch")) : groups;
+    return discountOnly ? batchGroups.filter(({ model, batch }) => maxDiscountByModel.has(modelId(model)) || (batch && maxDiscountByModel.has(modelId(batch)))) : batchGroups;
+  }, [filtered, catalogModels, batchFilter, discountOnly, maxDiscountByModel]);
   const paginated = useMemo(() => paginateModels(grouped, page, pageSize), [grouped, page, pageSize]);
   const selectedGroup = grouped.find(({ model, batch }) => modelId(model) === selectedId || (batch && modelId(batch) === selectedId));
   const inspectedModel = selectedGroup ? (modelId(selectedGroup.batch) === selectedId ? selectedGroup.batch : selectedGroup.model) : paginated.items[0]?.model ?? null;
@@ -292,7 +346,7 @@ export default function GatewayModelsPage() {
     ? referenceCount ? "OpenRouter update failed · showing cached data" : "OpenRouter request failed"
     : payload?.reference?.videoPricingError ? "Video prices unavailable · No availability probes" : "No availability probes on this page";
 
-  useEffect(() => { setPage(1); }, [query, inputModality, outputModality, abilityFilter, minContext, maxInputPrice, sort, batchFilter, pageSize]);
+  useEffect(() => { setPage(1); }, [query, inputModality, outputModality, abilityFilter, minContext, maxInputPrice, sort, batchFilter, discountOnly, pageSize]);
 
   return (
     <div className="gateway-models-page">
@@ -322,9 +376,10 @@ export default function GatewayModelsPage() {
               <label className="catalog-select"><span>Min context</span><select value={minContext} onChange={(event) => setMinContext(Number(event.target.value))}>{CONTEXT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label className="catalog-select"><span>Batch models</span><select value={batchFilter} onChange={(event) => setBatchFilter(event.target.value)}><option value="all">All</option><option value="unmatched">Without standard model</option></select></label>
               {outputModality === "text" ? <label className="catalog-price-filter"><span>Max input $/1M</span><input type="number" min="0" step="any" value={maxInputPrice} onChange={(event) => setMaxInputPrice(event.target.value)} placeholder="Any" /></label> : null}
+              <label className="catalog-discount-filter" title="Only discounts reported by loaded provider endpoint prices; unchecked models are not scanned."><input type="checkbox" checked={discountOnly} onChange={(event) => setDiscountOnly(event.target.checked)} />Reported discounts</label>
               <label className="catalog-select"><span>Rows</span><select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>{PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
               <span className="catalog-result-count">{grouped.length} matching rows</span>
-              <button className="catalog-clear" type="button" onClick={() => { setQuery(""); setInputModality("all"); setOutputModality("text"); setAbilityFilter("all"); setMinContext(0); setMaxInputPrice(""); setSort("id"); setBatchFilter("all"); }}>Clear filters</button>
+              <button className="catalog-clear" type="button" onClick={() => { setQuery(""); setInputModality("all"); setOutputModality("text"); setAbilityFilter("all"); setMinContext(0); setMaxInputPrice(""); setSort("id"); setBatchFilter("all"); setDiscountOnly(false); }}>Clear filters</button>
             </div>
 
             {loading && !payload ? <div className="loading-state">Loading OpenRouter models…</div> : (
@@ -340,9 +395,9 @@ export default function GatewayModelsPage() {
                       <Fragment key={id}>
                       <tr data-selected={id === modelId(inspectedModel) || (batch && modelId(batch) === modelId(inspectedModel))} tabIndex={0} aria-label={`Inspect ${id}`} onClick={() => setSelectedId(id)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedId(id); } }}>
                         <td><span className="catalog-model-name">{reference?.name || id}</span><span className="catalog-model-id">{id}</span>{outputModality === "text" && reference?.pricing?.overrides?.some(isTimePricingOverride) ? <span className="catalog-schedule-badge">Scheduled pricing</span> : null}{batch ? <button className="catalog-batch-link" type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(modelId(batch)); }}>Batch · {modelId(batch)}</button> : null}{outputModality === "text" ? <button className="catalog-endpoints-toggle" type="button" aria-expanded={expandedEndpointsId === id} onClick={(event) => { event.stopPropagation(); toggleEndpoints(id); }}>{expandedEndpointsId === id ? "Hide endpoints" : "Show endpoint prices"}</button> : null}</td>
-                        {outputModality === "text" ? <><td className="numeric"><TokenValue value={Number(reference?.contextLength) > 0 ? reference.contextLength : null} /></td><td>{reference?.inputModalities?.join(", ") || "—"}</td><td>{reference?.outputModalities?.join(", ") || "—"}</td><td className="numeric catalog-money"><PriceValue value={tokenRateForDisplay(reference, "input")} />{batch ? <span className="catalog-batch-price" title="Batch price"><PriceValue value={tokenRateForDisplay(batchReference, "input")} /></span> : null}</td><td className="numeric catalog-money"><PriceValue value={tokenRateForDisplay(reference, "output")} />{batch ? <span className="catalog-batch-price" title="Batch price"><PriceValue value={tokenRateForDisplay(batchReference, "output")} /></span> : null}</td></> : <><td><AbilityBadges reference={reference} outputModality={outputModality} /></td><td className="catalog-media-pricing">{outputModality === "image" ? <ImagePriceList result={endpointResults[id] ?? payload?.endpointPrices?.[id]} resolutions={reference?.imageSupportedResolutions} paused={imagePricesPaused} /> : <VideoPriceList skus={reference?.videoPricingSkus} resolutions={reference?.videoSupportedResolutions} durations={reference?.videoSupportedDurations} />}</td></>}
+                        {outputModality === "text" ? <><td className="numeric"><TokenValue value={Number(reference?.contextLength) > 0 ? reference.contextLength : null} /></td><td>{reference?.inputModalities?.join(", ") || "—"}</td><td>{reference?.outputModalities?.join(", ") || "—"}</td><td className="numeric catalog-money"><PriceValue value={tokenRateForDisplay(reference, "input")} /><DiscountBadge value={maxDiscountByModel.get(id)} />{batch ? <span className="catalog-batch-price" title="Batch price"><PriceValue value={tokenRateForDisplay(batchReference, "input")} /><DiscountBadge value={maxDiscountByModel.get(modelId(batch))} /></span> : null}</td><td className="numeric catalog-money"><PriceValue value={tokenRateForDisplay(reference, "output")} />{batch ? <span className="catalog-batch-price" title="Batch price"><PriceValue value={tokenRateForDisplay(batchReference, "output")} /></span> : null}</td></> : <><td><AbilityBadges reference={reference} outputModality={outputModality} /></td><td className="catalog-media-pricing">{outputModality === "image" ? <ImagePriceList result={endpointResults[id] ?? payload?.endpointPrices?.[id]} resolutions={reference?.imageSupportedResolutions} paused={imagePricesPaused} /> : <VideoPriceList skus={reference?.videoPricingSkus} resolutions={reference?.videoSupportedResolutions} durations={reference?.videoSupportedDurations} />}<DiscountBadge value={maxDiscountByModel.get(id)} /></td></>}
                       </tr>
-                      {outputModality === "text" && expandedEndpointsId === id ? <tr className="catalog-endpoint-detail-row"><td colSpan={6}><div className="catalog-endpoints">{endpointResult?.loading ? "Loading endpoints…" : endpointResult?.error ? endpointResult.error : endpointResult?.endpoints?.length ? endpointResult.endpoints.map((endpoint, index) => <div key={`${endpoint.tag}-${index}`} className="catalog-endpoint"><span>{endpoint.providerName || "Provider unreported"}</span><code>{endpoint.tag || "tag unreported"}</code><span><EndpointPricing pricing={endpoint.pricing} /></span></div>) : "No provider endpoints reported."}</div></td></tr> : null}
+                      {outputModality === "text" && expandedEndpointsId === id ? <tr className="catalog-endpoint-detail-row"><td colSpan={6}><div className="catalog-endpoints">{endpointResult?.loading ? "Loading endpoints…" : endpointResult?.error ? endpointResult.error : endpointResult?.endpoints?.length ? <EndpointGroups endpoints={endpointResult.endpoints} /> : "No provider endpoints reported."}</div></td></tr> : null}
                       </Fragment>
                     );
                   })}</tbody>
