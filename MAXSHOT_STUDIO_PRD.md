@@ -3,7 +3,7 @@
 **Status:** Developing product — four generation paths supported; later Studio features remain staged
 **Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
 **Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** October 13, 2026
+**Updated:** October 19, 2026
 
 ## 1. Purpose
 
@@ -198,6 +198,11 @@ and test without a long wait. To exercise each state: submit any ordinary
 prompt for Generated; add a keyword above for Failed; leave the Review page
 (or watch it) during the delay for Pending; and submit a fourth video while
 three are Pending to hit the concurrency cap.
+
+The prototype also includes the Pricing page (P0.6). Its prices are a static
+snapshot of the public OpenRouter model catalog taken on October 19, 2026,
+converted to Credits; they are reference rates for the page, not the quote P0.3
+shows before a generation.
 
 A separate proof-of-concept ([live-demo/](../live-demo)) wires text-to-image
 and text-to-video composer actions to fal.ai for real generation, proving the
@@ -456,6 +461,82 @@ Acceptance:
   Failed one deducts nothing and keeps its reason.
 - Pending and Failed assets never appear in Discover, Liked, or the
   reference-image picker.
+
+### P0.6 Model Pricing Page
+
+- A Pricing entry in the shell navigation (in the prototype, between Credits
+  and Referral) lists what each model costs, so a user can compare models
+  before choosing one. It is a shell-level page shared with the Gateway: the
+  Text tab is the Gateway's chat catalog, while the Image and Video tabs are
+  Studio's. Where Pricing sits in the navigation is a baseline decision (§10).
+- Three tabs — Text, Image, Video — each showing its model count. One search
+  field filters the active tab by model ID or name.
+- Image and Video list exactly the models the Studio model picker offers (the
+  configured model catalog, §11). The two stay in step: a model added to or
+  removed from the picker is added to or removed from this page.
+- Columns follow the Text tab: Model ID, Input, Output, and a Copy action for
+  the ID. Image and Video add an Abilities column — T2I and I2I for images,
+  T2V, I2V, and V2V for videos. Text keeps Input / 1M tokens, Output / 1M
+  tokens, and Cache read / 1M.
+- Prices show in Credits with the USD equivalent beneath (1 Credit =
+  $0.000001), and the billing unit appears with the price — per image, per
+  second, per 1M tokens, or per megapixel. Token rates are always quoted per
+  1M tokens. When a model has several rates, Output shows the cheapest as
+  "from"; rates for turning an existing video into a new one (V2V) are not
+  used for that headline.
+- A model with more than one rate has an "All N rates" control that expands
+  the row. It states the supported resolutions and durations, then lists the
+  rates grouped by the mode the source names (T2V, I2V, V2V, Input charges);
+  rates the source doesn't tie to a mode stay under "Mode unspecified". Each
+  group is a small table of rate, Credits, and USD, ordered base rate first
+  and then by resolution, with the unit stated once in the header.
+- A model that has providers shows "N providers"; opening it lists each
+  provider's name, tag, and prices. For Text this includes cache rates and any
+  long-prompt tier.
+- Selecting a model fills a details panel beside the list (below it on a
+  narrow window): name, ID with a Copy ID action, description, an overview, the
+  model's pricing, its providers, and its catalog fields. The overview shows
+  context window, max output, and price per 1M tokens for Text; and abilities,
+  resolutions, durations, aspect ratios, first/last-frame support, audio
+  generation, and reference-image limit for Image and Video. Every model also
+  shows its release date.
+- A price here is a reference rate. The price a user is actually charged is
+  the quote shown before submission (P0.3), and where the two differ the quote
+  governs.
+
+Acceptance:
+
+- Every model in the Studio picker has a row, with a price, on the Image or
+  Video tab; no model appears there that the picker doesn't offer.
+- Searching narrows only the active tab, and switching tabs keeps each tab's
+  own selection.
+- Selecting any model shows its details; opening "All N rates" or a provider
+  list doesn't change the selection.
+- Copy puts exactly the model ID on the clipboard and confirms it.
+- A model whose source reports no price shows "-" rather than 0.
+
+Known gaps — not yet specified, to be decided before this page is final:
+
+- Studio's composer allows options some models don't support: 2–10 second
+  durations (Veo accepts only 4, 6, or 8; Seedance starts at 4), 21:9 (several
+  image models and Veo don't offer it), and up to 9 reference images (some
+  models accept 0 to 4). The page should show these limits on the row, and the
+  composer should keep an unsupported combination from being submitted.
+- No estimate of a typical single generation (for example a 4-second 720p clip
+  with audio), and no mapping from Studio's SD / HD / 2K to each model's
+  resolution tiers. Models billed per video token can't be priced per clip
+  without a tokens-per-second figure.
+- The "from" price for models with audio variants is the no-audio rate, while
+  Studio defaults audio on.
+- Not shown, though the source has them: long-prompt tier prices and other
+  charges (web search, image input) outside the provider list, mandatory
+  reasoning, batch variants shown apart from their base model, retirement
+  dates, knowledge cutoff, and per-provider context, quantization, and uptime.
+- Latency, throughput, and usage popularity have no data source in the
+  prototype; for video, expected generation time matters to the Pending
+  behavior in P0.5.
+- No sorting, filters, or paging beyond search, and no visible "updated at"
+  or refresh.
 
 ## 8. Phase 2 Requirements
 
@@ -725,9 +806,13 @@ Creations rather than shipping as its own page. Liked (P1.6) becomes a
 second tab alongside My Creations, in that same embedded section — not a
 new destination (currently built but disabled by default — see P1.6).
 
-Placement of Studio within the overall Maxshot navigation (relative to
-Chat, Dashboard, API, Credits, Referral, Profile) is a baseline decision,
-not this PRD's to make.
+The prototype also has a Pricing item (P0.6). It is a shell-level page shared
+with the Gateway, not a Studio route; its Image and Video tabs are the part
+this PRD owns.
+
+Placement of Studio and Pricing within the overall Maxshot navigation
+(relative to Chat, Dashboard, API, Credits, Referral, Profile) is a baseline
+decision, not this PRD's to make.
 
 ## 11. Terminology
 
@@ -788,10 +873,20 @@ not this PRD's to make.
   (P1.5). A toggle within Image-to-Video switches between the two modes;
   each keeps its own uploaded images independently.
 - **Configured model catalog:** The per-mode set of generation models a user
-  picks from (P0.1). Illustrative example, matching the current prototype,
-  not a commitment to these specific providers: Image — Seedream 4.0,
-  FLUX.1.1 Pro, Midjourney v7, GPT Image 1, Ideogram 3.0, Qwen-Image. Video —
-  Kling 2.1, Sora 2, Seedance 1.0 Pro, Wan 2.2, Runway Gen-4, Hailuo 2.3.
+  picks from (P0.1), and the set the Pricing page lists on its Image and
+  Video tabs (P0.6). Matching the current prototype, not a commitment to these
+  specific providers — Image (14): Seedream 5.0 Flash (default), Seedream 4.5,
+  Seedream 5.0 Pro, Seedream 5.0 Lite, Grok Imagine Image 2.0, Recraft V4.1
+  Flash, FLUX 3 Image, Grok Imagine Image Quality, Qwen Image 3, Qwen Image 3
+  Pro, Recraft V4.1, Riverflow V2.5 Pro, Riverflow V2.5 Fast, Recraft V4.
+  Video (7): Veo 3.1 Lite (default), Seedance 2.5, Seedance 2.0, Seedance 2.0
+  Fast, Wan 3.0, Veo 3.1 Fast, Seedance 2.0 Mini.
+- **Ability:** What a model can do with its inputs, shown as a tag on the
+  Pricing page (P0.6): T2I (text to image), I2I (image to image), T2V (text to
+  video), I2V (image to video), and V2V (video to video).
+- **Reference rate:** A model's published price converted to Credits for the
+  Pricing page (P0.6). It informs model choice; the quote shown before
+  submission (P0.3) is what is charged.
 
 ## 12. Prototype Migration
 
@@ -843,3 +938,4 @@ into production.
 | 2026-09-21 | Generation-failure error message | Defined the inline error message shown when a generation or edit fails (content policy, restricted reference image, or generic provider failure) — no credit deducted, input left untouched for retry, and the message clears on prompt edit or on leaving the current context rather than persisting into an unrelated view (P0.1, P1.1). Documented the prototype's keyword-based failure simulation (§5.1) used to exercise this without a real provider. |
 | 2026-09-23 | Pending video generation | Added P0.5: video generation no longer locks the composer — a submission creates the asset as Pending immediately, the composer clears, and it resolves in the background (some video models can take several minutes). Pending videos show in their own module above My Creations, hidden entirely when empty; up to 3 may be Pending at once, and a fourth is blocked using the same inline error-message location/behavior as a failed generation (P0.1). Credit is only deducted on success; a failed Pending video is removed with no charge and shows the same inline error message. Documented the keyword table (§5.1) driving both ordinary and Pending failures, and the prototype's 20-second compressed Pending delay. |
 | 2026-09-28 | Generation status replaces the Pending module | Superseded the 2026-09-23 design: there is no separate Pending module. Every generation is an asset with a status — Pending, Generated, or Failed — that lives in My Creations, filterable by a status dropdown beside the type filter (P0.2, P0.5). Clicking Generate now opens the new asset's Review page immediately (image and video alike) showing the known info plus a generating state in the media area, instead of locking the composer; the page updates in place when the result arrives (P0.1). A failed generation becomes a Failed asset with its reason (retry via reloading its prompt/references, or delete) rather than disappearing; the inline composer error message remains for blocked submissions (e.g. the 3-concurrent-video cap) and failed edits (P0.1, P1.1). Only Generated assets reach Discover, Liked, and the reference picker. §5.1 documents the prototype's per-state test recipe and delays (image 3–5s, video 20s). |
+| 2026-10-19 | Pricing page and model catalog | Added P0.6, a shell-level Pricing page with Text, Image, and Video tabs: per-model prices in Credits with USD, an Abilities column for media, "from" prices with an expandable breakdown grouped by mode, provider lists, and a details panel. Image and Video list only the models the Studio picker offers. Replaced the illustrative model catalog (§11) with the picker's 14 image and 7 video models, and recorded the known gaps between the composer's options and each model's limits. |
