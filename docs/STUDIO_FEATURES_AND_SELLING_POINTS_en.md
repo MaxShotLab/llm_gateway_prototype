@@ -4,8 +4,6 @@
 
 **Create images and videos from text or images in one place. Switch between 20+ leading models, with prices you can see up front.**
 
-Chinese: 在同一个入口里，用文字或图片生成图片和视频。20 多个主流模型自由切换，价格公开透明。
-
 ---
 
 ## 2. Core Selling Points
