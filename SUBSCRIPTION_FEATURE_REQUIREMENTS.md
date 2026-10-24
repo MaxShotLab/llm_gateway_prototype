@@ -1,7 +1,7 @@
 # Maxshot Gateway Subscription Feature Requirements
 
 Status: Draft for Phase 2 definition
-Updated: October 13, 2026
+Updated: October 23, 2026
 Parent document: [Phase 2 PRD And Features](./PHASE_2_PRD_AND_FEATURES.md)
 
 ## 1. Scope
@@ -41,8 +41,9 @@ be redeemed for fiat or crypto or refunded as Credits.
 - Spend the basic-chat allowance only on eligible low-cost web Chat requests;
   spend one premium allowance across eligible Chat, API, image, and video
   requests without separate modality balances.
-- See the exact configured Credit charge before submitting an image or video
-  job, including its funding sources and any Dollar-balance debit.
+- See the estimated Credit charge and funding sources before submitting an
+  image or video job, including any estimated Dollar-balance debit; see the
+  final charge and adjustment after settlement.
 - Apply the eligible subscription allowance before promotional Credits and
   Dollar balance. Basic-chat requests use basic Credits first, then premium
   Credits; other eligible requests use premium Credits only.
@@ -59,12 +60,13 @@ be redeemed for fiat or crypto or refunded as Credits.
   and full details on the Usage page.
 - Keep subscription billing, invoices, and usage separate from pay-as-you-go
   balances, top-ups, and usage.
-- Save and manage a tokenized preferred card through the payment provider for
-  recurring billing.
+- If recurring card payment is supported, save and manage a tokenized preferred
+  card through the payment provider.
 - View subscription payment history and invoices.
 - See renewal, failed-payment, allowance-low, and allowance-exhausted states.
-- Let users pay the full subscription charge from Dollar balance or a saved
-  card, with a configurable Dollar-balance-first preference.
+- Let users pay the full subscription charge from Dollar balance. If recurring
+  cards are supported, use a saved card for the full charge when the balance
+  is insufficient; never split a charge.
 - Keep existing Dollar balance and promotional Credits usable when renewal
   fails.
 
@@ -113,8 +115,8 @@ without a subscription.
 | Studio (later) | Higher capped low-cost web Chat | Larger premium allowance | Higher-cost eligible media models |
 
 The plan catalog must version the price, both allowances, eligible model/route
-lists,
-text windows, media job and concurrency limits, and Credit price schedule.
+lists for Core and Plus, text windows, media job and concurrency limits, and
+Credit price schedule.
 Eligibility refers to the configured production model catalog, not the
 exploratory selection in [Media Model Selection](./model-strategy/MEDIA_STRATEGY_REFERENCE.md)
 or the illustrative models in the Studio PRD.
@@ -122,6 +124,12 @@ Unsupported routes and models remain unavailable through the subscription;
 where available through PAYG, they retain their published PAYG price. No plan
 promises unlimited use. Image/video API usage follows the same rule only when
 Maxshot exposes that API route.
+Each eligible request uses the same published Credit price under subscription
+and PAYG; the subscription's economic advantage is its included monthly
+allowances, not a discounted per-request rate. Basic/Premium are allowance
+classes, not four separately sold Core-Basic/Core-Premium/Plus-Basic/Plus-Premium
+subscriptions. A model's allowance class and per-plan eligibility are
+configured separately.
 
 Publish numeric plan prices and allowances only after testing the maximum
 provider cost of fully consuming *both* allowances under the allowed model
@@ -131,6 +139,13 @@ as the aggregate subscriber cost; averages alone do not bound exposure.
 Current prototype values are examples, not approved launch economics; in
 particular, the $20/30-million-Credit Plus
 example needs validation before it is offered as a real plan.
+Development may use configurable mock values. Commercial prices and both
+allowances require cost validation and approval before launch. New purchases
+use the current catalog version; an existing paid period retains its price,
+allowances, model eligibility, and limits until renewal. Adverse changes
+(price increases, reduced allowances, or removed models) require in-app notice
+before renewal. A scheduled change takes effect only on successful renewal;
+accepted requests retain their original pricing and eligibility versions.
 
 ## 4. Subscription Lifecycle And Billing Algorithm
 
@@ -153,9 +168,10 @@ Initial purchase and renewal use the same payment-source rule:
 
 1. Create one stable idempotency key from account, operation type, plan, and
    target billing period.
-2. If Dollar-balance-first is enabled and the full plan price is available,
-   debit the complete price from Dollar balance.
-3. Otherwise charge the complete price to the saved card. Do not partially
+2. If the full plan price is available, debit the complete price from Dollar
+   balance.
+3. If the balance is insufficient and recurring card support and a saved card
+   are available, charge the complete price to that card. Do not partially
    debit Dollar balance and charge the remainder to card.
 4. If neither source can pay the full price, initial purchase ends without an
    entitlement and renewal enters `past_due`.
@@ -165,15 +181,18 @@ Initial purchase and renewal use the same payment-source rule:
    key must return the original result without another debit, card charge,
    invoice, period, or allowance grant in either bucket.
 7. On renewal failure, do not create a new period or either allowance. Promotional
-   Credits and Dollar balance remain available for PAYG.
+   Credits and Dollar balance remain available for PAYG. Do not automatically
+   retry or grant a grace-period allowance in this release. The user may add
+   funds and manually renew; the new paid period starts on successful payment,
+   not on the previous period's scheduled start.
 8. Cancellation changes `active` to `cancel_at_period_end`; resuming before
    period end returns it to `active`. At period end it becomes `ended`.
 9. Apply a pending plan change only after the next successful full payment. Do
    not prorate or refund unused allowance as Credits.
 
-An active user may remove the saved card. Renewal then uses Dollar balance only
-when Dollar-balance-first is enabled and the full price is available; otherwise
-renewal fails and enters `past_due`.
+An active user may remove the saved card, when supported. Renewal then uses
+Dollar balance only; if the full price is unavailable, renewal fails and
+enters `past_due`.
 
 ### 4.3 Request And Generation Usage Charging
 
@@ -181,11 +200,14 @@ renewal fails and enters `past_due`.
    output modality are eligible for the plan. An ineligible but supported
    model or route may use PAYG under the normal funding rules.
 2. For variable-cost text, estimate the maximum from the selected model,
-   route, and request limits. For image/video, calculate a firm user-facing
-   Credit quote from the selected model, generation path, count, duration,
-   resolution, audio, and other billable settings. Show the quote before a UI
-   job is submitted; the successful job is charged that quoted amount even if
-   the provider's actual cost differs.
+   route, and request limits. For image/video, show an estimated Credit charge
+   based on model, path, count, duration, resolution, audio, and other billable
+   settings before submission. Reserve against that estimate and settle using
+   actual billable usage under the published price schedule, releasing excess
+   reservation or collecting an authorized shortfall. Never create a negative
+   balance or charge an unauthorized source; record any remaining shortfall as
+   platform cost. A fixed customer-facing Credit quote is a later improvement,
+   not a launch requirement.
 3. Check the eligible monthly allowance: basic Chat may use basic then premium
    Credits; all other eligible requests use premium Credits only. For text Chat
    and text API requests, also check the 5-hour and weekly text windows.
@@ -205,29 +227,36 @@ renewal fails and enters `past_due`.
    its reservation while Pending, including across a billing-period boundary;
    do not grant or consume a new period's allowance for that job.
 7. On successful text completion, convert the metering event to final Credit
-   cost and Dollar debit. On a Generated media result, charge the quoted
-   Credits exactly once. Reconcile reserved buckets once, release any unused
-   text reservation, and create one usage record. A Failed media job produces
-   no charge and releases its entire reservation; a retry is a new job with a
-   new quote and reservation.
+   cost and Dollar debit. For media, settle only successfully delivered
+   outputs at their actual billable cost and release unused generation
+   reservation; failed or undelivered outputs have no generation charge.
+   Independently billable preprocessing that completed may settle even if
+   generation fails. A canceled job still pays for outputs delivered before
+   cancellation. Reconcile each charge once and show the final adjustment.
 8. Count gross Dollar-equivalent cost against API-key spending limits at the
    versioned rate regardless of funding source and record the native usage
    unit: text tokens, image outputs, or the configured video pricing unit.
 9. At 90% of a text window or either monthly allowance, create one in-app
    warning per window or bucket. Premium percentage includes Pending media
    reservations as held, not charged, Credits. At 100%, stop using the
-   applicable allowance until its reset; basic Chat may then draw on premium
-   Credits, followed by eligible PAYG funding under the authorization rule
-   above. Show the user
-   when basic Chat starts spending premium Credits.
+   applicable allowance until its reset. Basic monthly exhaustion may route
+   eligible Chat to Premium, then authorized PAYG; text-window exhaustion
+   routes text directly to authorized PAYG without spending either subscription
+   allowance. Show the user when basic Chat starts spending Premium.
 10. Store plan, model-price, limit, and Credit-to-Dollar rate versions so
-    later changes do not alter accepted quotes or historical periods.
+    later changes do not alter accepted request rules or historical periods.
 
 ### 4.4 Media Job Settlement
 
 Studio's Pending, Generated, and Failed states remain the user-facing job
 states. Pending jobs hold funds but show no final deduction. Generated jobs
-charge the upfront quote; Failed jobs release the hold and show no charge.
+settle successful outputs against actual billable usage. For partial success,
+charge only delivered outputs and release the failed portion's hold. Failed
+jobs release the generation hold; independently completed, billable search or
+preprocessing may still be charged. Show an estimate for each independent
+billable component before submission and its actual settlement afterward.
+Canceled jobs release undelivered work but retain charges for any outputs or
+independent components already completed.
 Provider callbacks, retries, and polling must be idempotent by job ID. A job
 that remains Pending needs reconciliation against provider state before its
 hold can be released; a timeout alone must not allow a late success to charge
@@ -251,25 +280,26 @@ in the Studio PRD; this document does not add one by default.
   subscription state, plan and limit versions, granted and consumed amounts
   for each allowance, and linked payment/invoice IDs.
 - Each media job records: account, job and provider IDs, route, output modality,
-  model and price versions, billable settings, quoted Credits, reserved bucket
-  amounts, billing-period ID, status, final usage record ID, and timestamps.
+  model and price versions, billable settings, estimated Credits, reserved
+  bucket amounts, actual billable components, billing-period ID, status, final
+  usage record ID, and timestamps.
 
 ## 5. Payment And Reward Rules
 
-- Card payment support is a prerequisite for subscriptions and automatic
-  monthly renewal.
-- Store only the payment provider's tokenized payment-method reference. Never
-  store raw card details.
-- A user can select, replace, or remove the preferred card used for renewal,
-  subject to provider capabilities.
+- Recurring card support is optional for this release. Dollar-balance-funded
+  initial purchase and renewal must work without it.
+- If cards are supported, store only the payment provider's tokenized
+  payment-method reference, never raw card details. Users may select, replace,
+  or remove the preferred card subject to provider capabilities.
 - Confirmed top-ups add Dollar balance net of disclosed fees. Dollar balance
   can fund PAYG usage or a full subscription charge.
-- The user can choose Dollar-balance-first renewal. A saved card is the
-  fallback when that preference is off or the Dollar balance is insufficient.
+- Dollar balance is the first payment source. If recurring cards are supported,
+  a saved card is the fallback when the balance cannot cover the full charge.
 - Split payment between Dollar balance and card is not supported in this
   version.
-- Payment execution, authentication, retries, and card-network behavior follow
-  the selected payment provider's interface.
+- Payment execution, authentication, and card-network behavior follow the
+  selected provider's interface when cards are supported. Subscription renewal
+  has no automatic retry or grace-period entitlement in this release.
 - Crypto remains a one-time Dollar-balance top-up method.
 - Subscription payments do not generate referral rewards.
 - Subscription allowance does not roll over, expire early, support withdrawal,
@@ -285,6 +315,8 @@ in the Studio PRD; this document does not add one by default.
 ## 6. Acceptance Criteria
 
 - A user can compare plans and subscribe to one plan.
+- Core and Plus each include separate Basic and Premium allowances; model
+  allowance class and plan eligibility are separately configurable.
 - Initial purchase and renewal follow the same full-source payment rule.
 - A user can change plan or cancel renewal and see the resulting status.
 - Eligible low-cost web Chat consumes its capped basic allowance before the
@@ -300,9 +332,11 @@ in the Studio PRD; this document does not add one by default.
   insufficient.
 - Final usage cost is reconciled against the reservation without double
   charging and unused reservation is released.
-- An image or video UI job shows a firm Credit quote before submission; a
-  Generated result deducts that quote exactly once, while a Failed result
-  releases its hold and deducts nothing.
+- An image or video UI job shows estimated Credits and funding before
+  submission; actual billable delivered outputs settle once with a visible
+  adjustment. Failed generation releases its generation hold. Independently
+  completed, billable preprocessing may still settle; canceled and partially
+  successful jobs charge only completed billable components.
 - A Pending video holds the period's reserved allowance across renewal and
   cannot receive a second grant or charge from the next period.
 - Text windows do not block image/video jobs; media job and concurrency limits
@@ -322,31 +356,38 @@ in the Studio PRD; this document does not add one by default.
 - A 90% subscription-window warning appears in-app and is not duplicated for
   the same window.
 - A fully consumed text window falls back to eligible PAYG without consuming
-  additional subscription allowance for text requests.
+  additional subscription allowance for text requests; media may continue
+  using Premium if its monthly allowance and route limits permit.
 - A depleted basic-chat bucket may use premium Credits at the published rate;
   the UI makes this transition visible, and no request consumes basic Credits
   from API or media routes.
-- A tokenized preferred card can be selected for renewal, and subscription
-  invoices are visible separately from PAYG receipts.
-- Every successful initial purchase or renewal produces one invoice showing
-  whether Dollar balance or card funded it.
+- Subscription billing records are visible separately from PAYG receipts; a
+  tokenized preferred card may be selected for renewal only if supported.
+- Every successful initial purchase or renewal produces one billing record
+  showing whether Dollar balance or an available card funded it.
+- Insufficient renewal funding creates no new entitlement; manual payment
+  after replenishment starts a new period at payment time, with no auto-retry.
+- The current paid period keeps its price, allowances, limits, and eligibility
+  version; adverse changes are notified before they apply at renewal.
 - API-key limits use gross Dollar-equivalent cost regardless of funding source.
-- A renewal uses the full Dollar balance charge or the full saved-card charge,
-  never a split payment.
+- A renewal uses the full Dollar balance charge or, if supported, the full
+  saved-card charge, never a split payment.
 - The UI never combines Dollars and Credits into one displayed balance.
 - Subscription payments do not create referral rewards.
 
 ## 7. Deferred Provider And Operations Detail
 
-- Plan price and both monthly allowances.
+- Commercially approved plan prices and both monthly allowances; mock values
+  are for development only.
 - Free-model quota and post-quota funding policy for `F` models.
-- Exact model and media-route eligibility, firm image/video Credit price
-  schedule, and plan-specific media job limits.
+- Exact model and media-route eligibility, image/video Credit price schedule,
+  and plan-specific media job limits. A fixed upfront Credit quote is deferred.
 - Studio tier price and allowance; defer launch until multimodal cost data is
   available.
-- Recurring card billing provider.
+- Recurring card billing provider, if cards are added.
 - Exact 5-hour and weekly Credit limits; both are versioned configuration.
-- Provider-specific payment authentication, retry, and failure behavior.
+- Provider-specific payment authentication and failure behavior, if cards are
+  added; subscription renewal itself has no auto-retry in this release.
 - Administrative billing operations.
 
 The warning threshold is fixed at 90% for this version. Notifications are
@@ -356,6 +397,7 @@ in-app only.
 
 | Date | Change |
 |---|---|
+| 2026-10-23 | Confirmed Core/Plus two-bucket value proposition and versioned eligibility; made cards optional, defined balance-only failed renewal and manual restart, adopted actual-cost media/preprocessing settlement, and fixed adverse plan changes to renewal only. |
 | 2026-10-13 | Added B/P/F web Chat model eligibility index; free quota remains separate from subscription buckets. |
 | 2026-10-13 | Split subscription benefit into capped low-cost web Chat Credits and one shared premium Credit pool for eligible Chat, API, image, and video; preserved the two-unit ledger and PAYG fallback, and required worst-case combined-cost validation. |
 | 2026-10-12 | Extended one monthly allowance across eligible Chat, API, image, and video; added plan coverage, firm media quotes, Pending-job holds and settlement, feature-level usage, media overage authorization, and separate text windows versus media job limits. |

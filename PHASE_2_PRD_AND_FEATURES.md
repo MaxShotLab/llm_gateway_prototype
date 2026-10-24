@@ -130,14 +130,16 @@ Subscription is an optional account entitlement that grants a capped,
 low-cost web Chat Credit allowance and one premium Credit allowance shared by
 eligible Chat, API, image, and video usage. The basic-chat allowance is a
 restricted Credit bucket, not a new unit or unlimited chat. Subscription does
-not change per-request or per-generation pricing. Image/video
+not change per-request or per-generation pricing; its value comes from the
+included monthly allowances. Core and Plus both include both buckets, with
+commercial prices and amounts approved only after cost validation. Image/video
 routes must already exist to be eligible.
 
 Must-do features:
 
 - View available plans.
-- Show B/P/F web Chat eligibility on each model; the index does not change API
-  or Studio funding.
+- Show B/P/F web Chat eligibility on each model and configure Core/Plus model
+  access separately; the index does not change API or Studio funding.
 - Subscribe to a plan.
 - Change plan.
 - Cancel renewal.
@@ -153,14 +155,13 @@ Must-do features:
 - Show Credit cost and actual Dollar debit separately.
 - Show configurable 5-hour and weekly text-usage limits in the expandable
   account menu, plus both monthly allowances and premium feature-level usage in
-  Usage. Image/video jobs have firm quotes and separate job limits.
+  Usage. Image/video jobs have pre-submit estimates and separate job limits.
 - Warn in-app at 90% consumption for each subscription window.
 - Separate subscription usage, payments, and invoices from pay-as-you-go usage,
   top-ups, and receipts.
-- Support a tokenized preferred card for recurring billing before subscription
-  launch.
-- Allow a full subscription charge from Dollar balance, with saved card as
-  fallback. Do not split one renewal across both sources.
+- Allow a full subscription charge from Dollar balance. If recurring cards are
+  supported, a tokenized saved card pays the full charge when balance is
+  insufficient; cards are not a launch prerequisite. Do not split charges.
 - Send renewal, failed-payment, allowance-low, and allowance-exhausted states
   to the UI.
 
@@ -169,7 +170,9 @@ Implementation contract:
 - `SUBSCRIPTION_FEATURE_REQUIREMENTS.md` is authoritative for the state model,
   payment algorithm, idempotency, records, precision, and acceptance criteria.
 - Initial purchase and renewal use the same full-source rule: Dollar balance
-  first when enabled and sufficient, otherwise saved card; never split.
+  first, optional saved-card fallback if supported; never split. An unfunded
+  renewal creates no new entitlement; there is no automatic retry or grace
+  allowance. Manual payment starts a new period when successful.
 - One idempotent billing operation creates exactly one successful payment,
   invoice, subscription period, and both allowance buckets.
 - Subscription states are `pending_payment`, `active`,
@@ -179,9 +182,14 @@ Implementation contract:
 - Request charging consumes eligible subscription Credits, free Credits, referral
   Credits, then Dollar balance and records Credit cost separately from Dollar
   debit.
-- Media jobs reserve their upfront Credit quote while Pending, charge it once
-  when Generated, and release the hold without charge when Failed. Dollar
-  overage for media requires confirmation in the UI or an API-key opt-in.
+- Media jobs reserve against an upfront Credit estimate while Pending and
+  settle actual billable delivered outputs, releasing unused generation holds.
+  Independent completed preprocessing may settle even if generation fails.
+  Dollar overage for media requires UI confirmation or an API-key opt-in.
+- Exhausting Basic may route eligible Chat to Premium. Exhausting a text
+  window routes text to authorized PAYG; media can still use Premium.
+- Current-period price, allowances, limits, and eligibility are versioned;
+  adverse changes are notified and apply only on renewal.
 
 Minimum ledger buckets:
 
@@ -263,13 +271,14 @@ These need product discussion before Phase 2 requirements are finalized:
 - Code interpreter execution limits and safety boundaries.
 - Per-agent usage detail level and billing presentation.
 - Subscription plan price and both monthly allowances.
-- Recurring card billing provider.
+- Recurring card billing provider, only if recurring cards are added.
 - Exact versioned 5-hour and weekly Credit limits.
 
 ## 9. Version History
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-23 | Subscription decisions confirmed | Made cards optional, kept balance-funded renewal, adopted actual-cost media settlement, clarified Core/Plus value and eligibility, and versioned plan changes. |
 | 2026-10-13 | Model eligibility index | Added visible Basic Chat, Premium, and free-quota model labels without introducing a new subscription bucket. |
 | 2026-10-13 | Basic and premium allowances | Added capped low-cost web Chat Credits alongside one shared premium allowance; preserved Dollar/Credit units and PAYG fallback. |
 | 2026-10-12 | Multimodal subscription alignment | Extended the shared allowance to eligible Chat, API, image, and video usage; separated text windows from media job controls and delegated media quote/settlement details to the subscription requirements. |

@@ -270,15 +270,28 @@ Anthropic- or Gemini-compatible customer APIs are not included in Phase 2.
   quota. This index does not change API or Studio funding rules.
 - Grant a capped low-cost web Chat Credit allowance and one premium Credit
   allowance shared across eligible Chat, API, image, and video, without
-  changing per-request pricing.
-- Charge renewals from Dollar balance first when enabled and sufficient;
-  otherwise use a tokenized saved card. Do not split one renewal.
+  changing per-request pricing. Core and Plus both contain both allowances;
+  their commercial prices and amounts require cost validation before launch.
+- Label each model Basic or Premium and configure Core/Plus eligibility by
+  model and route; the separate `F` free quota is not a subscription benefit.
+- Charge purchases and renewals from Dollar balance. Saved-card payment is an
+  optional full-charge fallback if recurring card support is available; it is
+  not a subscription launch prerequisite. Never split one charge.
 - Apply the same rule to initial purchase and create each paid period and both
   allowances exactly once.
 - Keep basic-chat Credits, premium Credits, promotional Credits, and Dollar
   balance separate; both subscription benefits are Credit buckets, not new
   units.
+- Basic Chat may use Premium after Basic is exhausted. Exhausting a 5-hour or
+  weekly text window sends text to authorized PAYG; media may still use Premium.
 - Show subscription usage windows, renewal state, invoices, and PAYG fallback.
+- Show an estimated Credit charge for media, reserve funds, then reconcile
+  against actual billable usage. Charge only delivered outputs; independently
+  completed and billable preprocessing may settle even if generation fails.
+  A firm upfront Credit quote is a later improvement, not a launch requirement.
+- Keep price, allowance, and model-eligibility versions fixed for the current
+  paid period; apply catalog changes to new purchases and future renewals.
+  Notify subscribers before adverse renewal changes.
 
 ## 6. Navigation
 
@@ -367,6 +380,7 @@ Required alignment work:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-10-23 | Confirmed subscription decisions | Made recurring cards optional, retained balance-funded renewal, actual-cost media settlement, both Core/Plus buckets, window fallback, and period-versioned plan changes. |
 | 2026-10-13 | Developing Studio and eligibility index | Recorded four supported Studio generation paths in the developing product and added B/P/F web Chat eligibility labels without changing historical Phase 1 acceptance. |
 | 2026-10-13 | Basic and premium subscription allowances | Added a capped low-cost web Chat Credit bucket alongside the shared premium pool, retaining Dollar/Credit units. |
 | 2026-09-21 | Subscription implementation contract | Clarified that initial purchase and renewal share one full-source payment rule and create each period and allowance exactly once. |
