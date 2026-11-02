@@ -1,15 +1,15 @@
-# Maxshot Gateway and Studio Product Document
+# Maxshot Gateway Product Document
 
 - **Release:** 2.0
 - **Audience:** Console users, creators, API developers, advanced users, testers, and support teams
-- **Last reviewed:** October 30, 2026
+- **Last reviewed:** November 2, 2026
 - **Console:** [gateway.maxshot.ai](https://gateway.maxshot.ai)
 - **API base URL:** `https://api-gateway.888646.xyz/v1` (shown on the API page)
 - **Related:** [Product Guide](./MAXSHOT_GATEWAY_PRODUCT_GUIDE.md) and [illustrated User Guide](./MAXSHOT_GATEWAY_USER_GUIDE.md)
 
 ## Who This Document Is For
 
-- **Console users** who want to chat with AI models, add Credits, review usage, manage referrals, or update account settings.
+- **Console users** who want to chat with AI models, create images and videos, add Credits, review usage, manage referrals, or update account settings.
 - **Creators** who want to generate images and videos from text or reference images, follow their results, and reuse them.
 - **API developers** who want to create and manage keys, integrate an OpenAI-compatible client, select models, and monitor usage.
 - **Advanced users and testers** who need guidance on attachments, reasoning, web search, reply versions, developer mode, and every generation path, status, limit, and error.
@@ -17,27 +17,42 @@
 
 After reading this document, you will be able to:
 
-- Log in and complete a first Chat, a first image, and a first video.
+- Log in and complete a first chat, a first image, and a first video.
 - Choose a model and use its options and capability-aware controls.
 - Add Credits and understand balances, fees, settlement, and top-up status.
-- Read the Pricing page and estimate what a request or generation will cost.
+- Compare models on the Pricing page and estimate what a request or generation will cost.
 - Create, secure, update, and revoke API keys, and call the API with cURL, Python, or JavaScript.
 - Follow generations through Pending, Generated, and Failed, and reuse results with Try this and Discover.
 - Use referrals and profile settings safely.
-- Diagnose common Chat, API, Studio, balance, and top-up problems.
+- Diagnose common chat, creation, API, balance, and top-up problems.
 
-| Part | Sections | Content |
-|---|---|---|
-| I. Gateway | 1–8 | Login, navigation, Chat, Usage, Credits, API, Referral, Profile |
-| II. Studio | 9–13 | Image and video generation, results, My Creations, Discover, model catalog |
-| III. Pricing | 14–15 | The Pricing page and how Studio is priced |
-| IV. Help | 16–17 | Troubleshooting, support, and safety |
+## 1. Product Overview
 
----
+**Maxshot Gateway is one console for working with AI.** With a single account and a single Credit balance you can chat with leading AI models, create images and videos, compare every model's price, and build on the same models through an OpenAI-compatible API.
 
-# Part I. Gateway
+### Features
 
-## 1. Quick Start
+| Feature | What it gives you |
+|---|---|
+| **Chat** | Talk to models grouped by tier (Flagship, Reasoning, Balanced, Economy, Code, Free). Attach files, images, and audio; turn on web search and thinking; compare reply versions; keep a searchable history |
+| **Studio** | Create images and videos in four ways: text to image, image to image, text to video, and image to video. Choose from 25 models, control aspect ratio, resolution, duration, audio, reference images, first and last frame, and seed, and see the price before you generate |
+| **My Creations and Discover** | Keep, filter, download, and reuse everything you create. Browse everyone's work and reuse any prompt with Try this |
+| **Pricing** | A public price list for text, image, and video models, with per-resolution rates, providers, limits, and one-click model ID copy |
+| **API** | OpenAI-compatible access with per-key daily and monthly limits, expiry, copy-ready code samples, and a request log |
+| **Credits** | One balance for chat, creation, and the API. Top up with crypto and follow every order |
+| **Usage** | Balance, trends, tokens, Credits, and a request-by-request detail table |
+| **Referral** | An invite link, tracked rewards, and reward status |
+| **Profile** | Login methods, language, theme, history retention, notifications, and developer mode |
+
+### How it fits together
+
+- **One account.** Log in with Google, GitHub, or a wallet, and every feature is available.
+- **One Credit balance.** Chat, Studio, and the API all spend the same Credits (1 USD ≈ 1,000,000 Credits). Top-ups, free Credits, and referral rewards feed the same balance.
+- **Prices you can see.** The Pricing page lists every model, and the console shows an estimate or a firm price before you send a message or generate.
+- **One price list.** The Pricing page lists the models behind chat, creation, and the API in one place, with prices and limits, and copies any model ID for you.
+- **Always current.** Model availability and prices change. The live model pickers and the Pricing page are the source of truth.
+
+## 2. Quick Start
 
 ### Step 1: Log in
 
@@ -58,14 +73,15 @@ A short verification step may appear during login. If it fails, select **Retry v
 
 ### Step 2: Confirm or add Credits
 
-Your balance appears at the top right of every page. If you need more Credits, open **Credits** and follow [Section 5](#5-add-credits).
+Your balance appears at the top right of every page. If you need more Credits, open **Credits** and follow [Section 8](#8-credits).
 
-### Step 3: Start a Chat, or create in Studio
+### Step 3: Start
 
 - **Chat:** open **New Chat**, select a model or enable **Auto model**, type a message, and press **Enter** or select **Send**. The reply streams into the conversation. Select **Stop** to end it early.
-- **Studio:** open **Studio**, choose **Image** or **Video**, pick a model, describe what you want, and select the round **Generate** button. See [Section 9](#9-quick-start-for-studio).
+- **Create:** open **Studio**, choose **Image** or **Video**, pick a model, describe what you want, and select the round **Generate** button. See [Section 5](#5-create-images-and-videos-with-studio).
+- **Build:** open **API**, create a key, and copy a code sample. See [Section 7](#7-api).
 
-## 2. Navigate the Console
+## 3. Navigate the Console
 
 | Page | Use it to |
 |---|---|
@@ -80,7 +96,7 @@ Your balance appears at the top right of every page. If you need more Credits, o
 
 The sidebar also shows your conversation **History** and links to Telegram, X, Docs, and GitHub. On small screens, open the navigation drawer to reach the same pages. Chat can be browsed without an account. Every other page asks you to log in first.
 
-## 3. Use Chat
+## 4. Chat
 
 ### Choose a model
 
@@ -88,7 +104,7 @@ Select the model name at the top of Chat. You can search the catalog. Models are
 
 Enable **Auto model** to use Maxshot's configured default. While it is on, manual model selection is locked.
 
-Model availability and pricing are dynamic. The values shown in the selector are the source of truth, and the [Pricing page](#14-the-pricing-page) lists every model.
+Model availability and pricing are dynamic. The values shown in the selector are the source of truth, and the [Pricing page](#9-pricing) lists every model.
 
 ### Chat controls
 
@@ -136,7 +152,7 @@ When several replies exist, use the version arrows under the reply to compare th
 
 The sidebar **History** lets you reopen, **Search conversations**, **Rename**, and **Delete** your conversations. Saved conversations are available after reload and on another device signed in to the same account. Deleting a conversation is permanent. If you are not logged in, History reads "Log in to see your conversations."
 
-How long history is kept depends on **Chat history retention** in [Profile](#8-manage-your-profile).
+How long history is kept depends on **Chat history retention** in [Profile](#11-profile).
 
 ### Review response usage
 
@@ -165,7 +181,187 @@ Optional parameters are sent only when enabled. These settings are stored in the
 
 If your balance cannot cover a message, Chat shows "Insufficient credits. Please top up and try again." with a **Top up** button.
 
-## 4. Review Usage
+## 5. Create Images and Videos with Studio
+
+**Studio** creates images and videos from text or reference images. It uses the same account and Credit balance as the rest of the console, and everything you create is kept in **My Creations**.
+
+The page runs from top to bottom: the **composer** (reference images, prompt, and a toolbar with the model, aspect ratio and resolution, duration and audio for video, the sparkle **Optimize prompt** button, the price, and **Generate**), then **My Creations**, then **Discover**.
+
+### 5.1 Create Your First Image or Video
+
+1. **Choose what to create.** Two switches at the top: first **Image** or **Video**, then the tab.
+
+   | Kind | Tabs |
+   |---|---|
+   | Image | **Text to Image**, **Image to Image** |
+   | Video | **Text to Video**, **Image to Video** |
+
+2. **Pick a model and describe it.**
+   - Select a model in the toolbar. Each kind has its own list (see [Section 5.6](#56-the-model-catalog)).
+   - Write a prompt of up to 5,000 characters.
+   - For Image to Image or Image to Video, add a reference image.
+   - Adjust the options the model offers (see [Section 5.2](#52-generation-paths-and-options)).
+3. **Generate.** Studio shows the price for your exact selection next to the round **Generate** button, which stays grey until the prompt is filled in. Select it. The result appears right away as **Pending** and finishes in the background (see [Section 5.3](#53-follow-a-generation)).
+4. **Find the result.** Your result appears in **My Creations**, just below the composer. It shows as **Pending**, then becomes **Generated** (or **Failed**) on its own. Every successful result is also shown in **Discover** ([Section 5.5](#55-discover)).
+
+### 5.2 Generation Paths and Options
+
+#### Generation paths
+
+| Path | You provide | Result |
+|---|---|---|
+| Text to Image | A prompt | An image |
+| Image to Image | A prompt and reference images | An image guided by your references |
+| Text to Video | A prompt | A video |
+| Image to Video | A prompt and reference images, or a first and last frame | A video that starts from your image |
+
+Not every model supports every path. For example, Recraft V4.1 Flash does not take reference images, so it supports text to image only, while Recraft V4 Styles requires at least one reference image.
+
+#### Options
+
+Options come from the selected model, so the choices change when you change models.
+
+| Option | Applies to | Behavior |
+|---|---|---|
+| Model | All | Separate lists for image and video. Names carry the provider, for example "Google: Veo 3.1 Lite" |
+| Aspect ratio and resolution | All | One chip such as `1:1 · 2K` or `16:9 · 720p`. Image models offer 6 to 18 ratios (many include **auto**) and 768, 1K, 1.5K, 2K, or 4K. Video models offer 2 to 7 ratios and 480p, 720p, 1080p, or 4K. Some Recraft models are automatic |
+| Duration | Video | The durations the model supports, for example 4, 6, or 8 seconds for Veo and 2 to 30 seconds for Wan 3.0 |
+| Audio | Video | **Model audio** (the model creates sound) or **No audio**. On supported models you can also upload your own soundtrack |
+| Images per request | Image | Models that allow it can produce several images in one request |
+| Seed | Most models | A number that lets you reproduce or vary a result |
+| Model settings | Some models | Quality (Grok Imagine Image 2.0), output format and background (Riverflow), negative prompt (Veo, Kling, Wan 2.7), watermark (Seedance), and similar |
+| Optimize prompt | All | The sparkle button rewrites your prompt. It can use Credits, and you see "Not enough Chat credits to optimize this prompt" if your balance is too low |
+
+#### Write a prompt
+
+The prompt field holds up to **5,000 characters**, with a live counter.
+
+#### Use reference images
+
+For Image to Image and Image to Video:
+
+- Add up to **9** reference images. Supported formats are **JPEG, PNG, and WebP**, up to **32 MB** each.
+- Use the **Upload** tile, or pick an image from My Creations. A counter beside it (such as `1 / 3`) shows how many you have added and how many the model accepts.
+- Preview or remove references before you generate.
+- Each model has its own limit. Seedream accepts up to 14, FLUX 3 Image and Riverflow V2.5 Pro up to 10, Riverflow V2.5 Fast up to 4, Qwen Image and Grok Imagine up to 3, and Recraft V4 and V4.1 up to 1. Some models accept only a single starting frame.
+- If an upload fails or times out, select the image to retry it, or remove it and add another.
+
+#### First and last frame
+
+Video models accept a **first frame** and a **last frame**, so you can fix how the clip opens and closes. Turn on **First & last frame** (the small **i** beside it explains it), and the upload area becomes two boxes, **First frame** and **Last frame**. Both images must be JPEG, PNG, or WebP under 32 MB. Some combinations are not accepted by a given model, and Studio tells you when a combination is unsupported.
+
+#### Soundtrack
+
+Video models that accept reference audio, currently Seedance 2.5, Seedance 2.0, Seedance 2.0 Fast, Seedance 2.0 Mini, and Wan 3.0, let you upload your own **WAV or MP3** file, up to 32 MB, as the soundtrack. All ten video models can generate sound.
+
+#### Seed
+
+Enter a whole number (up to 2,147,483,647) to repeat or vary a result. An invalid seed is rejected with a message.
+
+### 5.3 Follow a Generation
+
+#### What happens when you select Generate
+
+1. Studio gets a firm quote for your selection. If the quote fails ("Could not price this generation"), nothing is submitted. If a quote expires ("This price expired. Refreshing…"), Studio refreshes it.
+2. Your generation is created as **Pending** and appears in My Creations.
+3. You can stay on its page or leave. It keeps generating in the background.
+
+Images usually finish in seconds. Videos can take several minutes, and you can leave the page: the video stays in My Creations, marked **Pending**, until it is ready.
+
+#### Status
+
+| Status | Meaning |
+|---|---|
+| **Pending** | Submitted, no result yet |
+| **Generated** | The result is ready |
+| **Failed** | No result could be produced |
+
+A failed generation can show a more specific reason: **Rejected**, **Blocked** (the prompt or an image was stopped by safety review; adjust the prompt and try again), **Delivery failed**, **Canceled**, or **Expired**. A result you deleted, or one that has expired, is shown as no longer available.
+
+#### Limits while generating
+
+- Up to **3 videos** can be Pending at once. Wait for one to finish before starting another. Images are not subject to this limit.
+- If your balance is below the quote, Studio blocks the generation ("Not enough credits for this generation") and offers a top-up.
+- If an earlier Studio charge is still settling, spending is paused and Studio does not submit until it finishes. A finished result can briefly say "Credits are still settling."
+- If Studio or a model is temporarily unavailable, Studio says so and asks you to try again or choose another model.
+
+### 5.4 Manage My Creations
+
+My Creations lists your own results, below the composer. Before you have created anything it reads "Generations you keep will show up here."
+
+**Filter**
+
+- **Type:** the **All**, **Image**, and **Video** tabs.
+- **Status:** the **All status** drop-down (Generated, Pending, Failed).
+
+Select **Load more** to see older results.
+
+**Open, download, and delete**
+
+- Select a result to open its page: the media, the date, the size and resolution (and duration for videos), the **Reference used**, and the prompt.
+- Hover over a card, or use the buttons at the top right of its page. The buttons are **Try this**, **Edit**, **Download**, **Image to Video**, and **Delete**.
+- **Download** saves a Generated result.
+- **Delete** asks you to confirm first and is permanent. Results made from it are not affected.
+
+**Build on a result**
+
+- **Try this** reloads a result's prompt and settings into the composer so you can adjust and generate again. References have to be uploaded again. If the model used is no longer offered, Studio tells you and selects a current model.
+- **Edit** (images only) opens an edit page where you write a prompt and use **Animate** to turn the image into a video. It is greyed out on videos.
+- **Image to Video** (images only) sends the image to the **Image to Video** tab as a reference image.
+
+Editing a result in place, such as inpainting, background removal, or upscaling, and extending a video are not part of Studio today.
+
+### 5.5 Discover
+
+**Discover** sits below My Creations. It is a gallery of **everyone's work**: every image or video that is generated successfully is automatically added to Discover, with its prompt and its creator's name ("by name"). Discover is the community's showcase, and a quick way to learn good prompts.
+
+- Browse with the **All**, **Image**, and **Video** tabs. Videos show a play button, their length, and a speaker icon if they have sound.
+- Open an item to see its result and its prompt.
+- Use **Try this** to load its prompt into your composer, then change it and generate your own. Reference files belong to the original creator, so you upload your own. If the model is no longer available, Studio selects a current model.
+- You must be logged in to try an item.
+
+Because successful results appear in Discover, do not put private or sensitive information in prompts. See [Section 13](#13-support-and-safety).
+
+### 5.6 The Model Catalog
+
+Studio offers **25 models**: 15 image and 10 video. Model availability and pricing are dynamic. The live model picker and Pricing page are the source of truth.
+
+**Image models**
+
+| Model | Resolutions | Aspect ratios | Reference images | Images per request | Extra settings |
+|---|---|---|---|---|---|
+| Seedream 5.0 Flash | 1K, 2K | 18, with auto | Up to 14 | 1 | Seed |
+| Seedream 4.5 | 1K, 2K, 4K | 18, with auto | Up to 14 | 10 | Seed |
+| Seedream 5.0 Pro | 1K, 2K | 18, with auto | Up to 14 | 1 | Seed |
+| Seedream 5.0 Lite | 2K, 4K | 18, with auto | Up to 14 | 4 | Seed |
+| Grok Imagine Image 2.0 | 1K, 2K | 14, with auto | Up to 3 | 1 | Quality |
+| Grok Imagine Image Quality | 1K, 2K | 14, with auto | Up to 3 | 1 | None |
+| FLUX 3 Image | 768, 1K, 1.5K, 2K, 4K | 16, with auto | Up to 10 | 1 | None |
+| Qwen Image 3 | 1K, 2K | 13 | Up to 3 | 6 | Seed |
+| Qwen Image 3 Pro | 1K, 2K | 13 | Up to 3 | 6 | Seed |
+| Riverflow V2.5 Pro | 1K, 2K, 4K | 9, with auto | Up to 10 | 1 | Output format, background |
+| Riverflow V2.5 Fast | 1K, 2K | 9, with auto | Up to 4 | 1 | Output format, background |
+| Recraft V4.1 Flash | Auto | 6, with auto | None (text only) | 6 | None |
+| Recraft V4.1 | Auto | 6, with auto | Up to 1 | 6 | None |
+| Recraft V4 | Auto | 6, with auto | Up to 1 | 6 | None |
+| Recraft V4 Styles | Auto | 12, with auto | 1 to 10, required | 6 | None |
+
+**Video models**
+
+| Model | Resolutions | Aspect ratios | Durations | Soundtrack upload | Extra settings |
+|---|---|---|---|---|---|
+| Veo 3.1 Lite | 720p, 1080p | 16:9, 9:16 | 4, 6, 8 s | No | Negative prompt, seed, prompt enhancement, person generation, conditioning scale |
+| Veo 3.1 Fast | 720p, 1080p, 4K | 16:9, 9:16 | 4, 6, 8 s | No | Same as Veo 3.1 Lite |
+| Seedance 2.5 | 480p, 720p | 16:9, 9:16 | 4–30 s | Yes | Watermark, output format, seed |
+| Seedance 2.0 | 480p, 720p, 1080p, 4K | 1:1, 3:4, 9:16, 4:3, 16:9, 21:9 | 4–15 s | Yes | Watermark, seed |
+| Seedance 2.0 Fast | 480p, 720p | 1:1, 3:4, 9:16, 4:3, 16:9, 21:9 | 4–15 s | Yes | Watermark, seed |
+| Seedance 2.0 Mini | 480p, 720p | 1:1, 3:4, 9:16, 4:3, 16:9, 21:9 | 4–15 s | Yes | Watermark, return last frame, seed |
+| Seedance 1.5 Pro | 480p, 720p, 1080p | 1:1, 3:4, 9:16, 9:21, 4:3, 16:9, 21:9 | 4–12 s | No | Watermark, seed |
+| Wan 3.0 | 480p, 720p, 1080p | 16:9, 4:3, 1:1, 3:4, 9:16 | 2–30 s | Yes | Seed |
+| Wan 2.7 | 720p, 1080p | 16:9, 9:16, 1:1, 4:3, 3:4 | 2–10 s | No | Negative prompt, prompt extension, seed |
+| Kling v3.0 Pro | 720p | 16:9, 9:16, 1:1 | 3–15 s | No | Negative prompt, CFG scale |
+
+## 6. Usage
 
 Open **Usage** to see:
 
@@ -178,45 +374,11 @@ Open **Usage** to see:
 
 Filter the table by **Chat**, **API**, or **All**, page through it, and use **Refresh Data** to reload.
 
-## 5. Add Credits
-
-Crypto top-up is available. **Card** is shown but disabled with the note "Card payments coming soon."
-
-1. Open **Credits**.
-2. Choose a preset amount or **Custom**. Enter at least **$1**. The selected token may have a higher minimum, which the console shows.
-3. Keep **Crypto** selected under **Payment method**, and select **Continue**.
-4. Connect a wallet if needed. If you logged in with Google or GitHub, this is the first time a wallet is required. A wallet login reuses the connected wallet.
-5. Select a **blockchain** and a **token** from the options the console offers.
-6. Review the quote: **You pay**, the **Network fee** (charged by the bridge provider, LI.FI), the **Platform fee** (5%), and the estimated **Credits added**. Select **Refresh quote** if the quote expires.
-7. Approve the transaction in your wallet.
-8. Wait for the transaction to settle and for Maxshot to process the confirmed on-chain payment.
-
-Cross-chain payments are quoted and routed through LI.FI. The console shows only the chains and tokens it currently supports.
-
-### Send directly to your deposit address
-
-If you already hold Base USDC or Base AIT, choose **Use deposit address instead**. You get a dedicated Base address, generated with a wallet signature and linked to your account permanently. Only send **USDC or AIT on the Base network** to it. Other chains and tokens are not supported. Credits are added automatically after on-chain confirmation.
-
-### Understand balances
-
-- **Usable balance:** the total available for Chat, Studio, and API requests.
-- **Paid credits:** Credits received from completed top-ups.
-- **Free credits:** promotional or account-grant Credits.
-- **Referral rewards:** confirmed referral Credits.
-
-1 USD ≈ 1,000,000 Credits (1 Credit = $0.000001).
-
-### Track a top-up
-
-Use **Top-up history** to check each order's date, method, amount paid, fees, Credits, status, and a link to the transaction. Order statuses include **detected**, **submitted**, **bridging**, **confirming**, **confirmed**, **needs review**, **manual review**, **failed**, **expired**, and **ignored**. Cross-chain processing and confirmations can take several minutes. The final **confirmed** entry, not an earlier estimate, is authoritative for the Credits received.
-
-Credits can only be spent in Maxshot. **Withdrawals and refunds are not supported.**
-
-## 6. Create and Manage API Keys, and Call the API
+## 7. API
 
 The **API** page has four parts, from top to bottom: a **Base URL** bar with a **Copy** button, the **Keys** list, **Quick Start** code samples, and the **Request log**.
 
-### 6.1 Create a key
+### 7.1 Create a key
 
 1. Open **API** and select **Create API key** (top right).
 2. Enter a **Name** of 2–50 characters. Use letters, numbers, spaces, hyphens, underscores, or periods. The name must be unique among your keys.
@@ -227,7 +389,7 @@ The **API** page has four parts, from top to bottom: a **Base URL** bar with a *
 
 The secret is shown only once. Keys begin with `sk-ms-`. If it is lost, revoke the key and create a replacement.
 
-### 6.2 Manage and revoke keys
+### 7.2 Manage and revoke keys
 
 The **Keys** list shows each key's name, the beginning of the key, this period's usage, last used, and status (**Active**, **Revoked**, or **Expired**). Use the status filter, or **Show revoked**, to see other keys. Select a key to open its details:
 
@@ -242,7 +404,7 @@ Revoking takes effect immediately and cannot be undone. Applications using the k
 
 The **Request log** lists the time, key, requested model, tokens in and out, latency, cost, and status (**Succeeded** or **Failed**). Filter by **All keys** and by status, and use **Refresh Data** to reload. Before the first call it reads "No request logs yet."
 
-### 6.3 Call the API
+### 7.3 Call the API
 
 The API is **OpenAI-compatible**. Most clients that work with OpenAI work with Maxshot after you change the Base URL and key.
 
@@ -347,245 +509,43 @@ Do not assume a model remains available or keeps the same price. Read the live c
 | `POST /completions` | Legacy text completions JSON |
 | `POST /messages` | Anthropic Messages JSON or SSE. Bearer or `x-api-key`, with `anthropic-version` |
 
-Embeddings, image generation and editing, audio, realtime, and Gemini-native routes are not supported. Image and video generation is done in Studio ([Section 9](#9-quick-start-for-studio)), not through this API.
+Embeddings, image generation and editing, audio, realtime, and Gemini-native routes are not supported. Image and video generation is done in Studio ([Section 5](#5-create-images-and-videos-with-studio)), not through this API.
 
-## 7. Use Referrals
+## 8. Credits
 
-1. Open **Referral**.
-2. Select **Copy link** (or **Copy code**, or share on X or Telegram).
-3. Share it with a new user.
-4. Review confirmed rewards and referred top-ups on the same page.
+Crypto top-up is available. **Card** is shown but disabled with the note "Card payments coming soon."
 
-Any registered user can invite others. Registration alone does not create a reward: the referred user must complete a top-up, and it must be confirmed. The page shows the current **reward rate** and the **reward cap** per referred user. These values are set by Maxshot and may change.
+1. Open **Credits**.
+2. Choose a preset amount or **Custom**. Enter at least **$1**. The selected token may have a higher minimum, which the console shows.
+3. Keep **Crypto** selected under **Payment method**, and select **Continue**.
+4. Connect a wallet if needed. If you logged in with Google or GitHub, this is the first time a wallet is required. A wallet login reuses the connected wallet.
+5. Select a **blockchain** and a **token** from the options the console offers.
+6. Review the quote: **You pay**, the **Network fee** (charged by the bridge provider, LI.FI), the **Platform fee** (5%), and the estimated **Credits added**. Select **Refresh quote** if the quote expires.
+7. Approve the transaction in your wallet.
+8. Wait for the transaction to settle and for Maxshot to process the confirmed on-chain payment.
 
-The page tracks **Earned rewards**, **Confirmed top-up**, **Reward rate**, **Reward cap**, **Pending rewards**, and **Referred accounts**. The **Referred top-ups** table lists each top-up with its date, referee, amount, reward, and status:
+Cross-chain payments are quoted and routed through LI.FI. The console shows only the chains and tokens it currently supports.
 
-| Status | Meaning |
-|---|---|
-| **Confirmed** | The reward is confirmed and credited |
-| **Pending** | Waiting for the top-up to settle |
-| **Withheld** | Held for risk review |
-| **Under review** | A manual review is required |
-| **Revoked** | The reward was revoked |
+### Send directly to your deposit address
 
-Filter the table by **All**, **Pending**, **Credited**, or **Needs attention**.
+If you already hold Base USDC or Base AIT, choose **Use deposit address instead**. You get a dedicated Base address, generated with a wallet signature and linked to your account permanently. Only send **USDC or AIT on the Base network** to it. Other chains and tokens are not supported. Credits are added automatically after on-chain confirmation.
 
-## 8. Manage Your Profile
+### Understand balances
 
-Open **Profile** to:
+- **Usable balance:** the total available for Chat, Studio, and API requests.
+- **Paid credits:** Credits received from completed top-ups.
+- **Free credits:** promotional or account-grant Credits.
+- **Referral rewards:** confirmed referral Credits.
 
-- Edit your display name and email, and **Save profile**.
-- Under **Login methods**, **Bind** or **Unbind** Google, GitHub, or a wallet. You cannot remove your last login method, so confirm another method works before unbinding one.
-- Choose the **Interface language** (English or 中文) and **Theme** (Dark, Light, or System).
-- Set **Chat history retention** to **Permanent**, **90 days**, or **30 days**. A change applies to existing and future chats, and older history may expire sooner.
-- Turn **Notifications** on or off, in-app and email.
-- Turn **Developer mode** on or off ([Section 3](#developer-mode)).
-- Under **Session & Security**, **Log out** to end the session on this device.
+1 USD ≈ 1,000,000 Credits (1 Credit = $0.000001).
 
----
+### Track a top-up
 
-# Part II. Studio
+Use **Top-up history** to check each order's date, method, amount paid, fees, Credits, status, and a link to the transaction. Order statuses include **detected**, **submitted**, **bridging**, **confirming**, **confirmed**, **needs review**, **manual review**, **failed**, **expired**, and **ignored**. Cross-chain processing and confirmations can take several minutes. The final **confirmed** entry, not an earlier estimate, is authoritative for the Credits received.
 
-## 9. Quick Start for Studio
+Credits can only be spent in Maxshot. **Withdrawals and refunds are not supported.**
 
-### Step 1: Open Studio and log in
-
-Open **Studio** from the sidebar. If you are not logged in, choose Google, GitHub, or **Sign in with wallet**, and enter a referral code first if you have one.
-
-### Step 2: Choose what to create
-
-Two switches at the top choose what you make. First **Image** or **Video**, then the generation tab:
-
-| Kind | Tabs |
-|---|---|
-| Image | **Text to Image**, **Image to Image** |
-| Video | **Text to Video**, **Image to Video** |
-
-### Step 3: Pick a model and describe it
-
-1. Select a model in the toolbar. Each kind has its own list (see [Section 13](#13-the-studio-model-catalog)).
-2. Write a prompt of up to 5,000 characters.
-3. For Image to Image or Image to Video, add a reference image.
-4. Adjust the options the model offers (see [Section 10](#10-generate-images-and-videos)).
-
-### Step 4: Generate
-
-Studio shows the price for your exact selection next to the round **Generate** button, which stays grey until the prompt is filled in. Select it. The result appears right away as **Pending** and finishes in the background (see [Section 11](#11-follow-a-generation)).
-
-### Step 5: Find the result
-
-Your result appears in **My Creations**, just below the composer. It shows as **Pending**, then becomes **Generated** (or **Failed**) on its own. Every successful result is also shown in **Discover** ([Section 12.2](#122-discover)).
-
-### The Studio page
-
-From top to bottom: the **composer** (reference images, prompt, and a toolbar with the model, aspect ratio and resolution, duration and audio for video, the sparkle **Optimize prompt** button, the price, and **Generate**), then **My Creations**, then **Discover**.
-
-Studio uses the same account and Credit balance as Chat and the API.
-
-## 10. Generate Images and Videos
-
-### Generation paths
-
-| Path | You provide | Result |
-|---|---|---|
-| Text to Image | A prompt | An image |
-| Image to Image | A prompt and reference images | An image guided by your references |
-| Text to Video | A prompt | A video |
-| Image to Video | A prompt and reference images, or a first and last frame | A video that starts from your image |
-
-Not every model supports every path. For example, Recraft V4.1 Flash does not take reference images, so it supports text to image only, while Recraft V4 Styles requires at least one reference image.
-
-### Options
-
-Options come from the selected model, so the choices change when you change models.
-
-| Option | Applies to | Behavior |
-|---|---|---|
-| Model | All | Separate lists for image and video. Names carry the provider, for example "Google: Veo 3.1 Lite" |
-| Aspect ratio and resolution | All | One chip such as `1:1 · 2K` or `16:9 · 720p`. Image models offer 6 to 18 ratios (many include **auto**) and 768, 1K, 1.5K, 2K, or 4K. Video models offer 2 to 7 ratios and 480p, 720p, 1080p, or 4K. Some Recraft models are automatic |
-| Duration | Video | The durations the model supports, for example 4, 6, or 8 seconds for Veo and 2 to 30 seconds for Wan 3.0 |
-| Audio | Video | **Model audio** (the model creates sound) or **No audio**. On supported models you can also upload your own soundtrack |
-| Images per request | Image | Models that allow it can produce several images in one request |
-| Seed | Most models | A number that lets you reproduce or vary a result |
-| Model settings | Some models | Quality (Grok Imagine Image 2.0), output format and background (Riverflow), negative prompt (Veo, Kling, Wan 2.7), watermark (Seedance), and similar |
-| Optimize prompt | All | The sparkle button rewrites your prompt. It can use Credits, and you see "Not enough Chat credits to optimize this prompt" if your balance is too low |
-
-### Write a prompt
-
-The prompt field holds up to **5,000 characters**, with a live counter.
-
-### Use reference images
-
-For Image to Image and Image to Video:
-
-- Add up to **9** reference images. Supported formats are **JPEG, PNG, and WebP**, up to **32 MB** each.
-- Use the **Upload** tile, or pick an image from My Creations. A counter beside it (such as `1 / 3`) shows how many you have added and how many the model accepts.
-- Preview or remove references before you generate.
-- Each model has its own limit. Seedream accepts up to 14, FLUX 3 Image and Riverflow V2.5 Pro up to 10, Riverflow V2.5 Fast up to 4, Qwen Image and Grok Imagine up to 3, and Recraft V4 and V4.1 up to 1. Some models accept only a single starting frame.
-- If an upload fails or times out, select the image to retry it, or remove it and add another.
-
-### First and last frame
-
-Video models accept a **first frame** and a **last frame**, so you can fix how the clip opens and closes. Turn on **First & last frame** (the small **i** beside it explains it), and the upload area becomes two boxes, **First frame** and **Last frame**. Both images must be JPEG, PNG, or WebP under 32 MB. Some combinations are not accepted by a given model, and Studio tells you when a combination is unsupported.
-
-### Soundtrack
-
-Video models that accept reference audio, currently Seedance 2.5, Seedance 2.0, Seedance 2.0 Fast, Seedance 2.0 Mini, and Wan 3.0, let you upload your own **WAV or MP3** file, up to 32 MB, as the soundtrack. All ten video models can generate sound.
-
-### Seed
-
-Enter a whole number (up to 2,147,483,647) to repeat or vary a result. An invalid seed is rejected with a message.
-
-## 11. Follow a Generation
-
-### What happens when you select Generate
-
-1. Studio gets a firm quote for your selection. If the quote fails ("Could not price this generation"), nothing is submitted. If a quote expires ("This price expired. Refreshing…"), Studio refreshes it.
-2. Your generation is created as **Pending** and appears in My Creations.
-3. You can stay on its page or leave. It keeps generating in the background.
-
-Images usually finish in seconds. Videos can take several minutes, and you can leave the page: the video stays in My Creations, marked **Pending**, until it is ready.
-
-### Status
-
-| Status | Meaning |
-|---|---|
-| **Pending** | Submitted, no result yet |
-| **Generated** | The result is ready |
-| **Failed** | No result could be produced |
-
-A failed generation can show a more specific reason: **Rejected**, **Blocked** (the prompt or an image was stopped by safety review; adjust the prompt and try again), **Delivery failed**, **Canceled**, or **Expired**. A result you deleted, or one that has expired, is shown as no longer available.
-
-### Limits while generating
-
-- Up to **3 videos** can be Pending at once. Wait for one to finish before starting another. Images are not subject to this limit.
-- If your balance is below the quote, Studio blocks the generation ("Not enough credits for this generation") and offers a top-up.
-- If an earlier Studio charge is still settling, spending is paused and Studio does not submit until it finishes. A finished result can briefly say "Credits are still settling."
-- If Studio or a model is temporarily unavailable, Studio says so and asks you to try again or choose another model.
-
-## 12. My Creations and Discover
-
-### 12.1 Manage My Creations
-
-My Creations lists your own results, below the composer. Before you have created anything it reads "Generations you keep will show up here."
-
-**Filter**
-
-- **Type:** the **All**, **Image**, and **Video** tabs.
-- **Status:** the **All status** drop-down (Generated, Pending, Failed).
-
-Select **Load more** to see older results.
-
-**Open, download, and delete**
-
-- Select a result to open its page: the media, the date, the size and resolution (and duration for videos), the **Reference used**, and the prompt.
-- Hover over a card, or use the buttons at the top right of its page. The buttons are **Try this**, **Edit**, **Download**, **Image to Video**, and **Delete**.
-- **Download** saves a Generated result.
-- **Delete** asks you to confirm first and is permanent. Results made from it are not affected.
-
-**Build on a result**
-
-- **Try this** reloads a result's prompt and settings into the composer so you can adjust and generate again. References have to be uploaded again. If the model used is no longer offered, Studio tells you and selects a current model.
-- **Edit** (images only) opens an edit page where you write a prompt and use **Animate** to turn the image into a video. It is greyed out on videos.
-- **Image to Video** (images only) sends the image to the **Image to Video** tab as a reference image.
-
-Editing a result in place, such as inpainting, background removal, or upscaling, and extending a video are not part of Studio today.
-
-### 12.2 Discover
-
-**Discover** sits below My Creations. It is a gallery of **everyone's work**: every image or video that is generated successfully is automatically added to Discover, with its prompt and its creator's name ("by name"). Discover is the community's showcase, and a quick way to learn good prompts.
-
-- Browse with the **All**, **Image**, and **Video** tabs. Videos show a play button, their length, and a speaker icon if they have sound.
-- Open an item to see its result and its prompt.
-- Use **Try this** to load its prompt into your composer, then change it and generate your own. Reference files belong to the original creator, so you upload your own. If the model is no longer available, Studio selects a current model.
-- You must be logged in to try an item.
-
-Because successful results appear in Discover, do not put private or sensitive information in prompts. See [Section 17](#17-support-and-safety).
-
-## 13. The Studio Model Catalog
-
-Studio offers **25 models**: 15 image and 10 video. Model availability and pricing are dynamic. The live model picker and Pricing page are the source of truth.
-
-**Image models**
-
-| Model | Resolutions | Aspect ratios | Reference images | Images per request | Extra settings |
-|---|---|---|---|---|---|
-| Seedream 5.0 Flash | 1K, 2K | 18, with auto | Up to 14 | 1 | Seed |
-| Seedream 4.5 | 1K, 2K, 4K | 18, with auto | Up to 14 | 10 | Seed |
-| Seedream 5.0 Pro | 1K, 2K | 18, with auto | Up to 14 | 1 | Seed |
-| Seedream 5.0 Lite | 2K, 4K | 18, with auto | Up to 14 | 4 | Seed |
-| Grok Imagine Image 2.0 | 1K, 2K | 14, with auto | Up to 3 | 1 | Quality |
-| Grok Imagine Image Quality | 1K, 2K | 14, with auto | Up to 3 | 1 | None |
-| FLUX 3 Image | 768, 1K, 1.5K, 2K, 4K | 16, with auto | Up to 10 | 1 | None |
-| Qwen Image 3 | 1K, 2K | 13 | Up to 3 | 6 | Seed |
-| Qwen Image 3 Pro | 1K, 2K | 13 | Up to 3 | 6 | Seed |
-| Riverflow V2.5 Pro | 1K, 2K, 4K | 9, with auto | Up to 10 | 1 | Output format, background |
-| Riverflow V2.5 Fast | 1K, 2K | 9, with auto | Up to 4 | 1 | Output format, background |
-| Recraft V4.1 Flash | Auto | 6, with auto | None (text only) | 6 | None |
-| Recraft V4.1 | Auto | 6, with auto | Up to 1 | 6 | None |
-| Recraft V4 | Auto | 6, with auto | Up to 1 | 6 | None |
-| Recraft V4 Styles | Auto | 12, with auto | 1 to 10, required | 6 | None |
-
-**Video models**
-
-| Model | Resolutions | Aspect ratios | Durations | Soundtrack upload | Extra settings |
-|---|---|---|---|---|---|
-| Veo 3.1 Lite | 720p, 1080p | 16:9, 9:16 | 4, 6, 8 s | No | Negative prompt, seed, prompt enhancement, person generation, conditioning scale |
-| Veo 3.1 Fast | 720p, 1080p, 4K | 16:9, 9:16 | 4, 6, 8 s | No | Same as Veo 3.1 Lite |
-| Seedance 2.5 | 480p, 720p | 16:9, 9:16 | 4–30 s | Yes | Watermark, output format, seed |
-| Seedance 2.0 | 480p, 720p, 1080p, 4K | 1:1, 3:4, 9:16, 4:3, 16:9, 21:9 | 4–15 s | Yes | Watermark, seed |
-| Seedance 2.0 Fast | 480p, 720p | 1:1, 3:4, 9:16, 4:3, 16:9, 21:9 | 4–15 s | Yes | Watermark, seed |
-| Seedance 2.0 Mini | 480p, 720p | 1:1, 3:4, 9:16, 4:3, 16:9, 21:9 | 4–15 s | Yes | Watermark, return last frame, seed |
-| Seedance 1.5 Pro | 480p, 720p, 1080p | 1:1, 3:4, 9:16, 9:21, 4:3, 16:9, 21:9 | 4–12 s | No | Watermark, seed |
-| Wan 3.0 | 480p, 720p, 1080p | 16:9, 4:3, 1:1, 3:4, 9:16 | 2–30 s | Yes | Seed |
-| Wan 2.7 | 720p, 1080p | 16:9, 9:16, 1:1, 4:3, 3:4 | 2–10 s | No | Negative prompt, prompt extension, seed |
-| Kling v3.0 Pro | 720p | 16:9, 9:16, 1:1 | 3–15 s | No | Negative prompt, CFG scale |
-
----
-
-# Part III. Pricing
-
-## 14. The Pricing Page
+## 9. Pricing
 
 Open **Pricing** in the sidebar. It is a public price list for the models Maxshot offers. Use it to compare models before you chat, generate, or integrate, and to copy a model ID.
 
@@ -652,24 +612,49 @@ Selecting a model opens, from top to bottom:
 - **"from" is a floor.** It is the cheapest listed rate. Video-to-video, scheduled windows, and long prompts can differ.
 - Check the limits in **Overview** (durations, aspect ratios, reference images, first and last frame) before you build a prompt around a setting.
 
-## 15. How Studio Is Priced
+### How Generation Is Priced
 
 - **Credits.** Studio spends from the same Credit balance as Chat and the API. 1,000,000 Credits equal $1.00.
 - **A firm quote.** Before submitting, Studio asks for the price of your exact model, path, and settings, and shows it beside the **Generate** button. That quote is what a successful generation costs.
 - **Charged when the result is made.** A generation settles at its quoted price once it completes. A finished result can briefly say "Credits are still settling."
-- **Same ledger.** Studio uses the balances in [Section 5](#5-add-credits).
+- **Same ledger.** The balances are the ones in [Section 8](#8-credits).
 - **The Pricing page shows list prices.** It is for comparing models. If it differs from your quote, the quote governs.
 - If your balance is lower than the quote, Generate is blocked and nothing is deducted. Credits can only be spent in Maxshot. Withdrawals and refunds are not supported.
 
-### Programmatic access to Studio
+## 10. Referral
 
-Studio has its own service for models, quotes, uploads, and generations. It is used by the Studio page and is not part of the public `/v1` API. Do not assume a Studio feature is available through the API.
+1. Open **Referral**.
+2. Select **Copy link** (or **Copy code**, or share on X or Telegram).
+3. Share it with a new user.
+4. Review confirmed rewards and referred top-ups on the same page.
 
----
+Any registered user can invite others. Registration alone does not create a reward: the referred user must complete a top-up, and it must be confirmed. The page shows the current **reward rate** and the **reward cap** per referred user. These values are set by Maxshot and may change.
 
-# Part IV. Help
+The page tracks **Earned rewards**, **Confirmed top-up**, **Reward rate**, **Reward cap**, **Pending rewards**, and **Referred accounts**. The **Referred top-ups** table lists each top-up with its date, referee, amount, reward, and status:
 
-## 16. Troubleshooting
+| Status | Meaning |
+|---|---|
+| **Confirmed** | The reward is confirmed and credited |
+| **Pending** | Waiting for the top-up to settle |
+| **Withheld** | Held for risk review |
+| **Under review** | A manual review is required |
+| **Revoked** | The reward was revoked |
+
+Filter the table by **All**, **Pending**, **Credited**, or **Needs attention**.
+
+## 11. Profile
+
+Open **Profile** to:
+
+- Edit your display name and email, and **Save profile**.
+- Under **Login methods**, **Bind** or **Unbind** Google, GitHub, or a wallet. You cannot remove your last login method, so confirm another method works before unbinding one.
+- Choose the **Interface language** (English or 中文) and **Theme** (Dark, Light, or System).
+- Set **Chat history retention** to **Permanent**, **90 days**, or **30 days**. A change applies to existing and future chats, and older history may expire sooner.
+- Turn **Notifications** on or off, in-app and email.
+- Turn **Developer mode** on or off ([Section 4](#developer-mode)).
+- Under **Session & Security**, **Log out** to end the session on this device.
+
+## 12. Troubleshooting
 
 ### Chat cannot send
 
@@ -724,7 +709,7 @@ Studio could not price your selection, so nothing was submitted. Try again. If i
 
 ### A reference image or soundtrack is rejected
 
-Use a JPEG, PNG, or WebP image under 32 MB, or a WAV or MP3 soundtrack under 32 MB. A soundtrack needs a model that accepts one (see [Section 13](#13-the-studio-model-catalog)). If an upload times out or fails, retry it or add another file. If you added more images than the model accepts, the extra images are ignored.
+Use a JPEG, PNG, or WebP image under 32 MB, or a WAV or MP3 soundtrack under 32 MB. A soundtrack needs a model that accepts one (see [Section 5.6](#56-the-model-catalog)). If an upload times out or fails, retry it or add another file. If you added more images than the model accepts, the extra images are ignored.
 
 ### A result is Pending for a long time
 
@@ -736,7 +721,7 @@ Open it to read the reason. If it was **Blocked**, change the prompt or the refe
 
 ### A setting I chose isn't accepted
 
-The model may not support it, for example a duration, aspect ratio, or number of reference images. Check [Section 13](#13-the-studio-model-catalog) or the model's details on the Pricing page.
+The model may not support it, for example a duration, aspect ratio, or number of reference images. Check [Section 5.6](#56-the-model-catalog) or the model's details on the Pricing page.
 
 ### I can't find a result
 
@@ -754,7 +739,7 @@ The Pricing page shows list prices for comparison. The price shown beside **Gene
 
 Deleting a result is permanent and cannot be undone from the console.
 
-## 17. Support and Safety
+## 13. Support and Safety
 
 - Telegram: [t.me/maxshotai](https://t.me/maxshotai)
 - X: [x.com/MaxshotAI](https://x.com/MaxshotAI)
