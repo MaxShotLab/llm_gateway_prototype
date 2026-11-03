@@ -1,0 +1,37 @@
+.pricing-page { --pricing-ink: #f0f0ec; --pricing-muted: #a1a4a6; --pricing-line: rgba(255,255,255,.12); --pricing-surface: #191b1e; --pricing-soft: #23262a; color: var(--pricing-ink); }
+.theme-light .pricing-page { --pricing-ink: #252b33; --pricing-muted: #737b83; --pricing-line: #e3e6e9; --pricing-surface: #fffefa; --pricing-soft: #f1f3f4; }
+.pricing-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 22px; }
+.pricing-heading h1 { margin: 0; font-size: 30px; font-weight: 590; letter-spacing: -.035em; }
+.pricing-heading span { color: var(--pricing-muted); font-size: 11px; }
+.pricing-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; align-items: start; gap: 16px; }
+.pricing-catalog, .pricing-detail { min-width: 0; padding: 20px; border: 1px solid var(--pricing-line); border-radius: 16px; background: var(--pricing-surface); }
+.pricing-catalog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.pricing-catalog h2, .pricing-detail h2 { margin: 0; font-size: 16px; font-weight: 590; }
+.pricing-catalog input { width: min(230px, 100%); height: 34px; padding: 0 12px; border: 1px solid var(--pricing-line); border-radius: 9px; color: var(--pricing-ink); background: var(--pricing-soft); font-size: 12px; }
+.pricing-catalog input::placeholder { color: var(--pricing-muted); }
+.pricing-tabs { display: inline-flex; gap: 3px; margin-top: 18px; padding: 4px; border-radius: 999px; background: var(--pricing-soft); }
+.pricing-tabs button { min-width: 69px; padding: 7px 12px; border: 0; border-radius: 999px; color: var(--pricing-muted); background: transparent; cursor: pointer; font-size: 12px; }
+.pricing-tabs button.active { color: var(--pricing-ink); background: var(--pricing-surface); }
+.pricing-disclaimer { margin: 13px 0 16px; color: var(--pricing-muted); font-size: 11px; line-height: 1.5; }
+.pricing-table-wrap { overflow-x: auto; }
+.pricing-page table { width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; }
+.pricing-page th { padding: 10px; color: var(--pricing-muted); background: var(--pricing-soft); font-size: 10px; font-weight: 500; }
+.pricing-page td { padding: 12px 10px; border-bottom: 1px solid var(--pricing-line); color: var(--pricing-ink); font-size: 11px; white-space: nowrap; }
+.pricing-page tbody tr.selected { background: rgba(100,123,148,.13); }
+.pricing-model-select { padding: 0; border: 0; color: var(--pricing-ink); background: none; cursor: pointer; font-family: monospace; font-size: 11px; text-align: left; }
+.pricing-model-select:hover { text-decoration: underline; }
+.pricing-copy, .pricing-copy-detail { padding: 6px 9px; border: 1px solid var(--pricing-line); border-radius: 7px; color: var(--pricing-ink); background: var(--pricing-soft); cursor: pointer; font-size: 10px; }
+.pricing-empty { padding: 24px 10px; color: var(--pricing-muted); font-size: 12px; }
+.pricing-detail h3 { margin: 19px 0 4px; font-size: 15px; font-weight: 560; overflow-wrap: anywhere; }
+.pricing-detail code { color: var(--pricing-muted); font-size: 10px; overflow-wrap: anywhere; }
+.pricing-detail p { color: var(--pricing-muted); font-size: 11px; line-height: 1.5; }
+.pricing-abilities { display: flex; gap: 5px; margin-top: 13px; }
+.pricing-abilities span { padding: 3px 6px; border: 1px solid var(--pricing-line); border-radius: 5px; color: var(--pricing-ink); font-size: 10px; }
+.pricing-detail h4 { margin: 19px 0 10px; padding-top: 16px; border-top: 1px solid var(--pricing-line); font-size: 12px; font-weight: 590; }
+.pricing-detail-row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--pricing-line); font-size: 11px; }
+.pricing-detail-row span { color: var(--pricing-muted); }
+.pricing-detail-row strong { font-weight: 560; text-align: right; }
+.pricing-credit-equivalent { margin-top: 13px; }
+.pricing-copy-detail { margin-top: 8px; }
+@media (max-width: 980px) { .pricing-layout { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .pricing-catalog-heading { align-items: stretch; flex-direction: column; } .pricing-catalog input { width: 100%; } .pricing-heading { align-items: start; flex-direction: column; } }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Brain,
@@ -23,6 +23,7 @@ import {
   ShareNetwork,
   Sparkle,
   Sun,
+  Tag,
   Trash,
   UploadSimple,
   UserCircle,
@@ -33,14 +34,21 @@ import {
 import { ChatPage } from "./pages/ChatPage";
 import { ApiPage } from "./pages/ApiPage";
 import { FundingPage } from "./pages/FundingPage";
+import { StudioPage, platformWorks } from "./pages/StudioPage";
+import { PricingPage } from "./pages/PricingPage";
+import { SharedWorkPage, StartersPage } from "./pages/GrowthPage";
+import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { createBillingScenario, getBillingTotals, getSubscriptionWindows } from "./data/billingData";
 
 const phaseOneNavItems = [
   { id: "chat", label: "Chat", Icon: ChatsCircle },
   { id: "studio", label: "Studio", Icon: MagicWand },
+  { id: "starters", label: "Starters", Icon: Sparkle },
+  { id: "playground", label: "Playground", Icon: Code },
   { id: "usage", label: "Usage", Icon: Gauge },
   { id: "api", label: "API", Icon: Key },
   { id: "topup", label: "Credits", Icon: Wallet },
+  { id: "pricing", label: "Pricing", Icon: Tag },
   { id: "referral", label: "Referral", Icon: ShareNetwork },
   { id: "settings", label: "Profile", Icon: UserCircle },
 ];
@@ -50,14 +58,16 @@ const phaseTwoNavItems = [
   { id: "toolkits", label: "Toolkits", Icon: PuzzlePiece },
 ];
 
+function publicWork(work) {
+  const creator = work.id.startsWith("discover-") ? "Maxshot demo" : work.creator;
+  if (work.mode !== "result") return { ...work, creator };
+  return { id: work.id, kind: work.kind, title: "Shared work", creator, art: work.art, status: "Generated", mode: "result" };
+}
+
 const protectedPageCopy = {
   usage: {
     label: "Usage",
     description: "Usage records and Credit balances are tied to your account.",
-  },
-  studio: {
-    label: "Studio",
-    description: "Generation paths and funding are available after login.",
   },
   api: {
     label: "API",
@@ -198,7 +208,9 @@ const dashboardChartData = {
 };
 
 const referralConfig = {
-  rewardRate: 1,
+  rewardRate: 10,
+  capDollars: 50,
+  mockCreditsPerDollar: 1_000_000,
   code: "ms-demo-referral",
   link: "https://gateway.maxshot.ai/?ref=ms-demo-referral",
 };
@@ -209,7 +221,6 @@ const referralTopUps = [
     user: "alex@builder.dev",
     joined: "Jun 12, 2026",
     topUp: 100_000_000,
-    reward: 1_000_000,
     status: "Confirmed",
   },
   {
@@ -217,8 +228,7 @@ const referralTopUps = [
     user: "mia@studio.ai",
     joined: "Jun 10, 2026",
     topUp: 250_000_000,
-    reward: 2_500_000,
-    status: "Pending",
+    status: "Confirmed",
   },
 ];
 
@@ -620,8 +630,8 @@ function DeferredNotice({ title }) {
     <section className="panel deferred-notice">
       <span>Experimental</span>
       <div>
-        <h2>{title} are not part of Phase 1.</h2>
-        <p>This prototype is kept for product review. Launch scope remains Chat, Usage, API, Credits, Referral, and Profile.</p>
+        <h2>{title} are coming soon.</h2>
+        <p>These exploratory controls are not part of the live Studio baseline.</p>
       </div>
     </section>
   );
@@ -629,18 +639,10 @@ function DeferredNotice({ title }) {
 
 function ReferralPage() {
   const [copied, setCopied] = useState(false);
-  const confirmedTopUp = referralTopUps.reduce(
-    (sum, item) => sum + (item.status === "Confirmed" ? item.topUp : 0),
-    0,
-  );
-  const earnedRewards = referralTopUps.reduce(
-    (sum, item) => sum + (item.status === "Confirmed" ? item.reward : 0),
-    0,
-  );
-  const pendingRewards = referralTopUps.reduce(
-    (sum, item) => sum + (item.status === "Pending" ? item.reward : 0),
-    0,
-  );
+  const confirmedTopUps = referralTopUps.filter((item) => item.status === "Confirmed");
+  const rewardFor = (item) => Math.min(item.topUp / 1_000_000 * referralConfig.rewardRate / 100, referralConfig.capDollars) * referralConfig.mockCreditsPerDollar;
+  const confirmedTopUp = confirmedTopUps.reduce((sum, item) => sum + item.topUp, 0);
+  const earnedRewards = confirmedTopUps.reduce((sum, item) => sum + rewardFor(item), 0);
 
   const copyReferralLink = () => {
     navigator.clipboard?.writeText(referralConfig.link);
@@ -657,7 +659,7 @@ function ReferralPage() {
       <section className="referral-hero panel">
         <div>
           <h2>Invite users. Earn confirmed rewards.</h2>
-          <p>Share your link. When a referred user tops up, you receive 1% promotional Credits.</p>
+          <p>Share your link. Earn promotional Credits worth 10% of confirmed top-ups, up to $50 per referee.</p>
         </div>
         <div className="referral-link-box">
           <small>Your referral code</small>
@@ -678,7 +680,7 @@ function ReferralPage() {
         </article>
         <article>
           <strong>{referralConfig.rewardRate}%</strong>
-          <span>Promotional Credits from referred top-ups.</span>
+          <span>Of confirmed top-ups, capped at $50 per referee.</span>
         </article>
         <article>
           <strong>Auto</strong>
@@ -687,9 +689,8 @@ function ReferralPage() {
       </section>
 
       <section className="metric-grid referral-metrics">
-        <MetricCard label="Earned rewards" value={earnedRewards.toLocaleString()} note="Confirmed promotional Credits" />
-        <MetricCard label="Confirmed top-up" value={confirmedTopUp.toLocaleString()} note="Measured referee volume" />
-        <MetricCard label="Pending rewards" value={pendingRewards.toLocaleString()} note="Awaiting confirmation" />
+        <MetricCard label="Earned rewards" value={earnedRewards.toLocaleString()} note="Confirmed promotional Credits · mock conversion" />
+        <MetricCard label="Confirmed top-up" value={`$${(confirmedTopUp / 1_000_000).toFixed(2)}`} note="Measured referee volume" />
         <MetricCard label="Referred accounts" value={referralTopUps.length.toLocaleString()} note="Unique attributed accounts" />
       </section>
 
@@ -716,8 +717,8 @@ function ReferralPage() {
                 <tr key={item.id}>
                   <td>{item.user}</td>
                   <td>{item.joined}</td>
-                  <td>{item.topUp.toLocaleString()}</td>
-                  <td>{item.reward.toLocaleString()}</td>
+                  <td>${(item.topUp / 1_000_000).toFixed(2)}</td>
+                  <td>{rewardFor(item).toLocaleString()} Credits</td>
                   <td>
                     <span className={`status-pill ${item.status === "Confirmed" ? "success" : "neutral"}`}>
                       <i /> {item.status}
@@ -728,31 +729,6 @@ function ReferralPage() {
             </tbody>
           </table>
         </div>
-      </section>
-    </main>
-  );
-}
-
-function StudioPage({ billing }) {
-  const plan = billing.subscription?.name || "PAYG";
-  const videoFunding = plan === "Plus" && billing.subscription?.status !== "past_due"
-    ? "Premium → free → referral → Dollars"
-    : "PAYG: free → referral → Dollars";
-
-  return (
-    <main className="content-page studio-page">
-      <PageHeader title="Studio" description="Image and video generation is supported in the developing product. This prototype is a static subscription overview." />
-      <section className="metric-grid">
-        <MetricCard label="Text to image" value="Supported" note="Image generation" />
-        <MetricCard label="Image to image" value="Supported" note="Image generation" />
-        <MetricCard label="Text to video" value="Supported" note="Video generation" />
-        <MetricCard label="Image to video" value="Supported" note="Video generation" />
-      </section>
-      <section className="panel">
-        <div className="panel-heading"><div><h2>Subscription funding examples</h2><p>Illustrative Credit quotes only. Actual prices depend on the model and settings.</p></div></div>
-        <p>Image: 120,000 Credits · Premium → free → referral → Dollars on Core and Plus.</p>
-        <p>Video: 800,000 Credits · {videoFunding}. Core video is PAYG only.</p>
-        <p>Basic Chat Credits never fund Studio. Pending jobs reserve the quote; Generated jobs charge it, and Failed jobs release it without a charge.</p>
       </section>
     </main>
   );
@@ -1454,7 +1430,10 @@ function ToolkitsPage({ onUsePrompt }) {
 }
 
 export function App() {
-  const [active, setActive] = useState("chat");
+  const [active, setActive] = useState(() => new URLSearchParams(window.location.search).has("share") ? "shared" : "chat");
+  const [shareId, setShareId] = useState(() => new URLSearchParams(window.location.search).get("share"));
+  const [publicWorks, setPublicWorks] = useState(() => (JSON.parse(localStorage.getItem("maxshot-demo-public-works") || "null") || platformWorks).map(publicWork));
+  const [studioSeed, setStudioSeed] = useState(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [user, setUser] = useState("demo@maxshot.ai");
   const [chatSeed, setChatSeed] = useState("");
@@ -1462,6 +1441,16 @@ export function App() {
   const [authHint, setAuthHint] = useState("");
   const [billing, setBilling] = useState(() => createBillingScenario("active"));
   const [freeRequestsUsed, setFreeRequestsUsed] = useState(0);
+  useEffect(() => { localStorage.setItem("maxshot-demo-public-works", JSON.stringify(publicWorks)); }, [publicWorks]);
+  useEffect(() => {
+    const syncLocation = () => {
+      const id = new URLSearchParams(window.location.search).get("share");
+      setShareId(id);
+      setActive(id ? "shared" : "chat");
+    };
+    window.addEventListener("popstate", syncLocation);
+    return () => window.removeEventListener("popstate", syncLocation);
+  }, []);
 
   const navigate = (nextPage) => {
     const protectedCopy = protectedPageCopy[nextPage];
@@ -1470,7 +1459,26 @@ export function App() {
       return;
     }
     setAuthHint("");
+    if (shareId) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("share");
+      window.history.pushState({}, "", url);
+      setShareId(null);
+    }
     setActive(nextPage);
+  };
+
+  const openShare = (id) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("share", id);
+    window.history.pushState({}, "", url);
+    setShareId(id);
+    setActive("shared");
+  };
+
+  const openStudio = (seed) => {
+    if (seed) setStudioSeed(seed);
+    navigate("studio");
   };
 
   const logout = () => {
@@ -1494,7 +1502,14 @@ export function App() {
       );
     }
     if (active === "usage") return <UsagePage billing={billing} />;
-    if (active === "studio") return <StudioPage billing={billing} />;
+    if (active === "studio") return <StudioPage billing={billing} canGenerateAccount={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to generate."); setLoginOpen(true); }} seed={studioSeed} onSeedConsumed={() => setStudioSeed(null)} publicWorks={publicWorks} onPublish={(work) => setPublicWorks((current) => [publicWork(work), ...current.filter((item) => item.id !== work.id)])} onUnshare={(id) => setPublicWorks((current) => current.filter((item) => item.id !== id))} onOpenShare={openShare} />;
+    if (active === "starters") return <StartersPage canRun={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to run this example."); setLoginOpen(true); }} onOpenStudio={openStudio} onPricing={() => navigate("pricing")} onApi={() => navigate("api")} onPlayground={() => navigate("playground")} />;
+    if (active === "playground") return <PlaygroundPage onOpenChat={(prompt) => { setChatSeed(prompt); navigate("chat"); }} onOpenStudio={openStudio} onApi={() => navigate("api")} onPricing={() => navigate("pricing")} />;
+    if (active === "shared") return <SharedWorkPage work={publicWorks.find((item) => item.id === shareId)} onBack={() => navigate("studio")} onTry={(work) => {
+      const source = `Share: ${work.id}${new URLSearchParams(window.location.search).get("via") === "x" ? " via X" : ""}`;
+      openStudio(work.mode === "method" ? { kind: work.kind, path: work.path, model: work.model, prompt: work.prompt, resolution: work.resolution, source } : { kind: work.kind, mode: "result", source });
+    }} />;
+    if (active === "pricing") return <PricingPage />;
     if (active === "api") return <ApiPage />;
     if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} />;
     if (active === "referral") return <ReferralPage />;
@@ -1514,7 +1529,7 @@ export function App() {
         onCreditsRequired={() => navigate("topup")}
       />
     );
-  }, [active, billing, chatSeed, freeRequestsUsed, user]);
+  }, [active, billing, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed]);
 
   return (
     <div className={`app-theme theme-${theme}`}>

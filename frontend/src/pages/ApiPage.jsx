@@ -107,12 +107,12 @@ export function ApiPage() {
         <div className="code-block">
           <div className="code-top">
             <span>Base URL</span>
-            <button onClick={() => copyText("https://api.maxshot.ai/llm/v1", "base-url")}>
+            <button onClick={() => copyText("https://api.maxshot.ai/v1", "base-url")}>
               {copied === "base-url" ? <Check size={15} /> : <Copy size={15} />}
               {copied === "base-url" ? "Copied" : "Copy"}
             </button>
           </div>
-          <code>https://api.maxshot.ai/llm/v1</code>
+          <code>https://api.maxshot.ai/v1</code>
           <small>Authorization: Bearer YOUR_API_KEY</small>
         </div>
       </section>
