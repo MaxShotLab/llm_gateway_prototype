@@ -6,7 +6,6 @@
 - **Sources:** (1) the live console at gateway.maxshot.ai (pages and front-end strings); (2) the live public endpoints `/config` (top-up and API configuration), `/model-catalog` (the Chat lineup), and `/model-pricing` (the price catalog); (3) the *Maxshot Gateway Product Document*, Release 2.0
 - **Audience:** marketing, growth, community, content, and partnerships teams
 - **Core rule:** always present Maxshot Gateway as **one integrated product**. Chat, Studio (creation), Pricing, API, and Credits are features of the same product. Never describe Studio as "another product" or "the new version".
-- **Chinese edition:** [MAXSHOT_GATEWAY_FEATURES_AND_SELLING_POINTS_zh.md](./MAXSHOT_GATEWAY_FEATURES_AND_SELLING_POINTS_zh.md)
 
 ---
 
