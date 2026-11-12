@@ -21,7 +21,7 @@ const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value);
 const formatDollarCents = (value) => `$${(value / 100).toFixed(2)}`;
 const formatDollarMicros = (value) => `$${(value / 1_000_000).toFixed(6)}`;
 
-export function ApiPage() {
+export function ApiPage({ embedded = false }) {
   const [keys, setKeys] = useState(starterApiKeys);
   const [selectedKeyId, setSelectedKeyId] = useState(starterApiKeys[0].id);
   const [createOpen, setCreateOpen] = useState(false);
@@ -84,11 +84,12 @@ export function ApiPage() {
     }
   };
 
+  const Shell = embedded ? "div" : "main";
   return (
-    <main className="content-page api-page">
+    <Shell className={embedded ? "api-page embedded-api" : "content-page api-page"}>
       <div className="page-heading">
         <div>
-          <h1>API</h1>
+          {embedded ? <h2>API keys</h2> : <h1>API</h1>}
           <p>OpenAI-compatible keys, limits, and request usage.</p>
         </div>
         <button className="primary-button compact" onClick={() => setCreateOpen(true)}>
@@ -358,7 +359,7 @@ export function ApiPage() {
           </section>
         </div>
       )}
-    </main>
+    </Shell>
   );
 }
 

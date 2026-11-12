@@ -24,8 +24,8 @@ import {
   subscriptionPlans,
 } from "../data/billingData";
 
-export function FundingPage({ billing, setBilling }) {
-  const [billingView, setBillingView] = useState("subscription");
+export function FundingPage({ billing, setBilling, tokenState, onTokens, usageContent, initialView = "subscription" }) {
+  const [billingView, setBillingView] = useState(initialView);
   const [amount, setAmount] = useState(25);
   const [methodId, setMethodId] = useState("crypto");
   const [saveCard, setSaveCard] = useState(true);
@@ -165,7 +165,15 @@ export function FundingPage({ billing, setBilling }) {
       <div className="billing-scope-tabs" role="tablist" aria-label="Billing type">
         <button className={billingView === "payg" ? "active" : ""} onClick={() => setBillingView("payg")} role="tab" aria-selected={billingView === "payg"}>PAYG</button>
         <button className={billingView === "subscription" ? "active" : ""} onClick={() => setBillingView("subscription")} role="tab" aria-selected={billingView === "subscription"}>Subscription</button>
+        <button className={billingView === "usage" ? "active" : ""} onClick={() => setBillingView("usage")} role="tab" aria-selected={billingView === "usage"}>Usage</button>
       </div>
+
+      {billingView === "usage" && usageContent}
+
+      {billingView !== "usage" && <section className="panel token-credit-summary">
+        <div><span className="eyebrow">MAX & AIT · prototype</span><h2>Earned Credit</h2><p>{tokenState.stakedAit.toLocaleString()} AIT staked on Ethereum · weekly grants are off-chain and expire seven days after posting. No funded term is active in this simulation. On eligible requests, AIT Earned Credit spends before subscription allowances.</p></div>
+        <button className="secondary-button compact" onClick={onTokens}>View MAX & AIT <ArrowRight size={14} /></button>
+      </section>}
 
       {billingView === "subscription" && (
       <>
@@ -174,7 +182,7 @@ export function FundingPage({ billing, setBilling }) {
           <div>
             <span className="eyebrow">Phase 2 proposal · simulated</span>
             <h2>Subscription</h2>
-            <p>Basic Chat Credits cover eligible web chat. Premium Credits cover eligible Chat, API, image, and video; promotional Credits and Dollars remain the fallback.</p>
+            <p>Basic Chat Credits cover eligible web chat. Premium Credits cover eligible Chat, API, image, and video. Eligible AIT Earned Credit spends first, then subscription allowance, other promotional Credits, and Dollars.</p>
           </div>
           <label className="prototype-scenario">
             <span>Prototype state</span>

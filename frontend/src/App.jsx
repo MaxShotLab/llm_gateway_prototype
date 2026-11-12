@@ -4,8 +4,10 @@ import {
   Brain,
   CaretDown,
   ChatsCircle,
+  ChartPieSlice,
   Check,
   Code,
+  Coins,
   Copy,
   DotsThree,
   Gauge,
@@ -23,7 +25,6 @@ import {
   ShareNetwork,
   Sparkle,
   Sun,
-  Tag,
   Trash,
   UploadSimple,
   UserCircle,
@@ -34,6 +35,8 @@ import {
 import { ChatPage } from "./pages/ChatPage";
 import { ApiPage } from "./pages/ApiPage";
 import { FundingPage } from "./pages/FundingPage";
+import { TokenomicsPage, ProviderMarketPage, initialTokenState } from "./pages/TokenomicsPage";
+import { PortfolioPage, VaultsPage, prototypeWallet } from "./pages/UnifiedPortfolioPage";
 import { StudioPage, platformWorks } from "./pages/StudioPage";
 import { PricingPage } from "./pages/PricingPage";
 import { SharedWorkPage, StartersPage } from "./pages/GrowthPage";
@@ -41,21 +44,14 @@ import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { createBillingScenario, getBillingTotals, getSubscriptionWindows } from "./data/billingData";
 
 const phaseOneNavItems = [
+  { id: "portfolio", label: "Portfolio", Icon: ChartPieSlice },
   { id: "chat", label: "Chat", Icon: ChatsCircle },
   { id: "studio", label: "Studio", Icon: MagicWand },
-  { id: "starters", label: "Starters", Icon: Sparkle },
-  { id: "playground", label: "Playground", Icon: Code },
-  { id: "usage", label: "Usage", Icon: Gauge },
-  { id: "api", label: "API", Icon: Key },
   { id: "topup", label: "Credits", Icon: Wallet },
-  { id: "pricing", label: "Pricing", Icon: Tag },
-  { id: "referral", label: "Referral", Icon: ShareNetwork },
-  { id: "settings", label: "Profile", Icon: UserCircle },
-];
-
-const phaseTwoNavItems = [
-  { id: "agents", label: "Agents", Icon: Robot },
-  { id: "toolkits", label: "Toolkits", Icon: PuzzlePiece },
+  { id: "tokens", label: "Tokens", Icon: Coins },
+  { id: "providers", label: "Providers", Icon: Globe },
+  { id: "vaults", label: "Vaults", Icon: Wallet },
+  { id: "referral", label: "Referrals", Icon: ShareNetwork },
 ];
 
 function publicWork(work) {
@@ -76,6 +72,22 @@ const protectedPageCopy = {
   topup: {
     label: "Credits",
     description: "Top-ups, payment methods, receipts, and credit balances require an account.",
+  },
+  portfolio: {
+    label: "Portfolio",
+    description: "Your Vault deposits, token position, and Gateway account require login.",
+  },
+  vaults: {
+    label: "Vaults",
+    description: "Vault balances and transactions require a linked wallet.",
+  },
+  tokens: {
+    label: "Tokens",
+    description: "Wallet positions, staking, and Earned Credit require an account.",
+  },
+  providers: {
+    label: "Providers",
+    description: "Provider discovery and applications require an account.",
   },
   referral: {
     label: "Referral",
@@ -397,14 +409,6 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
             user={user}
             onNavigate={onNavigate}
           />
-          <div className="nav-section-label">Experimental <span>(Coming Soon)</span></div>
-          <NavGroup
-            items={phaseTwoNavItems}
-            active={active}
-            collapsed={collapsed}
-            user={user}
-            onNavigate={onNavigate}
-          />
         </nav>
 
         <button
@@ -484,6 +488,15 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
                       }}
                     >
                       Profile
+                    </button>
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        onNavigate("api");
+                      }}
+                    >
+                      Developer settings
                     </button>
                     <button
                       role="menuitem"
@@ -639,13 +652,14 @@ function DeferredNotice({ title }) {
 
 function ReferralPage() {
   const [copied, setCopied] = useState(false);
+  const [program, setProgram] = useState("gateway");
   const confirmedTopUps = referralTopUps.filter((item) => item.status === "Confirmed");
   const rewardFor = (item) => Math.min(item.topUp / 1_000_000 * referralConfig.rewardRate / 100, referralConfig.capDollars) * referralConfig.mockCreditsPerDollar;
   const confirmedTopUp = confirmedTopUps.reduce((sum, item) => sum + item.topUp, 0);
   const earnedRewards = confirmedTopUps.reduce((sum, item) => sum + rewardFor(item), 0);
 
-  const copyReferralLink = () => {
-    navigator.clipboard?.writeText(referralConfig.link);
+  const copyReferralLink = (link) => {
+    navigator.clipboard?.writeText(link);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   };
@@ -653,8 +667,15 @@ function ReferralPage() {
   return (
     <main className="content-page referral-page">
       <PageHeader
-        title="Referral"
+        title="Referrals"
       />
+
+      <div className="billing-scope-tabs" role="tablist" aria-label="Referral program">
+        <button className={program === "gateway" ? "active" : ""} onClick={() => { setProgram("gateway"); setCopied(false); }} role="tab" aria-selected={program === "gateway"}>Gateway referrals</button>
+        <button className={program === "vaults" ? "active" : ""} onClick={() => { setProgram("vaults"); setCopied(false); }} role="tab" aria-selected={program === "vaults"}>Vault referrals</button>
+      </div>
+
+      {program === "gateway" && <>
 
       <section className="referral-hero panel">
         <div>
@@ -666,7 +687,7 @@ function ReferralPage() {
           <code>{referralConfig.code}</code>
           <small>Your referral link</small>
           <code>{referralConfig.link}</code>
-          <button className="secondary-button compact" onClick={copyReferralLink}>
+          <button className="secondary-button compact" onClick={() => copyReferralLink(referralConfig.link)}>
             {copied ? <Check size={16} /> : <Copy size={16} />}
             {copied ? "Copied" : "Copy link"}
           </button>
@@ -730,11 +751,31 @@ function ReferralPage() {
           </table>
         </div>
       </section>
+      </>}
+
+      {program === "vaults" && <>
+        <section className="referral-hero panel">
+          <div>
+            <span className="eyebrow">Vault depositor audience</span>
+            <h2>Invite people to Vaults</h2>
+            <p>Vault referrals have their own attribution, reward rules, and history. Gateway top-ups do not count toward this program.</p>
+          </div>
+          <div className="referral-link-box">
+            <small>Vault referral link · example</small>
+            <code>https://gateway.maxshot.ai/vaults?ref=ms-demo-vault</code>
+            <button className="secondary-button compact" onClick={() => copyReferralLink("https://gateway.maxshot.ai/vaults?ref=ms-demo-vault")}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Copied" : "Copy link"}</button>
+          </div>
+        </section>
+        <section className="panel referral-table-panel">
+          <div className="panel-heading"><div><h2>Vault referral activity</h2><p>Attribution and reward history for the linked wallet are separate from Gateway referrals.</p></div></div>
+          <p className="unified-empty-note">No Vault referral activity in this example account. Reward amounts and eligibility follow the existing Vault referral program.</p>
+        </section>
+      </>}
     </main>
   );
 }
 
-function UsagePage({ billing }) {
+function UsagePage({ billing, embedded = false }) {
   const periods = ["7 days", "30 days", "All"];
   const [activePeriod, setActivePeriod] = useState("30 days");
   const chartData = dashboardChartData[activePeriod];
@@ -751,11 +792,10 @@ function UsagePage({ billing }) {
     ),
   );
 
+  const Shell = embedded ? "div" : "main";
   return (
-    <main className="content-page dashboard-page">
-      <PageHeader
-        title="Usage"
-      />
+    <Shell className={embedded ? "dashboard-page embedded-usage" : "content-page dashboard-page"}>
+      {!embedded && <PageHeader title="Usage" />}
 
       <div className="billing-scope-tabs" role="tablist" aria-label="Usage billing source">
         {billing.subscription && <button className={billingView === "subscription" ? "active" : ""} onClick={() => setBillingView("subscription")} role="tab" aria-selected={billingView === "subscription"}>Subscription</button>}
@@ -891,17 +931,23 @@ function UsagePage({ billing }) {
           </table>
         </div>
       </section>
-    </main>
+    </Shell>
   );
 }
 
-function SettingsPage({ user, onLogout }) {
+function SettingsPage({ user, onLogout, initialView = "account" }) {
   const [retention, setRetention] = useState("Permanent");
   const [developerMode, setDeveloperMode] = useState(false);
+  const [profileView, setProfileView] = useState(initialView);
 
   return (
     <main className="content-page settings-page">
       <PageHeader title="Profile" />
+      <div className="billing-scope-tabs" role="tablist" aria-label="Profile sections">
+        <button className={profileView === "account" ? "active" : ""} onClick={() => setProfileView("account")} role="tab" aria-selected={profileView === "account"}>Account</button>
+        <button className={profileView === "developer" ? "active" : ""} onClick={() => setProfileView("developer")} role="tab" aria-selected={profileView === "developer"}>Developer settings</button>
+      </div>
+      {profileView === "account" && <>
       <section className="panel settings-panel">
         <div className="panel-heading">
           <div>
@@ -928,7 +974,7 @@ function SettingsPage({ user, onLogout }) {
         <div className="profile-method-list">
           <div><span><UserCircle size={20} /><b>Google</b><small>{user || "demo@maxshot.ai"}</small></span><em>Connected</em></div>
           <div><span><GithubLogo size={20} /><b>GitHub</b><small>Not linked</small></span><button className="secondary-button compact">Bind</button></div>
-          <div><span><Wallet size={20} /><b>Wallet</b><small>Not linked</small></span><button className="secondary-button compact">Connect wallet</button></div>
+          <div><span><Wallet size={20} /><b>Linked wallet</b><small>{prototypeWallet} · used for Vaults and AIT staking</small></span><em>One wallet per account</em></div>
         </div>
       </section>
       <section className="panel settings-panel profile-section">
@@ -957,6 +1003,8 @@ function SettingsPage({ user, onLogout }) {
           <button className="secondary-button compact" onClick={onLogout}>Log out</button>
         </div>
       </section>
+      </>}
+      {profileView === "developer" && <ApiPage embedded />}
     </main>
   );
 }
@@ -1440,6 +1488,7 @@ export function App() {
   const [theme, setTheme] = useState("light");
   const [authHint, setAuthHint] = useState("");
   const [billing, setBilling] = useState(() => createBillingScenario("active"));
+  const [tokenState, setTokenState] = useState(initialTokenState);
   const [freeRequestsUsed, setFreeRequestsUsed] = useState(0);
   useEffect(() => { localStorage.setItem("maxshot-demo-public-works", JSON.stringify(publicWorks)); }, [publicWorks]);
   useEffect(() => {
@@ -1501,7 +1550,7 @@ export function App() {
         />
       );
     }
-    if (active === "usage") return <UsagePage billing={billing} />;
+    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} initialView="usage" usageContent={<UsagePage billing={billing} embedded />} />;
     if (active === "studio") return <StudioPage billing={billing} canGenerateAccount={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to generate."); setLoginOpen(true); }} seed={studioSeed} onSeedConsumed={() => setStudioSeed(null)} publicWorks={publicWorks} onPublish={(work) => setPublicWorks((current) => [publicWork(work), ...current.filter((item) => item.id !== work.id)])} onUnshare={(id) => setPublicWorks((current) => current.filter((item) => item.id !== id))} onOpenShare={openShare} />;
     if (active === "starters") return <StartersPage canRun={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to run this example."); setLoginOpen(true); }} onOpenStudio={openStudio} onPricing={() => navigate("pricing")} onApi={() => navigate("api")} onPlayground={() => navigate("playground")} />;
     if (active === "playground") return <PlaygroundPage onOpenChat={(prompt) => { setChatSeed(prompt); navigate("chat"); }} onOpenStudio={openStudio} onApi={() => navigate("api")} onPricing={() => navigate("pricing")} />;
@@ -1510,8 +1559,12 @@ export function App() {
       openStudio(work.mode === "method" ? { kind: work.kind, path: work.path, model: work.model, prompt: work.prompt, resolution: work.resolution, source } : { kind: work.kind, mode: "result", source });
     }} />;
     if (active === "pricing") return <PricingPage />;
-    if (active === "api") return <ApiPage />;
-    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} />;
+    if (active === "api") return <SettingsPage user={user} onLogout={logout} initialView="developer" />;
+    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} usageContent={<UsagePage billing={billing} embedded />} />;
+    if (active === "portfolio") return <PortfolioPage billing={billing} tokenState={tokenState} onNavigate={navigate} />;
+    if (active === "vaults") return <VaultsPage onPortfolio={() => navigate("portfolio")} />;
+    if (active === "tokens") return <TokenomicsPage state={tokenState} setState={setTokenState} onCredits={() => navigate("topup")} />;
+    if (active === "providers") return <ProviderMarketPage />;
     if (active === "referral") return <ReferralPage />;
     if (active === "settings") return <SettingsPage user={user} onLogout={logout} />;
     return (
@@ -1529,7 +1582,7 @@ export function App() {
         onCreditsRequired={() => navigate("topup")}
       />
     );
-  }, [active, billing, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed]);
+  }, [active, billing, tokenState, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed]);
 
   return (
     <div className={`app-theme theme-${theme}`}>
