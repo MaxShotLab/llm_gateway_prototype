@@ -21,6 +21,8 @@
 
 .studio-page button { cursor: pointer; }
 .studio-page button:disabled { cursor: not-allowed; opacity: 0.46; }
+.studio-sample-quote { display: grid; gap: 4px; margin-top: 12px; padding: 11px 13px; border: 1px solid var(--studio-line); border-radius: 9px; background: var(--studio-soft); font-size: 11px; }
+.studio-sample-quote small { color: var(--studio-muted); line-height: 1.4; }
 .studio-page-intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 22px; }
 .studio-page-intro span { color: var(--studio-muted); font-size: 10px; letter-spacing: 0.15em; }
 .studio-page-intro h1 { margin: 8px 0 0; font-size: clamp(24px, 2.5vw, 31px); font-weight: 570; letter-spacing: -0.035em; }

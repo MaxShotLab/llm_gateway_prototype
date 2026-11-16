@@ -38,10 +38,10 @@ import { FundingPage } from "./pages/FundingPage";
 import { TokenomicsPage, ProviderMarketPage, initialTokenState } from "./pages/TokenomicsPage";
 import { PortfolioPage, VaultsPage, prototypeWallet } from "./pages/UnifiedPortfolioPage";
 import { StudioPage, platformWorks } from "./pages/StudioPage";
-import { PricingPage } from "./pages/PricingPage";
 import { SharedWorkPage, StartersPage } from "./pages/GrowthPage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { createBillingScenario, getBillingTotals, getSubscriptionWindows } from "./data/billingData";
+import { sampleCreditsPerUsd, sampleOfferingLabel } from "./data/sampleRequest";
 
 const phaseOneNavItems = [
   { id: "portfolio", label: "Portfolio", Icon: ChartPieSlice },
@@ -77,10 +77,6 @@ const protectedPageCopy = {
     label: "Portfolio",
     description: "Your Vault deposits, token position, and Gateway account require login.",
   },
-  vaults: {
-    label: "Vaults",
-    description: "Vault balances and transactions require a linked wallet.",
-  },
   tokens: {
     label: "Tokens",
     description: "Wallet positions, staking, and Earned Credit require an account.",
@@ -112,6 +108,7 @@ const mockUsage = [
     time: "Jun 11, 11:32",
     source: "Chat",
     model: "MiniMax-M3",
+    provider: "OpenRouter",
     input: "2,481",
     output: "3,147",
     subscriptionCost: 5_628,
@@ -125,6 +122,7 @@ const mockUsage = [
     time: "Jun 11, 09:18",
     source: "API",
     model: "GPT-5 mini",
+    provider: "OpenRouter",
     input: "1,907",
     output: "2,642",
     subscriptionCost: 4_549,
@@ -138,6 +136,7 @@ const mockUsage = [
     time: "Jun 10, 17:44",
     source: "Chat",
     model: "Claude Sonnet 4.6",
+    provider: "Provider B",
     input: "4,221",
     output: "9,885",
     subscriptionCost: 10_000,
@@ -151,6 +150,7 @@ const mockUsage = [
     time: "Jun 10, 15:22",
     source: "Studio",
     model: "Image model",
+    provider: "OpenRouter",
     input: "—",
     output: "1 image",
     subscriptionCost: 120_000,
@@ -164,6 +164,7 @@ const mockUsage = [
     time: "Jun 10, 14:55",
     source: "Studio",
     model: "Video model",
+    provider: "—",
     input: "—",
     output: "8 sec",
     subscriptionCost: 0,
@@ -178,6 +179,7 @@ const mockUsage = [
     time: "Jun 10, 14:22",
     source: "Studio",
     model: "Video model",
+    provider: "—",
     input: "—",
     output: "—",
     subscriptionCost: 0,
@@ -191,6 +193,7 @@ const mockUsage = [
     time: "Jun 10, 14:06",
     source: "API",
     model: "Gemini 3.1 Pro",
+    provider: "OpenRouter",
     input: "2,814",
     output: "4,023",
     subscriptionCost: 0,
@@ -203,6 +206,7 @@ const mockUsage = [
     time: "Jun 09, 20:51",
     source: "Chat",
     model: "DeepSeek V4 Flash",
+    provider: "OpenRouter",
     input: "1,102",
     output: "1,398",
     subscriptionCost: 0,
@@ -220,9 +224,8 @@ const dashboardChartData = {
 };
 
 const referralConfig = {
-  rewardRate: 10,
+  rewardRate: 1,
   capDollars: 50,
-  mockCreditsPerDollar: 1_000_000,
   code: "ms-demo-referral",
   link: "https://gateway.maxshot.ai/?ref=ms-demo-referral",
 };
@@ -232,16 +235,34 @@ const referralTopUps = [
     id: "ref-1042",
     user: "alex@builder.dev",
     joined: "Jun 12, 2026",
-    topUp: 100_000_000,
-    status: "Confirmed",
+    topUpCents: 10_000,
+    status: "Credited",
   },
   {
     id: "ref-1037",
     user: "mia@studio.ai",
     joined: "Jun 10, 2026",
-    topUp: 250_000_000,
-    status: "Confirmed",
+    topUpCents: 25_000,
+    status: "Pending",
   },
+  {
+    id: "ref-1031",
+    user: "kai@agent.dev",
+    joined: "Jun 8, 2026",
+    topUpCents: 3_000,
+    status: "Needs attention",
+  },
+];
+
+const partnerReferrals = [
+  { name: "Hyperliquid", type: "Perps DEX", logo: "/hyperliquid.png", connected: true, discount: "4% fee discount", earned: "12.4 AIT", href: "https://app.hyperliquid.xyz/join/MAXSHOT", eligibility: ["Rewards apply to the first $1B in lifetime volume per referee.", "At least one transaction on Hyperliquid activates the referral."] },
+  { name: "Polymarket", type: "Prediction market", logo: "/polymarket.png", connected: false, discount: "0% fee discount", earned: "—", href: "https://polymarket.com/?r=MaxshotAI", eligibility: ["New Polymarket accounts only.", "Valid for the first 180 days from account creation."] },
+];
+
+const partnerRewardHistory = [
+  { id: "#10", period: "Oct 9 → Oct 23, 2026", distribution: "24.00", earned: "8.2 AIT", status: "Claimable" },
+  { id: "#9", period: "Sep 25 → Oct 9, 2026", distribution: "18.00", earned: "4.2 AIT", status: "Claimed" },
+  { id: "#8", period: "Sep 11 → Sep 25, 2026", distribution: "0.00", earned: "—", status: "No reward" },
 ];
 
 const starterMemories = [
@@ -434,13 +455,14 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
 
           {user ? (
             <div className="topbar-account">
-              <a className="credit-pill" href="#" onClick={(event) => { event.preventDefault(); onNavigate("topup"); }}>
+              <a className="credit-pill" href="#" aria-label={`$${(dollarBalanceCents / 100).toFixed(2)} Dollar balance`} onClick={(event) => { event.preventDefault(); onNavigate("topup"); }}>
                 ${(dollarBalanceCents / 100).toFixed(2)}
                 <small>Dollar balance</small>
               </a>
               <div className="account-menu-wrap">
                 <button
                   className="account-button"
+                  aria-label={`Account: ${user}`}
                   onClick={() => setAccountOpen((open) => !open)}
                   aria-expanded={accountOpen}
                   aria-haspopup="menu"
@@ -547,7 +569,7 @@ function NavGroup({ items, active, collapsed, user, onNavigate }) {
 
     return (
       <button
-        className={`nav-item ${active === item.id ? "active" : ""} ${locked ? "locked" : ""}`}
+        className={`nav-item ${active === item.id || (active === "pricing" && item.id === "providers") ? "active" : ""} ${locked ? "locked" : ""}`}
         key={item.id}
         onClick={() => onNavigate(item.id)}
         title={locked ? "Log in required" : collapsed ? item.label : undefined}
@@ -555,7 +577,7 @@ function NavGroup({ items, active, collapsed, user, onNavigate }) {
         aria-disabled={locked}
         disabled={locked}
       >
-        <item.Icon size={19} weight={active === item.id ? "duotone" : "regular"} />
+        <item.Icon size={19} weight={active === item.id || (active === "pricing" && item.id === "providers") ? "duotone" : "regular"} />
         <span>{item.label}</span>
       </button>
     );
@@ -651,17 +673,22 @@ function DeferredNotice({ title }) {
 }
 
 function ReferralPage() {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState("");
   const [program, setProgram] = useState("gateway");
-  const confirmedTopUps = referralTopUps.filter((item) => item.status === "Confirmed");
-  const rewardFor = (item) => Math.min(item.topUp / 1_000_000 * referralConfig.rewardRate / 100, referralConfig.capDollars) * referralConfig.mockCreditsPerDollar;
-  const confirmedTopUp = confirmedTopUps.reduce((sum, item) => sum + item.topUp, 0);
+  const [rewardStatus, setRewardStatus] = useState("All");
+  const [sharePreview, setSharePreview] = useState("");
+  const confirmedTopUps = referralTopUps.filter((item) => item.status === "Credited");
+  const pendingTopUps = referralTopUps.filter((item) => item.status === "Pending");
+  const rewardFor = (item) => Math.min(Math.floor(item.topUpCents * referralConfig.rewardRate * sampleCreditsPerUsd / 10_000), referralConfig.capDollars * sampleCreditsPerUsd);
+  const confirmedTopUp = confirmedTopUps.reduce((sum, item) => sum + item.topUpCents, 0);
   const earnedRewards = confirmedTopUps.reduce((sum, item) => sum + rewardFor(item), 0);
+  const pendingRewards = pendingTopUps.reduce((sum, item) => sum + rewardFor(item), 0);
+  const visibleTopUps = rewardStatus === "All" ? referralTopUps : referralTopUps.filter((item) => item.status === rewardStatus);
 
-  const copyReferralLink = (link) => {
-    navigator.clipboard?.writeText(link);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+  const copyReferralValue = (value, field) => {
+    navigator.clipboard?.writeText(value);
+    setCopied(field);
+    window.setTimeout(() => setCopied(""), 1600);
   };
 
   return (
@@ -671,8 +698,8 @@ function ReferralPage() {
       />
 
       <div className="billing-scope-tabs" role="tablist" aria-label="Referral program">
-        <button className={program === "gateway" ? "active" : ""} onClick={() => { setProgram("gateway"); setCopied(false); }} role="tab" aria-selected={program === "gateway"}>Gateway referrals</button>
-        <button className={program === "vaults" ? "active" : ""} onClick={() => { setProgram("vaults"); setCopied(false); }} role="tab" aria-selected={program === "vaults"}>Vault referrals</button>
+        <button className={program === "gateway" ? "active" : ""} onClick={() => { setProgram("gateway"); setCopied(""); }} role="tab" aria-selected={program === "gateway"}>Maxshot Referrals Program</button>
+        <button className={program === "partner" ? "active" : ""} onClick={() => { setProgram("partner"); setCopied(""); }} role="tab" aria-selected={program === "partner"}>Partner Referral Program</button>
       </div>
 
       {program === "gateway" && <>
@@ -680,38 +707,25 @@ function ReferralPage() {
       <section className="referral-hero panel">
         <div>
           <h2>Invite users. Earn confirmed rewards.</h2>
-          <p>Share your link. Earn promotional Credits worth 10% of confirmed top-ups, up to $50 per referee.</p>
+          <p>Share your link. Example reward: {referralConfig.rewardRate}% of a referred user's confirmed Dollar-balance top-up, granted as promotional Credits. Final program terms are pending.</p>
+          <ol className="referral-steps">
+            <li><strong>1</strong><span><b>Share Invite</b><small>Send your personal link or code to friends and community.</small></span></li>
+            <li><strong>2</strong><span><b>Friends Top Up</b><small>New users add Dollar balance; subscription payments do not qualify.</small></span></li>
+            <li><strong>3</strong><span><b>Earn example Credits</b><small>Illustrative {referralConfig.rewardRate}% rate and {sampleCreditsPerUsd.toLocaleString()} Credits/$1 conversion; final terms are pending.</small></span></li>
+          </ol>
         </div>
         <div className="referral-link-box">
-          <small>Your referral code</small>
-          <code>{referralConfig.code}</code>
-          <small>Your referral link</small>
-          <code>{referralConfig.link}</code>
-          <button className="secondary-button compact" onClick={() => copyReferralLink(referralConfig.link)}>
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? "Copied" : "Copy link"}
-          </button>
+          <div className="referral-link-field"><span>Your Referral Code</span><div><code>{referralConfig.code}</code><button className="secondary-button compact" onClick={() => copyReferralValue(referralConfig.code, "code")}>{copied === "code" ? <Check size={14} /> : <Copy size={14} />}{copied === "code" ? "Copied" : "Copy code"}</button></div></div>
+          <div className="referral-link-field"><span>Your Referral Link</span><div><code>{referralConfig.link}</code><button className="primary-button compact" onClick={() => copyReferralValue(referralConfig.link, "link")}>{copied === "link" ? <Check size={14} /> : <Copy size={14} />}{copied === "link" ? "Copied" : "Copy link"}</button></div></div>
+          <div className="referral-share-actions"><button className="secondary-button compact" onClick={() => setSharePreview("X")}>Share on X</button><button className="secondary-button compact" onClick={() => setSharePreview("Telegram")}>Telegram</button><button className="secondary-button compact" onClick={() => setSharePreview("Share")}>Share</button></div>
+          {sharePreview && <p role="status" className="referral-share-preview">{sharePreview} preview: {referralConfig.link}</p>}
         </div>
-      </section>
-
-      <section className="referral-rules">
-        <article>
-          <strong>1</strong>
-          <span>Registered users can invite.</span>
-        </article>
-        <article>
-          <strong>{referralConfig.rewardRate}%</strong>
-          <span>Of confirmed top-ups, capped at $50 per referee.</span>
-        </article>
-        <article>
-          <strong>Auto</strong>
-          <span>Confirmed rewards are credited automatically.</span>
-        </article>
       </section>
 
       <section className="metric-grid referral-metrics">
-        <MetricCard label="Earned rewards" value={earnedRewards.toLocaleString()} note="Confirmed promotional Credits · mock conversion" />
-        <MetricCard label="Confirmed top-up" value={`$${(confirmedTopUp / 1_000_000).toFixed(2)}`} note="Measured referee volume" />
+        <MetricCard label="Earned rewards" value={earnedRewards.toLocaleString()} note="Confirmed promotional Credits" />
+        <MetricCard label="Confirmed top-up" value={`$${(confirmedTopUp / 100).toFixed(2)}`} note="Dollar balance added · USD" />
+        <MetricCard label="Pending rewards" value={pendingRewards.toLocaleString()} note="Potential promotional Credits" />
         <MetricCard label="Referred accounts" value={referralTopUps.length.toLocaleString()} note="Unique attributed accounts" />
       </section>
 
@@ -719,32 +733,34 @@ function ReferralPage() {
         <div className="panel-heading">
           <div>
             <h2>Referred top-ups</h2>
-            <p>{referralTopUps.length} attributed accounts.</p>
           </div>
+          <select aria-label="Reward status" value={rewardStatus} onChange={(event) => setRewardStatus(event.target.value)}><option>All</option><option>Credited</option><option>Pending</option><option>Needs attention</option></select>
         </div>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
+                <th>Date</th>
                 <th>Referee</th>
-                <th>Joined</th>
                 <th>Top-up</th>
                 <th>Reward</th>
                 <th>Status</th>
+                <th>Copy order ID</th>
               </tr>
             </thead>
             <tbody>
-              {referralTopUps.map((item) => (
+              {visibleTopUps.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.user}</td>
                   <td>{item.joined}</td>
-                  <td>${(item.topUp / 1_000_000).toFixed(2)}</td>
-                  <td>{rewardFor(item).toLocaleString()} Credits</td>
+                  <td>{item.user}</td>
+                  <td>${(item.topUpCents / 100).toFixed(2)}</td>
+                  <td>{item.status === "Needs attention" ? "—" : `${rewardFor(item).toLocaleString()} Credits`}</td>
                   <td>
-                    <span className={`status-pill ${item.status === "Confirmed" ? "success" : "neutral"}`}>
+                    <span className={`status-pill ${item.status === "Credited" ? "success" : "neutral"}`}>
                       <i /> {item.status}
                     </span>
                   </td>
+                  <td><button className="secondary-button compact" onClick={() => copyReferralValue(item.id, item.id)}>{copied === item.id ? "Copied" : "Copy"}</button></td>
                 </tr>
               ))}
             </tbody>
@@ -753,29 +769,23 @@ function ReferralPage() {
       </section>
       </>}
 
-      {program === "vaults" && <>
-        <section className="referral-hero panel">
-          <div>
-            <span className="eyebrow">Vault depositor audience</span>
-            <h2>Invite people to Vaults</h2>
-            <p>Vault referrals have their own attribution, reward rules, and history. Gateway top-ups do not count toward this program.</p>
-          </div>
-          <div className="referral-link-box">
-            <small>Vault referral link · example</small>
-            <code>https://gateway.maxshot.ai/vaults?ref=ms-demo-vault</code>
-            <button className="secondary-button compact" onClick={() => copyReferralLink("https://gateway.maxshot.ai/vaults?ref=ms-demo-vault")}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Copied" : "Copy link"}</button>
-          </div>
-        </section>
-        <section className="panel referral-table-panel">
-          <div className="panel-heading"><div><h2>Vault referral activity</h2><p>Attribution and reward history for the linked wallet are separate from Gateway referrals.</p></div></div>
-          <p className="unified-empty-note">No Vault referral activity in this example account. Reward amounts and eligibility follow the existing Vault referral program.</p>
-        </section>
+      {program === "partner" && <>
+        <div className="referral-partner-intro"><h2>Partner Referral Program</h2><p>Trade on partner platforms using Maxshot's referral link or by binding your account to earn AIT rewards.</p></div>
+        <section className="panel referral-partner-summary"><div><span>Platforms Active</span><strong>2</strong></div><div><span>Distributing AIT</span><strong>12.4 <small>AIT · example</small></strong></div></section>
+        <h3 className="referral-partner-heading">Active Partners</h3>
+        <section className="referral-partner-grid">{partnerReferrals.map((partner) => <article className="panel" key={partner.name}>
+          <header><img src={partner.logo} alt="" /><div><strong>{partner.name}</strong><small>{partner.type}</small></div><span className="referral-partner-state">{partner.connected ? "Referral Connected" : "Referral Not Connected"}</span></header>
+          <div className="referral-partner-stats"><div><small>Fee Discount</small><strong>{partner.discount}</strong></div><div><small>My earned</small><strong>{partner.earned}</strong></div></div>
+          <div className="referral-partner-action"><a className="secondary-button compact" href={partner.href} target="_blank" rel="noreferrer">Trade on {partner.name} ↗</a></div>
+          <div className="referral-partner-eligibility"><strong>Eligibility:</strong>{partner.eligibility.map((rule) => <p key={rule}>· {rule}</p>)}</div>
+        </article>)}</section>
+        <section className="panel referral-table-panel"><div className="panel-heading"><div><h2>AIT Reward History</h2><p>Illustrative 14-day partner distribution cycles.</p></div></div><div className="table-scroll"><table><thead><tr><th>Id</th><th>Period</th><th>Epoch Distribution</th><th>My Earnings</th><th>Status</th></tr></thead><tbody>{partnerRewardHistory.map((item) => <tr key={item.id}><td>{item.id}</td><td>{item.period}</td><td>{item.distribution}</td><td>{item.earned}</td><td><span className={`status-pill ${item.status === "Claimable" ? "success" : "neutral"}`}><i /> {item.status}</span></td></tr>)}</tbody></table></div></section>
       </>}
     </main>
   );
 }
 
-function UsagePage({ billing, embedded = false }) {
+function UsagePage({ billing, sampleUsage, embedded = false }) {
   const periods = ["7 days", "30 days", "All"];
   const [activePeriod, setActivePeriod] = useState("30 days");
   const chartData = dashboardChartData[activePeriod];
@@ -883,6 +893,19 @@ function UsagePage({ billing, embedded = false }) {
         </div>
       </section>
 
+      {sampleUsage && <section className="panel sample-usage-detail" aria-label="Illustrative request detail">
+        <div className="panel-heading"><div><h2>Latest simulated request</h2><p>{sampleUsage.time} · Chat · {sampleUsage.model} · no provider call or balance change</p></div></div>
+        <div className="sample-usage-grid">
+          <div><small>Selected offering</small><strong>{sampleOfferingLabel(sampleUsage.selected)}</strong><span>Rate {sampleUsage.selected.customerRateCard.rateCardVersion}</span></div>
+          <div><small>Serving offering</small><strong>{sampleOfferingLabel(sampleUsage.serving)}</strong><span>Rate {sampleUsage.serving.customerRateCard.rateCardVersion} · {sampleUsage.fallbackReason || "no fallback"}</span></div>
+          <div><small>Verified billable units</small><strong>{sampleUsage.units.input.toLocaleString()} input · {sampleUsage.units.output.toLocaleString()} output tokens</strong><span>Sample conversion {sampleCreditsPerUsd.toLocaleString()} Credits/$1</span></div>
+          <div><small>Authorization</small><strong>Estimate {sampleUsage.estimate.toLocaleString()} · maximum {sampleUsage.maximum.toLocaleString()} Credits</strong><span>Bound 1,000 input / 800 output tokens; reserved {sampleUsage.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {sampleUsage.reserved.subscription.toLocaleString()} Premium</span></div>
+          <div><small>Settled once</small><strong>{sampleUsage.charge.toLocaleString()} Credits final charge</strong><span>Used {sampleUsage.used.earned.toLocaleString()} AIT Earned Credit + {sampleUsage.used.subscription.toLocaleString()} Premium</span></div>
+          <div><small>Unused hold released</small><strong>{(sampleUsage.released.earned + sampleUsage.released.subscription).toLocaleString()} Credits</strong><span>{sampleUsage.released.earned.toLocaleString()} to original AIT Earned Credit grant/expiry + {sampleUsage.released.subscription.toLocaleString()} to Premium</span></div>
+        </div>
+        <p>Illustrative funded-term scenario. The account above has no active AIT Earned Credit term; this record does not update its balances.</p>
+      </section>}
+
       <section className="panel table-panel">
         <div className="panel-heading">
           <div>
@@ -897,6 +920,7 @@ function UsagePage({ billing, embedded = false }) {
                 <th>Time</th>
                 <th>Source</th>
                 <th>Model</th>
+                <th>Serving provider</th>
                 <th>Input</th>
                 <th>Output / units</th>
                 <th>Credit cost</th>
@@ -915,6 +939,7 @@ function UsagePage({ billing, embedded = false }) {
                   <td>{row.time}</td>
                   <td>{row.source}</td>
                   <td>{row.model}</td>
+                  <td>{row.provider}</td>
                   <td>{row.input}</td>
                   <td>{row.output}</td>
                   <td>{row.subscriptionReserved && billingView === "subscription" ? `0 (${row.subscriptionReserved.toLocaleString()} reserved)` : viewCost.toLocaleString()}</td>
@@ -1490,6 +1515,7 @@ export function App() {
   const [billing, setBilling] = useState(() => createBillingScenario("active"));
   const [tokenState, setTokenState] = useState(initialTokenState);
   const [freeRequestsUsed, setFreeRequestsUsed] = useState(0);
+  const [sampleUsage, setSampleUsage] = useState(null);
   useEffect(() => { localStorage.setItem("maxshot-demo-public-works", JSON.stringify(publicWorks)); }, [publicWorks]);
   useEffect(() => {
     const syncLocation = () => {
@@ -1550,7 +1576,7 @@ export function App() {
         />
       );
     }
-    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} initialView="usage" usageContent={<UsagePage billing={billing} embedded />} />;
+    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} initialView="usage" usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
     if (active === "studio") return <StudioPage billing={billing} canGenerateAccount={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to generate."); setLoginOpen(true); }} seed={studioSeed} onSeedConsumed={() => setStudioSeed(null)} publicWorks={publicWorks} onPublish={(work) => setPublicWorks((current) => [publicWork(work), ...current.filter((item) => item.id !== work.id)])} onUnshare={(id) => setPublicWorks((current) => current.filter((item) => item.id !== id))} onOpenShare={openShare} />;
     if (active === "starters") return <StartersPage canRun={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to run this example."); setLoginOpen(true); }} onOpenStudio={openStudio} onPricing={() => navigate("pricing")} onApi={() => navigate("api")} onPlayground={() => navigate("playground")} />;
     if (active === "playground") return <PlaygroundPage onOpenChat={(prompt) => { setChatSeed(prompt); navigate("chat"); }} onOpenStudio={openStudio} onApi={() => navigate("api")} onPricing={() => navigate("pricing")} />;
@@ -1558,11 +1584,11 @@ export function App() {
       const source = `Share: ${work.id}${new URLSearchParams(window.location.search).get("via") === "x" ? " via X" : ""}`;
       openStudio(work.mode === "method" ? { kind: work.kind, path: work.path, model: work.model, prompt: work.prompt, resolution: work.resolution, source } : { kind: work.kind, mode: "result", source });
     }} />;
-    if (active === "pricing") return <PricingPage />;
+    if (active === "pricing") return <ProviderMarketPage initialView="Models & Pricing" />;
     if (active === "api") return <SettingsPage user={user} onLogout={logout} initialView="developer" />;
-    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} usageContent={<UsagePage billing={billing} embedded />} />;
+    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
     if (active === "portfolio") return <PortfolioPage billing={billing} tokenState={tokenState} onNavigate={navigate} />;
-    if (active === "vaults") return <VaultsPage onPortfolio={() => navigate("portfolio")} />;
+    if (active === "vaults") return <VaultsPage accountSignedIn={Boolean(user)} onPortfolio={() => navigate("portfolio")} />;
     if (active === "tokens") return <TokenomicsPage state={tokenState} setState={setTokenState} onCredits={() => navigate("topup")} />;
     if (active === "providers") return <ProviderMarketPage />;
     if (active === "referral") return <ReferralPage />;
@@ -1580,9 +1606,10 @@ export function App() {
         freeRequestsUsed={freeRequestsUsed}
         onFreeRequest={() => setFreeRequestsUsed((used) => used + 1)}
         onCreditsRequired={() => navigate("topup")}
+        onUsageRecorded={setSampleUsage}
       />
     );
-  }, [active, billing, tokenState, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed]);
+  }, [active, billing, tokenState, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed, sampleUsage]);
 
   return (
     <div className={`app-theme theme-${theme}`}>

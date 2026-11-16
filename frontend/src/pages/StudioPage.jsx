@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUp, DownloadSimple, MagicWand, Plus, ShareNetwork, Trash, UploadSimple } from "@phosphor-icons/react";
 import { getBillingTotals } from "../data/billingData";
+import { getUsableModels, providerSnapshot } from "../data/providerCatalog";
+import { sampleCreditsPerUsd, sampleImageQuote, sampleOfferingLabel, sampleVideoQuote } from "../data/sampleRequest";
 import "./studio.css";
 
 const paths = {
@@ -8,10 +10,14 @@ const paths = {
   Video: ["Text to Video", "Image to Video"],
 };
 
+const modelNames = Object.fromEntries(providerSnapshot.models.map((model) => [model.modelId, model.displayName]));
+const catalogModels = providerSnapshot.models.filter((item) => item.modality === "image" || item.modality === "video");
+const availableModels = new Set(["image", "video"].flatMap((modality) => getUsableModels(providerSnapshot, modality).map((model) => model.displayName)));
 const models = {
-  Image: ["Seedream 5.0 Flash", "Seedream 4.5", "Seedream 5.0 Pro", "Grok Imagine Image 2.0", "FLUX 3 Image", "Recraft V4"],
-  Video: ["Seedance 2.0 Mini", "Veo 3.1 Fast", "Wan 3.0", "Seedance 2.5", "Veo 3.1 Lite"],
+  Image: catalogModels.filter((item) => item.modality === "image" && availableModels.has(modelNames[item.modelId])).map((item) => modelNames[item.modelId]),
+  Video: catalogModels.filter((item) => item.modality === "video" && availableModels.has(modelNames[item.modelId])).map((item) => modelNames[item.modelId]),
 };
+const defaultModel = (kind) => models[kind][0] || "";
 
 const soundtrackModels = new Set(["Seedance 2.0 Mini", "Seedance 2.5", "Wan 3.0"]);
 
@@ -53,7 +59,7 @@ function GalleryCard({ item, onOpen, onTry }) {
 export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed, onSeedConsumed, publicWorks, onPublish, onUnshare, onOpenShare }) {
   const [kind, setKind] = useState("Image");
   const [path, setPath] = useState("Text to Image");
-  const [model, setModel] = useState(models.Image[0]);
+  const [model, setModel] = useState(defaultModel("Image"));
   const [prompt, setPrompt] = useState("");
   const [resolution, setResolution] = useState("1K");
   const [aspect, setAspect] = useState("16:9");
@@ -82,7 +88,7 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
     if (!seed) return;
     setKind(seed.kind);
     setPath(seed.mode === "result" ? paths[seed.kind][0] : seed.path);
-    setModel(seed.mode === "result" ? models[seed.kind][0] : seed.model);
+    setModel(seed.mode === "result" || !models[seed.kind].includes(seed.model) ? defaultModel(seed.kind) : seed.model);
     setPrompt(seed.mode === "result" ? "" : seed.prompt);
     setResolution(seed.resolution || (seed.kind === "Image" ? "1K" : "720p"));
     setReferences([]);
@@ -90,7 +96,7 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
     setFirstFrame("");
     setLastFrame("");
     setSourceAttribution(seed.source || "Shared method");
-    setNotice(seed.mode === "result" ? "Start a new creation. No source inputs were copied." : models[seed.kind].includes(seed.model) ? `${seed.source || "Shared method"} loaded. Review the settings before generating.` : `${seed.model} is unavailable. Choose another model before generating.`);
+    setNotice(seed.mode === "result" ? "Start a new creation. No source inputs were copied." : models[seed.kind].includes(seed.model) ? `${seed.source || "Shared method"} loaded. Review the settings before generating.` : `${seed.model} is no longer in the usable list. Switched to ${defaultModel(seed.kind)}; review the settings before generating.`);
     onSeedConsumed();
   }, [seed, onSeedConsumed]);
 
@@ -100,17 +106,19 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
   const totals = getBillingTotals(billing);
   const isReferencePath = path.startsWith("Image to");
   const modelUnavailable = !models[kind].includes(model);
+  const modelId = catalogModels.find((item) => modelNames[item.modelId] === model)?.modelId;
+  const sampleQuote = modelUnavailable ? null : kind === "Image" ? sampleImageQuote(modelId, resolution) : sampleVideoQuote(modelId, resolution, duration);
   const needsReferences = isReferencePath && (firstLast && kind === "Video" ? !firstFrame || !lastFrame : references.length === 0);
   const baseCost = kind === "Video" ? 300_000 : 120_000;
-  const estimate = Math.round(baseCost * (resolution === "2K" || resolution === "1080p" ? 1.5 : 1) * (kind === "Video" ? duration / 4 : 1));
-  const hold = Math.ceil(estimate * 1.15);
+  const estimate = sampleQuote?.estimate ?? Math.round(baseCost * (resolution === "2K" || resolution === "1080p" ? 1.5 : 1) * (kind === "Video" ? duration / 4 : 1));
+  const hold = sampleQuote?.maximum ?? Math.ceil(estimate * 1.15);
   const available = totals.premiumRemaining + totals.promotionalCredits + totals.dollarBalanceCents * 10_000;
   const canGenerate = Boolean(prompt.trim()) && !modelUnavailable && !needsReferences && (audio !== "Upload soundtrack" || Boolean(soundtrack)) && prompt.length <= 5000 && (!canGenerateAccount || available >= hold);
 
   const switchKind = (next) => {
     setKind(next);
     setPath(paths[next][0]);
-    setModel(models[next][0]);
+    setModel(defaultModel(next));
     setResolution(next === "Image" ? "1K" : "720p");
     setAudio("Model audio");
     setReferences([]);
@@ -133,7 +141,7 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
     }
     setKind(item.kind);
     setPath(item.path);
-    setModel(item.model);
+    setModel(models[item.kind].includes(item.model) ? item.model : defaultModel(item.kind));
     setPrompt(item.prompt);
     setResolution(item.resolution || (item.kind === "Image" ? "1K" : "720p"));
     setAudio("Model audio");
@@ -144,7 +152,7 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
     setLastFrame("");
     setDetailRef(null);
     setSourceAttribution(source === "mine" ? "" : `Share: ${item.id}`);
-    setNotice(!models[item.kind].includes(item.model) ? `${item.model} is unavailable. Choose another model before generating.` : item.references?.length ? "Reference files belong to the original creator. Upload your own to try this." : `Loaded ${source === "mine" ? "your" : "the creator's"} prompt and settings. Review them before generating.`);
+    setNotice(!models[item.kind].includes(item.model) ? `${item.model} is no longer in the usable list. Switched to ${defaultModel(item.kind)}; review the settings before generating.` : item.references?.length ? "Reference files belong to the original creator. Upload your own to try this." : `Loaded ${source === "mine" ? "your" : "the creator's"} prompt and settings. Review them before generating.`);
     document.querySelector(".studio-page")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -258,15 +266,16 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
             </div>}
             <label className="studio-prompt"><textarea value={prompt} maxLength={5000} onChange={(event) => setPrompt(event.target.value)} placeholder={`Describe the ${kind.toLowerCase()} you want to create...`} /><span>{prompt.length} / 5,000</span></label>
             <div className="studio-controls">
-              <label>Model<select aria-label="Model" value={model} onChange={(event) => { setModel(event.target.value); if (!soundtrackModels.has(event.target.value)) { setAudio("Model audio"); setSoundtrack(""); } }}>{modelUnavailable && <option value={model} disabled>Unavailable: {model}</option>}{models[kind].map((option) => <option key={option}>{option}</option>)}</select></label>
+              <label>Model<select aria-label="Model" value={model} onChange={(event) => { setModel(event.target.value); if (!soundtrackModels.has(event.target.value)) { setAudio("Model audio"); setSoundtrack(""); } }}>{models[kind].map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
               <label>Aspect<select aria-label="Aspect ratio" value={aspect} onChange={(event) => setAspect(event.target.value)}>{["16:9", "9:16", "1:1", "4:3"].map((option) => <option key={option}>{option}</option>)}</select></label>
               <label>Resolution<select aria-label="Resolution" value={resolution} onChange={(event) => setResolution(event.target.value)}>{(kind === "Image" ? ["1K", "2K"] : ["720p", "1080p"]).map((option) => <option key={option}>{option}</option>)}</select></label>
               {kind === "Video" && <><label>Duration<select aria-label="Duration" value={duration} onChange={(event) => setDuration(Number(event.target.value))}>{[4, 6, 8].map((option) => <option key={option} value={option}>{option}s</option>)}</select></label><label>Audio<select aria-label="Audio" value={audio} onChange={(event) => setAudio(event.target.value)}><option>Model audio</option><option>No audio</option>{soundtrackModels.has(model) && <option>Upload soundtrack</option>}</select></label></>}
               {path === "Image to Image" && <label>Reference strength<select aria-label="Reference strength" value={strength} onChange={(event) => setStrength(event.target.value)}><option>Low</option><option>Medium</option><option>High</option></select></label>}
               <button className="studio-optimize" disabled={!prompt.trim()} onClick={() => { setPrompt((value) => `${value.trim()}\nClear composition, coherent lighting, detailed textures.`); setNotice("Prompt optimization is simulated; no Credits were used."); }} title="Simulated prompt optimization"><MagicWand size={17} /> Optimize</button>
             </div>
+            {sampleQuote && <div className="studio-sample-quote" aria-label="Illustrative media request quote"><strong>Illustrative request quote</strong><span>{sampleOfferingLabel(sampleQuote.selected)} · rate {sampleQuote.selected.customerRateCard.rateCardVersion}{sampleQuote.backup ? " · same-model fallback covered" : ""}</span><span>Estimate {sampleQuote.estimate.toLocaleString()} Credits · hard maximum {sampleQuote.maximum.toLocaleString()} Credits · {kind === "Image" ? `one ${resolution} image` : `${duration}s ${resolution} video`}</span><span>Reserve: {sampleQuote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {sampleQuote.reserved.subscription.toLocaleString()} Premium Credits</span><small>Sample conversion {sampleCreditsPerUsd.toLocaleString()} Credits/$1. No funded AIT Earned Credit term is active; generation does not debit balances.</small></div>}
             {kind === "Video" && audio === "Upload soundtrack" && <label className="studio-soundtrack">Soundtrack (MP3 or WAV)<input type="file" accept="audio/mpeg,audio/wav" onChange={(event) => setSoundtrack(event.target.files?.[0]?.name || "")} /><span>{soundtrack || "Choose audio file"}</span></label>}
-            <div className="studio-submit-row"><p>{modelUnavailable ? <strong>{model} is unavailable. Select a current model to continue.</strong> : prompt.trim() ? <>Estimated {estimate.toLocaleString()} Credits · hold {hold.toLocaleString()} <span>· illustrative</span></> : "Enter a prompt to see an illustrative Credit estimate."}{available < hold && prompt.trim() && !modelUnavailable && <strong> Insufficient mock balance.</strong>}{sourceAttribution && <span> · Source: {sourceAttribution}</span>}</p><button className="studio-generate" disabled={!canGenerate} onClick={generate} aria-label="Generate"><ArrowUp size={19} /></button></div>
+            <div className="studio-submit-row"><p>{modelUnavailable ? <strong>{model} is unavailable. Select a current model to continue.</strong> : prompt.trim() ? <>Illustrative maximum {hold.toLocaleString()} Credits · no balance change</> : "Enter a prompt to simulate a request."}{available < hold && prompt.trim() && !modelUnavailable && <strong> Insufficient mock balance.</strong>}{sourceAttribution && <span> · Source: {sourceAttribution}</span>}</p><button className="studio-generate" disabled={!canGenerate} onClick={generate} aria-label="Generate"><ArrowUp size={19} /></button></div>
           </section>
           {canGenerateAccount && <section className="studio-library"><div className="studio-section-heading"><div><h2>My Creations</h2><p>Sample creations and simulated job states</p></div><select aria-label="Filter creation status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>{["All status", "Generated", "Pending", "Failed"].map((option) => <option key={option}>{option}</option>)}</select></div>
             <div className="studio-filter-tabs" role="tablist" aria-label="Filter My Creations">{["All", "Image", "Video"].map((option) => <button key={option} role="tab" aria-selected={mineFilter === option} className={mineFilter === option ? "active" : ""} onClick={() => setMineFilter(option)}>{option}</button>)}</div>

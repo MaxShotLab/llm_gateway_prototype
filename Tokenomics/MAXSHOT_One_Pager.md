@@ -19,7 +19,7 @@ flowchart LR
   M[Eligible MAX] --> L[Lock MAX / mint AIT]
   L --> S[Stake AIT]
   T[Real Treasury receipts and approved income] --> R[Prefunded reserve]
-  R --> C[Finite Earned Compute Credit]
+  R --> C[Finite AIT Earned Credit]
   S --> C --> G
   Q[Qualified PT/MAX market] --> F[Collectible net fees: 50% LP / 30% MAX stakers / 20% AIT buyback reserve]
 ```
@@ -28,11 +28,11 @@ flowchart LR
 
 | Layer | User-facing promise | Required control |
 |---|---|---|
-| Gateway | Existing crypto-deposit funding, dynamic verified model catalog, one Agent per account and bounded calls | Lowest-cost eligible provider by deterministic policy; preauthorize cost and reconcile each request |
+| Gateway | Existing crypto-deposit funding, dynamic verified model catalog, and a versioned agent-style integration path for bounded external-agent calls | Maintain at least five usable models per enabled text/image/video catalog; show only usable models in Chat/Studio. Route by deterministic policy, disclose estimate and hard maximum, reserve that maximum, and reconcile one capped charge |
 | Provider market | Real, benchmarked inference supply competing on quality, price and reliability | Verify identity, supply rights, model delivery and settlement |
 | MAX/AIT | Eligible MAX can be locked to mint tradable AIT into one merged position; burn owed AIT to begin MAX redemption | Blended MAX/AIT ratio, seven-day latest-burn wait, deterministic curve, cap and anti-reset logic |
-| Earned Credit | Qualified Ethereum-staked AIT earns a simple service allowance within an approved funded term | Off-chain shared account ledger; automatic seven-day epochs and grants; catalog-based model eligibility |
-| Agent growth | Verified setup guide, agent budgets, finite referrals and Compute Drops | No guessed endpoints, unbounded keys or unfunded rewards |
+| AIT Earned Credit | Qualified Ethereum-staked AIT earns a simple service allowance within an approved funded term | Confirmed unstaking stops new accrual but preserves accrued, ungranted entitlement; off-chain shared account ledger, automatic seven-day epochs, cumulative integer grant rounding with fractional carry, and catalog-based model eligibility |
+| Agent growth | Managed Agent features, templates, finite referrals and Compute Drops are later scope | No guessed endpoints, unbounded keys or unfunded rewards |
 | Optional PT market | Qualified provider-specific rights may trade against MAX | Binding rights, compliant access, provable LP/fee ownership |
 
 ## Proposed Genesis numbers
@@ -46,7 +46,7 @@ flowchart LR
 | Uninterrupted full-cap lock | `50M MAX` locked; marginal rate rises `600 → 1,800 MAX/AIT` |
 | HWM refill | Burn does not lower peak outstanding debt; refill below peak costs `R(HWM)` and mint above peak follows the curve integral |
 | MAX redemption | Proportional MAX becomes pending on AIT burn; withdraw seven days after latest burn; another burn resets the wait for all pending MAX |
-| Base Earned Credit | `$12/365` per eligible staked AIT-day (`~$1/month`) **within a funded term** |
+| Base AIT Earned Credit | `$12/365` per eligible staked AIT-day (`~$1/month`) **within a funded term** |
 | Proposed first term | `90 days`; full-cap maximum face value `$147,945.21`, plus cost buffer |
 | PT fee direction | Collectible distributable net: `50% LP / 30% qualified MAX stakers / 20% AIT buyback reserve` |
 

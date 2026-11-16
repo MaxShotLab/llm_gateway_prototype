@@ -1,3 +1,5 @@
+import { getUsableModels, providerSnapshot } from "./providerCatalog";
+
 export const starterConversations = [
   {
     id: "usage-review",
@@ -82,9 +84,10 @@ export const starterConversations = [
   },
 ];
 
-export const chatModels = [
+const chatModelExamples = [
   {
     name: "MiniMax-M3",
+    modelId: "minimax/minimax-m3",
     eligibilityIndex: "B",
     provider: "MiniMax",
     tier: "Flagship",
@@ -98,6 +101,7 @@ export const chatModels = [
   },
   {
     name: "Claude Sonnet 4.6",
+    modelId: "anthropic/claude-sonnet-4.6",
     eligibilityIndex: "P",
     provider: "Anthropic",
     tier: "Flagship",
@@ -111,6 +115,7 @@ export const chatModels = [
   },
   {
     name: "Gemini 3.1 Pro",
+    modelId: "google/gemini-3.1-pro",
     eligibilityIndex: "P",
     provider: "Google",
     tier: "Flagship",
@@ -135,6 +140,44 @@ export const chatModels = [
     files: false,
     estimatedCost: "$0.000",
   },
+  {
+    name: "Aion 3.5 Mini",
+    modelId: "aion-labs/aion-3.5-mini",
+    eligibilityIndex: "P",
+    provider: "Aion Labs",
+    tier: "Sample",
+    context: "128K",
+    webSearch: false,
+    reasoning: false,
+    files: false,
+    estimatedCost: "$0.002",
+  },
+  {
+    name: "DeepSeek V4 Flash",
+    modelId: "deepseek/deepseek-v4-flash",
+    eligibilityIndex: "P",
+    provider: "DeepSeek",
+    tier: "Sample",
+    context: "128K",
+    webSearch: false,
+    reasoning: false,
+    files: false,
+    estimatedCost: "$0.001",
+  },
+];
+
+const usableTextIds = new Set(getUsableModels(providerSnapshot, "text").map((model) => model.modelId));
+const chatOrder = new Map(chatModelExamples.map((model, index) => [model.modelId, index]));
+export const chatModels = [
+  ...providerSnapshot.models.filter((model) => model.modality === "text").sort((a, b) => (chatOrder.get(a.modelId) ?? Infinity) - (chatOrder.get(b.modelId) ?? Infinity)).map((model) => {
+    const example = chatModelExamples.find((item) => item.modelId === model.modelId);
+    const offering = providerSnapshot.offerings.find((item) => item.modelId === model.modelId && item.admissionStatus === "passed" && item.availability === "available" && item.policyEligible === true);
+    return { ...example, name: model.displayName, modelId: model.modelId, eligibilityIndex: model.chatEligibilityIndex,
+      provider: offering ? providerSnapshot.providers.find((item) => item.providerId === offering.providerId).name : example?.provider || "Gateway",
+      tier: example?.tier || "Catalog", webSearch: example?.webSearch || false, reasoning: example?.reasoning || false,
+      files: example?.files || false, available: usableTextIds.has(model.modelId) };
+  }),
+  ...chatModelExamples.filter((model) => !providerSnapshot.models.some((item) => item.modelId === model.modelId)).map((model) => ({ ...model, available: false })),
 ];
 
 export const mockUploadFiles = [

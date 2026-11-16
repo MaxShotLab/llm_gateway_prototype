@@ -1,7 +1,7 @@
 # Maxshot Auto Model Routing Design
 
-**Status:** Product design for text Chat; numeric limits and evaluation thresholds pending approval.
-**Scope:** Auto model selection in web text Chat only. Image and video generation, API requests, and manual model selection are unchanged. Default web model-list generation is handled separately.
+**Status:** Post-launch pilot design for text Chat; evaluation set, cost ceiling, pass thresholds and cohort pending approval.
+**Scope:** Auto model selection is deferred from launch. Its later opt-in pilot applies to web text Chat only. Image and video generation, API requests, and manual model selection are unchanged. Default web model-list generation is handled separately.
 
 ## Product contract
 
@@ -29,7 +29,7 @@ For pilot budgeting, cap output tokens and provider spend. A **$200-$300 hard ca
 3. Select a task label using explicit intent first, then lightweight prompt/context rules. When uncertain, use ordinary chat. Do not make an additional paid model call solely to classify the request in the first release.
 4. Rank eligible approved offerings for that task using evaluated quality, latency, reliability, and customer cost, with any separately governed commercial preference applied only after hard gates and a performance floor. An existing conversation keeps its selected offering by default; reconsider when a new requirement cannot be met or the offering becomes unavailable.
 5. Estimate the selected offering's maximum authorized charge under the agreed cost-control policy. Display the provider, model, and ceiling before submission. Require explicit confirmation before exceeding the displayed Auto ceiling; if the user declines, choose a qualifying lower-cost offering or do not send.
-6. Dispatch to the selected offering. A retry must preserve that offering, required capabilities, privacy and plan eligibility, and the authorized charge. Do not silently switch to a different offering after a failed request.
+6. Dispatch to the selected offering. After a failure before customer-visible output, the launch standing policy permits at most one verified equivalent provider offering for the **same model/version**, with required capabilities, privacy and plan eligibility, and the original authorized ceilings preserved. Do not switch to a different model within the accepted request.
 7. Record mapping version, task decision, selected offering, serving provider, estimate, final charge, latency, and status without storing prompt content in routing telemetry.
 
 The exact ceiling amount and cost-reservation algorithm belong in the separate cost-control design. Auto must use those controls, not bypass them. Subscription Basic/Premium eligibility and PAYG fallback continue to follow the subscription requirements; Auto selection does not grant a new allowance.
@@ -37,8 +37,8 @@ The exact ceiling amount and cost-reservation algorithm belong in the separate c
 ## Revision and rollout
 
 - Do not relabel models during an individual request. Outcomes and user feedback are evidence for later evaluation, not immediate approval changes.
-- Re-evaluate on a schedule and when offering capability, price, or quality changes materially. Publish a new mapping version after review. Disable an unhealthy offering promptly without silently replacing the chosen selection.
-- First run in shadow mode beside today's configured-default Auto behavior. Compare proposed choices, capability failures, estimated cost, latency, and task quality without changing user requests. Then enable a limited web Chat rollout.
+- Re-evaluate on a schedule and when offering capability, price, or quality changes materially. Publish a new mapping version after review. Disable an unhealthy offering promptly; any backup during an accepted request follows only the approved same-model provider fallback policy.
+- After the customer-selected-model launch, run in shadow mode beside the existing configured-default behavior. Compare proposed choices, capability failures, estimated cost, latency, and task quality without changing user requests. Enable a limited opt-in web Chat pilot only after its evaluation set, cost ceiling, pass thresholds and cohort are approved.
 - Keep model-list publication, routing approval, and route-health changes separately auditable.
 
 ## Acceptance checks
@@ -46,7 +46,7 @@ The exact ceiling amount and cost-reservation algorithm belong in the separate c
 - Manual selection never changes; Studio and API behavior are unchanged.
 - Auto never submits to an offering lacking a required capability or plan entitlement.
 - No request is submitted with an authorized maximum above the displayed Auto ceiling without confirmation, and the selected provider-model offering is visible afterward.
-- A provider failure cannot silently change the selected offering or create a duplicate charge.
+- A provider failure can move only to one approved equivalent same-model backup before output begins, never to a different model or a duplicate customer charge.
 - Routing decisions can be reproduced from the published mapping and policy versions.
 
 ## Open parameters

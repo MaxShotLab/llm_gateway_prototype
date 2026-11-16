@@ -13,7 +13,7 @@ flowchart LR
   A[Primary MAX buyer] -- actual payment --> T[Eligible Treasury assets]
   A -- eligible MAX --> L[MAX lock position]
   L -- curve mint --> I[AIT]
-  I -- stake in funded term --> C[Earned Compute Credit]
+  I -- stake in funded term --> C[AIT Earned Credit]
   C -- eligible inference --> G[Gateway]
   U[Paid customer] -- payment --> G
   G -- settlement --> P[Verified providers]
@@ -35,8 +35,8 @@ There are **three separate economic sources**: real primary MAX receipts, extern
 | **MAX** | Founder-confirmed fixed maximum: 1B; initial sale quantity: 50M | Any transferable MAX may return to Ethereum and lock for AIT; LayerZero transfer across the four launch chains; separate qualified stake may receive PT net fee share | FDV and locked MAX are not liquid Treasury assets; unsold/team MAX stays in restricted custody until released |
 | **AIT** | User-side mint only against eligible locked MAX; proposed Genesis outstanding cap: 50,000 | Transfer, trade, stake for funded term-limited Compute Credit; burn against the controller's merged position debt to start MAX redemption | No USD/NAV redemption, peg, cash yield or unconditional permanent credit rate |
 | **PT** | Optional, issuer/provider-specific and only after legal approval | Rights specified in binding instrument; potential PT/MAX trading | Ticker alone does not create equity, dividends or liquidation rights |
-| **Paid Credit** | Issued against real customer payment | Pay Gateway consumption | Separate payment/refund obligation and ledger |
-| **Earned Compute Credit** | Granted from an approved, prefunded term or campaign | Spend on eligible inference before expiry | Service allowance, not cash or an on-chain token by default |
+| **Dollar balance (USD)** | Added by confirmed customer top-ups, net of fees | Pay Gateway consumption or a full subscription charge | Separate funded balance and payment/refund obligation; not a Credit allowance |
+| **AIT Earned Credit** | Granted from eligible staked AIT time in an approved, prefunded term | Spend on eligible inference before expiry | Off-chain service allowance, not cash or an on-chain token; campaign Credits require separate funding |
 
 MAX and AIT have different rights. AIT is fungible, but the claim to retrieve locked MAX stays with the **mint position controller**. Buying AIT in the market gives the buyer staking eligibility under program rules; it does not transfer somebody else's MAX position. MAX and AIT each have 18 on-chain decimals.
 
@@ -95,7 +95,7 @@ MAX_charge = refill × R(H) + [L(H + newPeak) − L(H)]
 H_after = max(H, O + q)
 ```
 
-Thus, AIT minted into the gap below the old HWM is charged at `R(H)` per AIT. The portion that crosses above the old HWM is charged by the curve integral. For example, after debt peaks at 30,000 and falls to 20,000, a 15,000-AIT mint charges the first 10,000 at `R(30,000) = 1,032 MAX/AIT` and the next 5,000 at `L(35,000) − L(30,000)`; the HWM becomes 35,000. The **50,000 cap applies to outstanding debt**, not lifetime cumulative mints. Round the exact total MAX charge **up** to the next MAX wei using deterministic integer arithmetic. Protocol AIT buybacks remain inventory until a separately approved, debt-safe retirement method exists.
+Thus, AIT minted into the gap below the old HWM is charged at `R(H)` per AIT. The portion that crosses above the old HWM is charged by the curve integral. For example, after debt peaks at 30,000 and falls to 20,000, a 15,000-AIT mint charges the first 10,000 at `R(30,000) = 1,032 MAX/AIT` and the next 5,000 at `L(35,000) − L(30,000)`; the HWM becomes 35,000. The **50,000 cap applies to outstanding debt**, not lifetime cumulative mints. Round the exact total MAX charge **once up** to the next MAX wei using the deterministic integer evaluation in the [addendum §5](./MAXSHOT_Decision_Gaps_and_Handoff_Addendum.md#5-confirmed-integer-mint-quote). Protocol AIT buybacks remain inventory until a separately approved, debt-safe retirement method exists.
 
 **Contract handoff invariants:** at launch, with AIT confined to Ethereum and absent a separately specified recovery state, `Σ active D = outstandingMintDebt = Ethereum AIT totalSupply`; `Σ active M + Σ pending MAX = MAX allocated to user claims`; `HWM >= outstandingMintDebt` and never decreases. AIT acquired into protocol inventory remains in total supply and does not retire debt. A cross-chain MAX transfer does not affect AIT debt. If AIT bridging is later enabled, replace the local-supply equality with global supply including in-flight messages; a bridge burn is not position redemption. A partial position burn must move no more than proportional active MAX; a full burn must move all residual active MAX.
 
@@ -103,9 +103,11 @@ Thus, AIT minted into the gap below the old HWM is charged at `R(H)` per AIT. Th
 
 ### 4.1 Proposed funded base program
 
-Within an expressly approved and fully funded term, **one qualified staked AIT accrues `$12/365` of USD-denominated Earned Compute Credit per day**, approximately `$1/month`. Grants post weekly and each grant expires seven days after issuance. The first proposed commitment is **90 days**; there is no perpetual entitlement.
+Within an expressly approved and fully funded term, **one qualified staked AIT accrues `$12/365` of USD-denominated AIT Earned Credit per day**, approximately `$1/month`. Grants post weekly and each grant expires seven days after issuance. The first proposed commitment is **90 days**; there is no perpetual entitlement.
 
-At launch, Ethereum staking accrues from confirmed stake time, prorated for actual time staked, without warm-up. Unstaking is immediate with no cooldown, preserves accrued but ungranted Credit, and is required before AIT can be burned for MAX redemption. All stakers share seven-day intervals from the funded program's start; the final short interval also receives a grant. After Ethereum finality, the Gateway backend posts grants automatically into its **off-chain ledger**, without a user claim transaction. Each Gateway account links one verified staking wallet; changing or unlinking it is unavailable at launch. One Agent per account and the UI share the account Earned Credit balance, subject to the Agent's scoped key, model-catalog permission and spend cap. Billing uses earliest-expiring eligible Earned Credit before Paid Credit; unused preauthorization returns to its original grant with the original expiry, and expired remainder is not spendable again. A provider-fault or overcharge refund after settlement creates a new seven-day grant for the Earned portion and restores the Paid portion to Paid Credit.
+For each funded term, lock a versioned Credits-per-USD conversion rate. At each shared grant boundary, floor the account's cumulative time-weighted entitlement to whole Credits, then issue only the difference from that term's earlier grants (TD-40). Fractional entitlement carries through unstaking and later epochs; only the final sub-Credit remainder is discarded. The conversion value remains a funded-program input.
+
+At launch, Ethereum staking accrues from confirmed stake time, prorated for actual time staked, without warm-up. Confirmed unstaking stops new accrual immediately, has no cooldown, preserves accrued but ungranted AIT Earned Credit, and is required before AIT can be burned for MAX redemption. Issued grants retain their normal expiry. All stakers share seven-day intervals from the funded program's start; the final short interval also receives a grant. After Ethereum finality, the Gateway backend posts grants automatically into its **off-chain ledger**, without a user claim transaction. Each Gateway account links one verified staking wallet; changing or unlinking it is unavailable at launch. The UI and authorized external agents using scoped keys share eligible account AIT Earned Credit, subject to model-catalog permission and spend caps. A managed Agent object or one-Agent-per-account cap is not a Tokenomics-release requirement. Billing uses earliest-expiring eligible AIT Earned Credit before subscription and promotional Credits, then Dollar balance; unused preauthorization returns to its original grant with the original expiry, and expired remainder is not spendable again. A provider-fault or overcharge refund after settlement creates a new seven-day grant for the AIT Earned Credit portion and restores the Dollar-funded portion to Dollar balance.
 
 ```text
 50,000 staked AIT × $12/year = $600,000 annualized maximum face value
@@ -126,7 +128,7 @@ $5,000,000 × 15% × 80% = $600,000/year
 
 This equals the 50,000 AIT annualized face ceiling only if all $5M earns that realized net return and enough eligible liquidity exists. Holding `$147,945.21` aside for a 90-day maximum face commitment leaves `$4,852,054.79` invested. At the same hypothetical 15% and 80%, the yearly allocation becomes `$582,246.58`, a `$17,753.42` gap against `$600,000`. Provider cost and buffer may enlarge the required reserve. This is why the funded 90-day term is the design unit, with renewal subject to fresh coverage approval.
 
-Paid Credit, Earned Credit and eligible Treasury assets need separate ledgers. Paid Gateway GMV is not profit; earned-credit calls are not external paid GMV. MAX market value, MAX locked in contracts, PT liquidity positions and unrealized marks cannot be counted as ready cash for credit fulfillment.
+Dollar balance, AIT Earned Credit and eligible Treasury assets need separate ledgers. Paid Gateway GMV is not profit; earned-credit calls are not external paid GMV. MAX market value, MAX locked in contracts, PT liquidity positions and unrealized marks cannot be counted as ready cash for credit fulfillment.
 
 ### 4.3 Market-buyer interpretation
 
@@ -138,7 +140,7 @@ An AIT buyer at `$50/AIT` would see `$12 / $50 = 24%` **annualized face-credit r
 
 Customers pay for real model usage. Maxshot pays the provider and retains only verified contribution after provider and operating costs. The PRD's illustrative `$2M` paid GMV, `$1.76M` provider settlement and `$120K` operating costs yields `$120K` net operating contribution. A proposed 50% of that (`$60K`) could support an approved credit budget **only if** it is incremental, settled, available and not already included in Treasury returns.
 
-At launch, Paid Credit uses the Gateway's existing crypto-deposit flow, subject to end-to-end verification. The customer-facing model catalog expands dynamically to every verified model from supported providers; a shared model ID requires verified equivalence of version and required capabilities. Each model has one current catalog assignment, and a funded Earned Credit program permits a set of catalogs. New-call eligibility uses the catalog assignment at preauthorization; an in-flight call keeps its authorization. For a selected model, routing defaults to the lowest quoted-cost verified provider that meets capability, quality, latency and data-policy constraints, with fallback only inside the authorized maximum cost.
+At launch, Dollar balance uses the Gateway's existing crypto-deposit flow, subject to end-to-end verification. The Gateway catalog expands dynamically to verified models from supported providers; each enabled text, image, and video catalog maintains at least five distinct usable models. Chat and Studio show only currently usable models (TD-41); a shared model ID requires verified equivalence of version and required capabilities. Each model has one current catalog assignment, and a funded AIT Earned Credit program permits a set of catalogs. New-call eligibility uses the catalog assignment at preauthorization; an in-flight call keeps its authorization. For a selected model, routing defaults to the lowest quoted-cost verified provider that meets capability, quality, latency and data-policy constraints. The server computes an estimated charge and hard maximum from bounded settings and permitted fallback rates, reserves the full maximum before dispatch, and caps final customer debit at that accepted amount. Provider-reported excess is a platform/provider discrepancy, not an additional customer debit.
 
 ### 5.2 PT/MAX market
 

@@ -8,6 +8,8 @@
 
 Vaults remain as a product with their existing deposit/withdrawal behavior. They move under the unified Gateway account and interface. Exact hosting, route redirects, and data migration are deployment work, not new Vault economics.
 
+Existing Vault depositors may connect the wallet that holds a position and withdraw through the existing Vault flow **before** linking that wallet to a Gateway account. Wallet/contract authorization remains the withdrawal authority. Linking is required to show the position in the unified Portfolio and use Gateway account benefits; wallet-only withdrawal does not create a Gateway account or Earned Credit entitlement. The one-wallet-per-account rule applies when a wallet is linked.
+
 ## Account and Portfolio
 
 Each Gateway account links at most one wallet. Portfolio summarizes, in separate sections, the linked wallet's Vault deposits, its MAX/AIT position, and Gateway Credits/subscription. It may use separate layouts for the underlying products; it is a summary and navigation surface. MAX locking, minting, staking, burning, and withdrawal interactions remain in MAX & AIT. The Vault transaction flow remains in Vaults.
@@ -16,14 +18,14 @@ Vault revenue funds purchases of existing AIT from the market. Operations prepar
 
 ## Referrals
 
-One Referrals page contains two separate programs:
+One Referrals page contains the two programs visible on the current live sites:
 
 | Program | Audience and purpose | Separate records |
 | --- | --- | --- |
-| Gateway referrals | Invite users to Gateway compute and funded usage | Link/code, attribution, reward balance, and history |
-| Vault referrals | Invite eligible Vault depositors | Link/code, attribution, reward balance, and history |
+| Maxshot Referrals Program | Invite users to Gateway compute and funded usage | Link/code, copy/share controls, attributed top-ups, reward balance, status filter, and history |
+| Partner Referral Program | Earn AIT from eligible activity on integrated partner platforms | Partner cards, connection status, fee discounts, eligibility, AIT totals, and epoch reward history |
 
-The programs share account identity but do not share attribution or reward accounting. The exact Vault referral rate and eligibility remain governed by the existing Vault program; the UI prototype does not invent new reward terms.
+The programs share account identity but do not share attribution or reward accounting. Maxshot Referrals Program measures confirmed referred top-ups by the USD amount credited to Dollar balance after fees; approved rewards are separate promotional Credits at the program's versioned conversion. Subscription payments do not qualify. The live Gateway page displayed 1% promotional Credit rewards when captured for this prototype; that UI reference does not approve a change to launch economics. The live `app.maxshot.ai/referral` page shows Hyperliquid and Polymarket partner referrals. Community Referral Program and Community Rewards are hidden in the unified prototype for now. A separate Vault depositor referral program is not visible in that source and requires a later product decision if retained.
 
 ## Prototype scope
 

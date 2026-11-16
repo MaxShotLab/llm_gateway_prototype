@@ -25,6 +25,7 @@ import {
   starterConversations,
 } from "../data/chatData";
 import { getBillingTotals } from "../data/billingData";
+import { sampleChatQuote, sampleChatSettlement, sampleCreditsPerUsd, sampleOfferingLabel } from "../data/sampleRequest";
 
 const responseText =
   "The mock gateway completed this request with the selected model and recorded token usage and Credit cost. This response is streaming to demonstrate the production chat behavior.";
@@ -64,7 +65,7 @@ function addMockFile(currentFiles, setFiles) {
   if (nextFile) setFiles((current) => [...current, nextFile]);
 }
 
-export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired, billing, freeRequestsUsed, onFreeRequest, onCreditsRequired }) {
+export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRequired, billing, freeRequestsUsed, onFreeRequest, onCreditsRequired, onUsageRecorded }) {
   const [conversations, setConversations] = useState(starterConversations);
   const [activeId, setActiveId] = useState(null);
   const [value, setValue] = useState("");
@@ -74,7 +75,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   );
   const [model, setModel] = useState(chatModels[0].name);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
-  const [autoModel, setAutoModel] = useState(false);
   const [searchEnabled, setSearchEnabled] = useState(false);
   const [reasoningEnabled, setReasoningEnabled] = useState(false);
   const [files, setFiles] = useState([]);
@@ -85,6 +85,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeId) || null;
   const selectedModel = chatModels.find((item) => item.name === model);
+  const sampleQuote = selectedModel?.available ? sampleChatQuote(selectedModel.modelId) : null;
   const activeMessages = activeConversation?.messages || [];
   const billingTotals = getBillingTotals(billing);
   const billingNotice = selectedModel?.eligibilityIndex === "F"
@@ -163,7 +164,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
     if (!nextModel.files) setFiles([]);
   };
 
-  const finishStream = (conversationId, assistantMessage) => {
+  const finishStream = (conversationId, assistantMessage, sampleRecord) => {
     setConversations((current) =>
       current.map((conversation) =>
         conversation.id === conversationId
@@ -178,6 +179,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
     setStreaming(false);
     setStreamedText("");
     streamTimer.current = null;
+    if (sampleRecord) onUsageRecorded?.(sampleRecord);
   };
 
   const buildAssistantMessage = () => ({
@@ -198,10 +200,10 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
         ]
       : [],
     usage: {
-      inputTokens: 1842,
-      outputTokens: 624,
+      inputTokens: sampleQuote.units.input,
+      outputTokens: sampleQuote.units.output,
       cachedTokens: 0,
-      cost: selectedModel.estimatedCost,
+      cost: `${sampleChatSettlement(sampleQuote).charge.toLocaleString()} Credits · illustrative`,
       model: selectedModel.name,
     },
     reasoning: reasoningEnabled,
@@ -209,7 +211,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   });
 
   const send = ({ promptOverride, appendUser = true } = {}) => {
-    if ((!promptOverride && !value.trim()) || streaming) return;
+    if ((!promptOverride && !value.trim()) || streaming || !selectedModel?.available) return;
     if (!canChat) {
       onLoginRequired?.();
       return;
@@ -223,6 +225,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
       return;
     }
     if (selectedModel?.eligibilityIndex === "F") onFreeRequest?.();
+    const requestQuote = sampleChatQuote(selectedModel.modelId);
     const prompt = promptOverride || value.trim();
     const userMessage = {
       role: "user",
@@ -268,6 +271,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
         finishStream(
           conversationId,
           buildAssistantMessage(),
+          { ...sampleChatSettlement(requestQuote), id: `sample-${Date.now()}`, time: new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }), model: selectedModel.name },
         );
       }
     }, 24);
@@ -300,7 +304,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   };
 
   const regenerateLatest = () => {
-    if (streaming || !activeConversation) return;
+    if (streaming || !activeConversation || !selectedModel?.available) return;
     const lastUser = [...messages].reverse().find((message) => message.role === "user");
     if (!lastUser) return;
     updateActiveConversation((conversation) => ({
@@ -414,17 +418,16 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
             <div className="model-picker">
               <button
                 onClick={() => setModelMenuOpen((state) => !state)}
-                disabled={autoModel}
                 aria-label="Select chat model"
               >
                 <span className="model-dot" />
                 {model}
-                <span className="model-eligibility-index" title={eligibilityLabels[selectedModel?.eligibilityIndex]}>{selectedModel?.eligibilityIndex}</span>
+                {selectedModel?.available ? <span className="model-eligibility-index" title={eligibilityLabels[selectedModel.eligibilityIndex]}>{selectedModel.eligibilityIndex}</span> : <span>· Unavailable</span>}
                 <CaretDown size={13} />
               </button>
               {modelMenuOpen && (
                 <div className="model-menu">
-                  {chatModels.map((item) => (
+                  {chatModels.filter((item) => item.available).map((item) => (
                     <button
                       className={item.name === model ? "selected" : ""}
                       onClick={() => selectModel(item)}
@@ -442,17 +445,6 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                 </div>
               )}
             </div>
-            <button
-              className={`privacy-button ${autoModel ? "enabled" : ""}`}
-              onClick={() => {
-                setAutoModel((value) => !value);
-                setModelMenuOpen(false);
-              }}
-              aria-pressed={autoModel}
-            >
-              <Sparkle size={17} />
-              Auto model
-            </button>
           </div>
         </header>
 
@@ -473,10 +465,12 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
               ))}
             </div>
             {billingNotice && <BillingNotice notice={billingNotice} onCreditsRequired={onCreditsRequired} />}
+            {sampleQuote && <SampleChatQuote quote={sampleQuote} />}
             <ChatComposer
               value={value}
               setValue={setValue}
               send={send}
+                  modelAvailable={Boolean(selectedModel?.available)}
               streaming={streaming}
               stopStreaming={stopStreaming}
               searchEnabled={searchEnabled}
@@ -499,7 +493,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                   message={message}
                   key={`${message.role}-${index}`}
                   isLatestAssistant={message.role === "assistant" && index === messages.length - 1}
-                  onRegenerate={regenerateLatest}
+                  onRegenerate={selectedModel.available ? regenerateLatest : null}
                 />
               ))}
               {streaming && (
@@ -511,10 +505,12 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
             </div>
             <div className="composer-dock chat-core-dock">
               {billingNotice && <BillingNotice notice={billingNotice} onCreditsRequired={onCreditsRequired} />}
+              {sampleQuote && <SampleChatQuote quote={sampleQuote} />}
               <ChatComposer
                 value={value}
                 setValue={setValue}
                 send={send}
+                modelAvailable={Boolean(selectedModel?.available)}
                 streaming={streaming}
                 stopStreaming={stopStreaming}
                 searchEnabled={searchEnabled}
@@ -548,6 +544,16 @@ function BillingNotice({ notice, onCreditsRequired }) {
   );
 }
 
+function SampleChatQuote({ quote }) {
+  return <div className="sample-quote" aria-label="Illustrative request quote">
+    <strong>Illustrative request quote</strong>
+    <span>{sampleOfferingLabel(quote.selected)} · rate {quote.selected.customerRateCard.rateCardVersion}{quote.backup ? " · one same-model fallback allowed" : ""}</span>
+    <span>Estimate {quote.estimate.toLocaleString()} Credits · hard maximum {quote.maximum.toLocaleString()} Credits · sample bound 1,000 input / 800 output tokens</span>
+    <span>Reserve: {quote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {quote.reserved.subscription.toLocaleString()} Premium Credits · sample conversion {sampleCreditsPerUsd.toLocaleString()} Credits/$1</span>
+    <small>Fixed sample units are used regardless of prompt length. No funded AIT Earned Credit term is active; no balance is debited. After a simulated response, inspect Credits → Usage.</small>
+  </div>;
+}
+
 function Message({ message, streaming = false, isLatestAssistant = false, onRegenerate }) {
   return (
     <article className={`message ${message.role}`}>
@@ -576,7 +582,7 @@ function Message({ message, streaming = false, isLatestAssistant = false, onRege
           <strong>{message.usage.cost}</strong>
         </div>
       )}
-      {message.role === "assistant" && !streaming && isLatestAssistant && (
+      {message.role === "assistant" && !streaming && isLatestAssistant && onRegenerate && (
         <div className="message-actions">
           <button onClick={onRegenerate}>
             <ArrowClockwise size={14} /> {message.content.includes("[Stopped]") ? "Retry" : "Regenerate"}
@@ -606,6 +612,7 @@ function ChatComposer({
   value,
   setValue,
   send,
+  modelAvailable,
   streaming,
   stopStreaming,
   searchEnabled,
@@ -681,7 +688,7 @@ function ChatComposer({
         <button
           className="send-button"
           onClick={streaming ? stopStreaming : () => send()}
-          disabled={!streaming && !value.trim()}
+          disabled={!streaming && (!value.trim() || !modelAvailable)}
           aria-label={streaming ? "Stop response" : "Send"}
         >
           {streaming ? <Stop size={17} weight="fill" /> : <ArrowRight size={19} />}

@@ -38,6 +38,9 @@ const defaultBalances = {
   dollarCents: 4_820,
 };
 
+export const sampleRenewalDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const sampleWeeklyReset = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
 export function createBillingScenario(scenario = "active") {
   const plan = subscriptionPlans[1];
   const base = {
@@ -57,7 +60,7 @@ export function createBillingScenario(scenario = "active") {
         premiumUsed: plan.premiumAllowance,
         premiumReserved: 0,
         windowUsage: { fiveHour: plan.limits.fiveHour, weekly: plan.limits.weekly },
-        renewsAt: "Oct 12, 2026",
+        renewsAt: sampleRenewalDate,
       },
     };
   }
@@ -83,7 +86,7 @@ export function createBillingScenario(scenario = "active") {
         : scenario === "exhausted"
           ? { fiveHour: plan.limits.fiveHour, weekly: plan.limits.weekly }
           : { fiveHour: 2_800_000, weekly: 12_200_000 },
-      renewsAt: "Oct 12, 2026",
+      renewsAt: sampleRenewalDate,
     },
   };
 }
@@ -134,7 +137,7 @@ export function getSubscriptionWindows(subscription) {
       label: "Weekly limit",
       used: subscription.windowUsage?.weekly || 0,
       limit: subscription.limits?.weekly || 0,
-      reset: "Sep 28",
+      reset: sampleWeeklyReset,
     },
   ].map((window) => ({
     ...window,
