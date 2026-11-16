@@ -41,14 +41,14 @@ be redeemed for fiat or crypto or refunded as Credits.
 - Spend the basic-chat allowance only on eligible low-cost web Chat requests;
   spend one premium allowance across eligible Chat, API, image, and video
   requests without separate modality balances.
-- See the estimated Credit charge and funding sources before submitting an
-  image or video job, including any estimated Dollar-balance debit; see the
-  final charge and adjustment after settlement.
-- Apply the eligible subscription allowance before promotional Credits and
-  Dollar balance. Basic-chat requests use basic Credits first, then premium
+- See the estimated Credit charge, hard maximum, and funding sources before
+  submitting an image or video job, including any maximum Dollar-balance
+  debit; see the final charge and released hold after settlement.
+- Apply the earliest-expiring eligible AIT Earned Credit before subscription
+  allowance. Basic-chat requests then use basic Credits first, then premium
   Credits; other eligible requests use premium Credits only.
 - Fall back to free Credits, referral Credits, then Dollar balance when the
-  eligible subscription allowances are exhausted.
+  eligible Earned Credit and subscription allowances are exhausted.
 - Block usage when no eligible Credit allowance or Dollar balance can cover the
   request.
 - View Credit cost and actual Dollar debit separately.
@@ -72,17 +72,20 @@ be redeemed for fiat or crypto or refunded as Credits.
 
 ## 3. Credit Ledger Requirements
 
-Basic-chat allowance, premium allowance, free Credits, referral Credits, and
+AIT Earned Credit, basic-chat allowance, premium allowance, free Credits, referral Credits, and
 Dollar balance must remain separate ledger buckets. Dollars and Credits must not be merged
 because they represent different units and accounting treatment.
 
 | Bucket | Source | Expiry | Consumption order |
 |---|---|---|---|
-| Basic-chat allowance | Active plan period; eligible low-cost web Chat only | End of billing period | First for eligible basic Chat |
-| Premium allowance | Active plan period; eligible Chat, API, image, video | End of billing period | First otherwise; second for eligible basic Chat |
+| AIT Earned Credit | Eligible funded AIT staking grant | Seven days after grant | First when its model catalog is eligible; earliest expiry first |
+| Basic-chat allowance | Active plan period; eligible low-cost web Chat only | End of billing period | After eligible AIT Earned Credit for basic Chat |
+| Premium allowance | Active plan period; eligible Chat, API, image, video | End of billing period | After eligible AIT Earned Credit otherwise; after basic for eligible basic Chat |
 | Free credits | Registered-user grant | Configured policy | After subscription allowances |
 | Referral rewards | Confirmed referral reward | Configured policy | After free Credits |
 | Dollar balance (USD) | User top-up | No expiry | Last; converted at the versioned request rate |
+
+Confirmed AIT unstaking stops new Earned Credit accrual immediately. Entitlement already accrued but not yet granted remains due at the next shared grant after chain finality; issued grants keep their original expiry.
 
 The premium allowance is one account-level pool, including for supported API
 keys; there are no separate image, video, or API balances. The basic-chat
@@ -199,26 +202,35 @@ enters `past_due`.
 1. Resolve the account entitlement and verify that the model, route, and
    output modality are eligible for the plan. An ineligible but supported
    model or route may use PAYG under the normal funding rules.
-2. For variable-cost text, estimate the maximum from the selected model,
-   route, and request limits. For image/video, show an estimated Credit charge
-   based on model, path, count, duration, resolution, audio, and other billable
-   settings before submission. Reserve against that estimate and settle using
-   actual billable usage under the published price schedule, releasing excess
-   reservation or collecting an authorized shortfall. Never create a negative
-   balance or charge an unauthorized source; record any remaining shortfall as
-   platform cost. A fixed customer-facing Credit quote is a later improvement,
-   not a launch requirement.
-3. Check the eligible monthly allowance: basic Chat may use basic then premium
-   Credits; all other eligible requests use premium Credits only. For text Chat
-   and text API requests, also check the 5-hour and weekly text windows.
+2. For text, image, and video, compute a request-specific estimated charge and
+   a **hard maximum customer charge** from the selected offering's published
+   rate, bounded request settings and any permitted same-model fallback rate.
+   Image/video settings include model, path, count, duration, resolution,
+   audio, and other billable components. Chat and Studio show the server
+   estimate and maximum before submission; API authorizes within one call.
+   Reserve the **maximum**, not merely the estimate, before provider dispatch.
+   The estimate is informative; a fixed final charge is not required.
+   Additional verified usage may raise the final charge above the estimate
+   only within the original maximum and original authorized funding sources.
+   If provider-reported cost would exceed the maximum, cap the customer debit
+   at that maximum, record the excess as a platform/provider discrepancy, and
+   stop further output when possible. Never create a negative balance or
+   debit an unapproved source.
+3. Check eligible AIT Earned Credit grants and their model-catalog allowance,
+   then the eligible monthly subscription allowance: basic Chat may use basic
+   then premium Credits; all other eligible requests use premium Credits only.
+   For the portion of text Chat and text API usage charged to subscription
+   allowance, also check and consume the 5-hour and weekly text windows.
+   Usage funded entirely by AIT Earned Credit leaves those subscription
+   windows untouched; account, API-key, and job limits still apply.
    Image/video jobs do not
    consume those text windows; enforce their configured per-job cost and
    concurrency limits instead.
-4. Reserve the eligible cost from subscription allowance(s) in that order
-   first. Reserve any remainder from eligible free Credits, referral Credits,
-   then Dollar balance
+4. Reserve the maximum eligible cost from earliest-expiring AIT Earned Credit grants
+   first, then eligible subscription allowance(s) in that order. Reserve any
+   remainder from eligible free Credits, referral Credits, then Dollar balance
    at the versioned rate. A media UI job that would debit Dollar balance shows
-   the amount and requires confirmation before submission. An API key must be
+   the maximum amount and requires confirmation before submission. An API key must be
    explicitly configured to allow Dollar-balance overage for media jobs.
 5. Reject the request or job before provider execution when funding is
    insufficient, the required overage is not authorized, or a job limit is
@@ -227,12 +239,15 @@ enters `past_due`.
    its reservation while Pending, including across a billing-period boundary;
    do not grant or consume a new period's allowance for that job.
 7. On successful text completion, convert the metering event to final Credit
-   cost and Dollar debit. For media, settle only successfully delivered
-   outputs at their actual billable cost and release unused generation
+   cost and Dollar debit within the original authorized maximum. For media,
+   settle only successfully delivered outputs at their actual billable cost
+   within that maximum and release unused generation
    reservation; failed or undelivered outputs have no generation charge.
    Independently billable preprocessing that completed may settle even if
    generation fails. A canceled job still pays for outputs delivered before
    cancellation. Reconcile each charge once and show the final adjustment.
+   Release unused holds to their original buckets and expiry; an excess
+   provider charge is never collected from the customer after acceptance.
 8. Count gross Dollar-equivalent cost against API-key spending limits at the
    versioned rate regardless of funding source and record the native usage
    unit: text tokens, image outputs, or the configured video pricing unit.
@@ -240,9 +255,10 @@ enters `past_due`.
    warning per window or bucket. Premium percentage includes Pending media
    reservations as held, not charged, Credits. At 100%, stop using the
    applicable allowance until its reset. Basic monthly exhaustion may route
-   eligible Chat to Premium, then authorized PAYG; text-window exhaustion
-   routes text directly to authorized PAYG without spending either subscription
-   allowance. Show the user when basic Chat starts spending Premium.
+   eligible Chat to Premium, then other eligible funding; text-window exhaustion
+   skips both subscription allowances while eligible AIT Earned Credit,
+   promotional Credits, and authorized PAYG remain available. Show the user
+   when basic Chat starts spending Premium.
 10. Store plan, model-price, limit, and Credit-to-Dollar rate versions so
     later changes do not alter accepted request rules or historical periods.
 
@@ -253,8 +269,9 @@ states. Pending jobs hold funds but show no final deduction. Generated jobs
 settle successful outputs against actual billable usage. For partial success,
 charge only delivered outputs and release the failed portion's hold. Failed
 jobs release the generation hold; independently completed, billable search or
-preprocessing may still be charged. Show an estimate for each independent
-billable component before submission and its actual settlement afterward.
+preprocessing may still be charged within the original maximum. Show an
+estimate and maximum for each independent billable component before submission
+and its actual settlement afterward.
 Canceled jobs release undelivered work but retain charges for any outputs or
 independent components already completed.
 Provider callbacks, retries, and polling must be idempotent by job ID. A job
@@ -272,6 +289,10 @@ in the Studio PRD; this document does not add one by default.
   microdollars. Never use floating-point values for ledger arithmetic.
 - Store the rounding policy and rate version used for every Credit-to-Dollar
   conversion.
+- AIT Earned Credit grants follow TD-40 in the Tokenomics handoff addendum: fix
+  the conversion rate per funded term, floor cumulative time-weighted
+  entitlement at each grant boundary, and issue only the increase over prior
+  grants. Carry fractions through unstaking and later epochs.
 - Each subscription payment/invoice records: account, plan and plan version,
   billing period, amount and currency, payment source, Dollar-balance debit,
   card charge, provider reference when applicable, status, timestamps, and
@@ -280,8 +301,8 @@ in the Studio PRD; this document does not add one by default.
   subscription state, plan and limit versions, granted and consumed amounts
   for each allowance, and linked payment/invoice IDs.
 - Each media job records: account, job and provider IDs, route, output modality,
-  model and price versions, billable settings, estimated Credits, reserved
-  bucket amounts, actual billable components, billing-period ID, status, final
+  model and price versions, billable settings, estimated Credits, accepted
+  maximum, reserved bucket amounts, actual billable components, billing-period ID, status, final
   usage record ID, and timestamps.
 
 ## 5. Payment And Reward Rules
@@ -330,13 +351,23 @@ in the Studio PRD; this document does not add one by default.
   Credits or Dollar balance.
 - A request is rejected before provider execution when available funding is
   insufficient.
-- Final usage cost is reconciled against the reservation without double
-  charging and unused reservation is released.
-- An image or video UI job shows estimated Credits and funding before
+- Final usage cost is reconciled against the reserved maximum without double
+  charging; unused reservation is released to its original source and expiry.
+- An image or video UI job shows estimated Credits, hard maximum, and funding before
   submission; actual billable delivered outputs settle once with a visible
   adjustment. Failed generation releases its generation hold. Independently
   completed, billable preprocessing may still settle; canceled and partially
   successful jobs charge only completed billable components.
+- A final customer charge may exceed the estimate but never the accepted
+  maximum. A provider overrun is recorded as a platform/provider discrepancy,
+  with no second customer authorization or debit after dispatch.
+- Mixed Earned, subscription, promotional, and Dollar reservations cover the
+  maximum in the approved spend order; unused amounts return to their original
+  buckets and expiry. A same-model fallback at a different rate remains inside
+  the same maximum and creates one customer charge.
+- Text streaming and media jobs with unexpected verified usage stop further
+  output when possible; a delivered overrun is recorded without a customer
+  debit above the accepted maximum.
 - A Pending video holds the period's reserved allowance across renewal and
   cannot receive a second grant or charge from the next period.
 - Text windows do not block image/video jobs; media job and concurrency limits
@@ -381,7 +412,8 @@ in the Studio PRD; this document does not add one by default.
   are for development only.
 - Free-model quota and post-quota funding policy for `F` models.
 - Exact model and media-route eligibility, image/video Credit price schedule,
-  and plan-specific media job limits. A fixed upfront Credit quote is deferred.
+  and plan-specific media job limits. A fixed **final** Credit charge is deferred;
+  the hard maximum is required before dispatch.
 - Studio tier price and allowance; defer launch until multimodal cost data is
   available.
 - Recurring card billing provider, if cards are added.
@@ -397,6 +429,8 @@ in-app only.
 
 | Date | Change |
 |---|---|
+| 2026-11-15 | Confirmed one hard maximum customer charge for text and media: reserve the maximum before dispatch, permit estimate shortfall only inside it, release unused holds, and never debit an overrun to the customer. |
+| 2026-11-13 | Reconciled AIT Earned Credit with subscription: eligible expiring Earned grants spend first; only subscription-funded text usage consumes the five-hour and weekly subscription windows. |
 | 2026-10-23 | Confirmed Core/Plus two-bucket value proposition and versioned eligibility; made cards optional, defined balance-only failed renewal and manual restart, adopted actual-cost media/preprocessing settlement, and fixed adverse plan changes to renewal only. |
 | 2026-10-13 | Added B/P/F web Chat model eligibility index; free quota remains separate from subscription buckets. |
 | 2026-10-13 | Split subscription benefit into capped low-cost web Chat Credits and one shared premium Credit pool for eligible Chat, API, image, and video; preserved the two-unit ledger and PAYG fallback, and required worst-case combined-cost validation. |
