@@ -45,7 +45,7 @@ Give an operator a reliable, read-only view of who uses Maxshot, where user fund
 
 Where §1 says "OpenRouter", read **per offering** once multi-provider routing lands (§2.1); the measures are unchanged. Request audit gains a request ID search and a key ID filter (TD-46/44).
 
-## 2. Write actions by release (phase 2)
+## 2. Admin actions and views by release (phase 2)
 
 | # | Action | Release | Required by | Minimum behavior |
 | --- | --- | --- | --- | --- |
@@ -57,7 +57,7 @@ Where §1 says "OpenRouter", read **per offering** once multi-provider routing l
 | 2.6 | Discrepancy ledger review | Foundation | TD-39, TD-49 | Provider cost above accepted maximum or after auto-release, with request ID and disposition. |
 | 2.7 | Funded term configuration | MAX/AIT | SPEC_TOKEN §4.2 | Term start/end, versioned Credits-per-USD rate, allowed catalog set, reserve reference; locked once the term starts. |
 | 2.8 | Grant ledger view | MAX/AIT | SPEC_TOKEN §6.3 | Per account/term/boundary: eligible AIT-wei-seconds, cumulative entitlement, grant, expiry, spend; reconstructable from finalized events. |
-| 2.9 | Wallet link registry view | Unified app | SPEC_ACCOUNT_VAULT §2 | Account ↔ wallet, link time, proof reference; read-only (no relink, TD-50). |
+| 2.9 | Wallet link registry view | Unified app (TD-52) | SPEC_ACCOUNT_VAULT §2 | Account ↔ wallet, link time, proof reference; read-only (no relink, TD-50). |
 | 2.10 | Pause state display | MAX/AIT | TD-18/21 | Read-only state of Mint/Burn/Withdraw/Pause All and bridge pauses; control stays with the multisig. |
 
 Vault Merkle distribution publishing and history remain in the existing Vault operations tooling and are referenced, not rebuilt (TD-52).

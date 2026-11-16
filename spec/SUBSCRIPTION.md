@@ -36,7 +36,7 @@ be redeemed for fiat or crypto or refunded as Credits.
 - See which supported models and modalities the plan allowance covers.
 - See a web Chat eligibility index on every listed model: `B` for Basic Chat,
   `P` for Premium, and `F` for the existing free-model quota.
-- Spend the basic-chat allowance only on eligible low-cost web Chat requests;
+- Spend the basic-chat allowance only on eligible Basic-labeled Chat or API text requests;
   spend one premium allowance across eligible Chat, API, image, and video
   requests without separate modality balances.
 - See the estimated Credit charge, hard maximum, and funding sources before
@@ -77,8 +77,8 @@ because they represent different units and accounting treatment.
 | Bucket | Source | Expiry | Consumption order |
 |---|---|---|---|
 | AIT Earned Credit | Eligible funded AIT staking grant | Seven days after grant | First when its model catalog is eligible; earliest expiry first |
-| Basic-chat allowance | Active plan period; eligible low-cost web Chat only | End of billing period | After eligible AIT Earned Credit for basic Chat |
-| Premium allowance | Active plan period; eligible Chat, API, image, video | End of billing period | After eligible AIT Earned Credit otherwise; after basic for eligible basic Chat |
+| Basic-chat allowance | Active plan period; eligible Basic-labeled Chat or API text | End of billing period | After eligible AIT Earned Credit for Basic-labeled text |
+| Premium allowance | Active plan period; eligible Chat, API, image, video | End of billing period | After eligible AIT Earned Credit otherwise; after basic for eligible Basic-labeled text |
 | Free credits | Registered-user grant | Configured policy | After subscription allowances |
 | Referral rewards | Confirmed referral reward | Configured policy | After free Credits |
 | Dollar balance (USD) | User top-up | No expiry | Last; converted at the versioned request rate |
@@ -89,13 +89,15 @@ The premium allowance is one account-level pool, including for supported API
 keys; there are no separate image, video, or API balances. The basic-chat
 allowance is a restricted Credit bucket, not a third unit or a cash balance.
 It is capped in monthly Credits and by the configured 5-hour and weekly text
-windows. Only listed low-cost models in web Chat qualify. API requests,
-frontier models, search/tool surcharges, image, and video never use it.
-The `B`/`P`/`F` index describes web Chat eligibility only. `F` is not a third
-subscription bucket; its quota and post-quota behavior follow the separate
-free-model policy. API and Studio usage follow their route and plan rules.
-Limit context, output tokens, and concurrent requests for eligible basic Chat
-so each Credit has a bounded provider cost. Do not advertise unlimited chat.
+windows. Only listed Basic-labeled models in Chat or API text qualify. Frontier
+models, search/tool surcharges, image, and video never use it. The `B`/`P`/`F`
+index describes web Chat eligibility; the same Basic/Premium model label governs
+eligible API text funding. `F` is not a third subscription bucket; its quota and
+post-quota behavior follow the separate free-model policy. Studio usage follows
+its route and plan rules.
+Limit context, output tokens, and concurrent requests for eligible Basic-labeled
+Chat and API text so each Credit has a bounded provider cost. Do not advertise
+unlimited chat.
 Each deduction keeps its source, model, modality, channel, route, and
 billing-period ID so the premium balance can be reported by feature without
 creating new buckets. Channel and modality are two views of the same usage;
@@ -111,9 +113,9 @@ without a subscription.
 
 | Plan | Included basic Chat | Included premium allowance | Media coverage |
 |---|---|---|---|
-| Core | Capped low-cost web Chat | Shared across eligible Chat, text API, and image jobs | Video uses PAYG only |
-| Plus | Higher capped low-cost web Chat | Shared across eligible Chat, API, image, and video jobs | Video draws from the premium allowance |
-| Studio (later) | Higher capped low-cost web Chat | Larger premium allowance | Higher-cost eligible media models |
+| Core | Capped Basic-labeled Chat and API text | Shared across eligible Chat, text API, and image jobs | Video uses PAYG only |
+| Plus | Higher capped Basic-labeled Chat and API text | Shared across eligible Chat, API, image, and video jobs | Video draws from the premium allowance |
+| Studio (later) | Higher capped Basic-labeled Chat and API text | Larger premium allowance | Higher-cost eligible media models |
 
 The plan catalog must version the price, both allowances, eligible model/route
 lists for Core and Plus, text windows, media job and concurrency limits, and
@@ -215,8 +217,9 @@ enters `past_due`.
    stop further output when possible. Never create a negative balance or
    debit an unapproved source.
 3. Check eligible AIT Earned Credit grants and their model-catalog allowance,
-   then the eligible monthly subscription allowance: basic Chat may use basic
-   then premium Credits; all other eligible requests use premium Credits only.
+   then the eligible monthly subscription allowance: Basic-labeled Chat and API
+   text may use basic then premium Credits; other eligible requests use premium
+   Credits only.
    For the portion of text Chat and text API usage charged to subscription
    allowance, also check and consume the 5-hour and weekly text windows.
    Usage funded entirely by AIT Earned Credit leaves those subscription
@@ -339,8 +342,8 @@ in the Studio PRD; this document does not add one by default.
   allowance class and plan eligibility are separately configurable.
 - Initial purchase and renewal follow the same full-source payment rule.
 - A user can change plan or cancel renewal and see the resulting status.
-- Eligible low-cost web Chat consumes its capped basic allowance before the
-  premium allowance; other eligible requests cannot consume basic Credits.
+- Eligible Basic-labeled Chat and API text consume the capped basic allowance
+  before the premium allowance; other requests cannot consume basic Credits.
 - Eligible Chat, API, image, and video requests share one premium monthly
   allowance; channel and modality views reconcile to that same premium total,
   not separate modality pools.
@@ -430,7 +433,7 @@ in-app only.
 ### Product offer
 
 - PAYG remains available without a subscription. PAYG and subscription use the same published Credit price for a given request; there is no subscription-only per-request discount.
-- Core and Plus each grant a capped monthly **Basic Chat** allowance and a separate capped **Premium** allowance. Basic Chat is limited to eligible low-cost web Chat models; Premium covers eligible Chat, API, image, and, for Plus, video. Core video uses PAYG only.
+- Core and Plus each grant a capped monthly **Basic Chat** allowance and a separate capped **Premium** allowance. Basic Chat covers eligible Basic-labeled Chat and API text requests; Premium covers eligible Chat, API, image, and, for Plus, video. Core video uses PAYG only.
 - Subscription value comes from included allowances and predictable monthly spend. The restricted Basic Chat allowance should carry most of the apparent usage advantage; the flexible Premium allowance must be sized against its higher possible provider cost.
 - Neither allowance is cash, withdrawable value, or an unlimited-use promise. Unused allowances expire at period end under the subscription requirements.
 

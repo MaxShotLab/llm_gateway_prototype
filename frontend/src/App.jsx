@@ -219,6 +219,7 @@ const mockUsage = [
   ...row,
   // TD-46: every accepted request carries a stable request ID; API rows carry the key used (TD-44).
   requestId: `req_demo${String(index + 1).padStart(3, "0")}`,
+  keyId: row.source === "API" ? (index === 1 ? "key-production" : "key-development") : null,
   keyName: row.source === "API" ? (index === 1 ? "Production API" : "Development") : null,
 }));
 
@@ -801,11 +802,11 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
   const [usageTypes, setUsageTypes] = useState({ Chat: true, Studio: true, API: true });
   const [requestQuery, setRequestQuery] = useState("");
   const [keyFilter, setKeyFilter] = useState("all");
-  const usageKeys = [...new Set(mockUsage.map((row) => row.keyName).filter(Boolean))];
+  const usageKeys = mockUsage.filter((row, index, rows) => row.keyId && rows.findIndex((item) => item.keyId === row.keyId) === index);
   const visibleUsage = mockUsage.filter((row) =>
     usageTypes[row.source] &&
     (!requestQuery.trim() || row.requestId.includes(requestQuery.trim().toLowerCase())) &&
-    (keyFilter === "all" || row.keyName === keyFilter) && (
+    (keyFilter === "all" || row.keyId === keyFilter) && (
       billingView === "subscription"
         ? row.subscriptionCost > 0 || row.subscriptionReserved > 0 || row.status === "Failed" && row.source === "Studio"
         : row.paygCreditCost > 0 || row.funding === "Free model"
@@ -825,7 +826,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
       {billingView === "subscription" ? (
         <>
           <section className="metric-grid subscription-usage-metrics">
-            <MetricCard label="Basic Chat" value={totals.basicRemaining.toLocaleString()} note="Credits remaining · eligible web Chat" />
+            <MetricCard label="Basic Chat" value={totals.basicRemaining.toLocaleString()} note="Credits remaining · Basic-labeled Chat and API text" />
             <MetricCard label="Premium" value={totals.premiumRemaining.toLocaleString()} note={`${(billing.subscription?.premiumReserved || 0).toLocaleString()} reserved · Chat, API, Studio`} />
             {windows.map((window) => (
               <MetricCard key={window.id} label={window.label} value={`${window.percent}% used`} note={`Resets ${window.reset}`} />
@@ -834,7 +835,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
           {windows.some((window) => window.percent >= 90) && (
             <div className="usage-limit-alert" role="status">A text usage window is above 90%. PAYG funding takes over when the limit is reached.</div>
           )}
-          {totals.basicPercent >= 90 && <div className="usage-limit-alert" role="status">Basic Chat Credits {totals.basicPercent === 100 ? "are exhausted" : `are ${totals.basicPercent}% used`}. Eligible Chat uses {totals.premiumRemaining > 0 && totals.textWindowRemaining > 0 ? "Premium Credits" : "PAYG funding"} next.</div>}
+          {totals.basicPercent >= 90 && <div className="usage-limit-alert" role="status">Basic Chat Credits {totals.basicPercent === 100 ? "are exhausted" : `are ${totals.basicPercent}% used`}. Eligible Chat and API text use {totals.premiumRemaining > 0 && totals.textWindowRemaining > 0 ? "Premium Credits" : "PAYG funding"} next.</div>}
           {totals.premiumPercent >= 90 && <div className="usage-limit-alert" role="status">Premium Credits {totals.premiumPercent === 100 ? "are exhausted" : `are ${totals.premiumPercent}% used, including reservations`}. PAYG funds eligible overage.</div>}
         </>
       ) : (
@@ -927,7 +928,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
             <input type="search" value={requestQuery} onChange={(event) => setRequestQuery(event.target.value)} placeholder="Search request ID" aria-label="Search by request ID" />
             <select value={keyFilter} onChange={(event) => setKeyFilter(event.target.value)} aria-label="Filter by API key">
               <option value="all">All sources and keys</option>
-              {usageKeys.map((name) => <option key={name} value={name}>API key: {name}</option>)}
+              {usageKeys.map((row) => <option key={row.keyId} value={row.keyId}>API key: {row.keyName} ({row.keyId})</option>)}
             </select>
           </div>
         </div>
@@ -958,7 +959,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
                 <tr key={`${billingView}-${row.time}-${row.model}`}>
                   <td>{row.time}</td>
                   <td><code>{row.requestId}</code></td>
-                  <td>{row.source}{row.keyName ? <small className="usage-key-name">{row.keyName}</small> : null}</td>
+                  <td>{row.source}{row.keyId ? <small className="usage-key-name">{row.keyName} · {row.keyId}</small> : null}</td>
                   <td>{row.model}</td>
                   <td>{row.provider}</td>
                   <td>{row.input}</td>

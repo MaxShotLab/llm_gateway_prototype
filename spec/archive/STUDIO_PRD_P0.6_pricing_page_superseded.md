@@ -80,4 +80,3 @@ Known gaps — not yet specified, to be decided before this page is final:
   behavior in P0.5.
 - No sorting, filters, or paging beyond search, and no visible "updated at"
   or refresh.
-

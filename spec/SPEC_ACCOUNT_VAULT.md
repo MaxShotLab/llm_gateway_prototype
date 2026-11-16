@@ -61,8 +61,6 @@ TD-42: Maxshot Referrals Program qualification uses a referred user's confirmed 
 | The linked wallet deposits/withdraws and claims a Vault AIT distribution | Vault calls, amounts, fees and statuses match the existing app/contract behavior; the 14-day Merkle cycle and AIT claim/history remain distinct from seven-day Gateway AIT Earned Credit grants. |
 | Old app entry or deep link is used after cutover | The user reaches the corresponding Gateway destination, including wallet-only Vault exit, without a forced account-link step. No retired portal silently performs a new economic action. |
 
-Engineering should capture the live contract addresses/chain IDs, connector behavior, index/claim source, route inventory and transaction evidence as implementation artifacts. This handoff does not invent those values.
-
 Engineering captures the live contract addresses/chain IDs, connector behavior, index/claim source, route inventory and transaction evidence as implementation artifacts; this specification does not invent those values.
 
 ## 7. Prototype evidence and limit

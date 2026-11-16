@@ -12,7 +12,7 @@
 
 ## 2. Funding buckets and eligibility
 
-Eligibility per bucket and product (TD-47). "Catalog" is the model's current catalog assignment at authorization (TD-23); "label" is the Gateway-supplied Basic/Premium Chat label on the model.
+Eligibility per bucket and product (TD-47). "Catalog" is the model's current catalog assignment at authorization (TD-23); "label" is the Gateway-supplied Basic/Premium label on the model, also used for API text.
 
 | Bucket | Chat text | Studio image/video | API text | API media | Consumes subscription text windows | Expiry |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -23,9 +23,9 @@ Eligibility per bucket and product (TD-47). "Catalog" is the model's current cat
 | Referral Credits | yes | yes | yes | yes | no | campaign terms |
 | Dollar balance | yes | yes | if the key allows Dollar spend | if the key allows Dollar spend | no | none |
 
-Free/Referral scope on Studio and API is to be confirmed against the current implementation; a difference is a change request, not a silent override (TD-47).
+Engineering must verify Free/Referral scope on Studio and API against the current Gateway implementation. The prototype is not proof of live billing behavior; a difference is a change request, not a silent override (TD-47).
 
-**Spend and hold order (TD-15):** earliest-expiring eligible AIT Earned Credit → Basic allowance (basic Chat only) → Premium allowance → Free Credits → Referral Credits → Dollar balance. The hold is taken source by source in this order for the full maximum; releases return to the same sources and original expiries; an expired grant is not revived. Only the portion charged to a subscription allowance consumes the 5-hour and weekly text windows; an API key may consume those windows (TD-44). Basic exhaustion may route eligible Chat to Premium; text-window exhaustion skips both subscription allowances while other eligible buckets remain available ([SUBSCRIPTION §4.3](./SUBSCRIPTION.md)).
+**Spend and hold order (TD-15):** earliest-expiring eligible AIT Earned Credit → Basic allowance (Basic-labeled Chat or API text) → Premium allowance → Free Credits → Referral Credits → Dollar balance. The hold is taken source by source in this order for the full maximum; releases return to the same sources and original expiries; an expired grant is not revived. Only the portion charged to a subscription allowance consumes the 5-hour and weekly text windows; an API key may consume those windows (TD-44). Basic exhaustion may route an eligible Chat or API text request to Premium; text-window exhaustion skips both subscription allowances while other eligible buckets remain available ([SUBSCRIPTION §4.3](./SUBSCRIPTION.md)).
 
 ## 3. Scoped API key policy
 
@@ -74,6 +74,8 @@ States (TD-49): `accepted → dispatched → delivered | failed | uncertain → 
 | Auto-release | Any hold unresolved **24 hours** after dispatch releases to the customer. Provider cost confirmed later goes to the discrepancy ledger, never to a customer debit. |
 | Customer view | The request shows as **Pending** in Usage with the held amount until settlement or release. A Pending job keeps its reservation across a billing-period boundary and does not consume a new period's allowance. |
 
+For a media offering to be admitted, its declared maximum job time plus the configured grace window must be **less than 24 hours**. This leaves an `uncertain` resolution window before the fixed hold auto-release deadline.
+
 Callbacks, retries and polling are idempotent by job ID; a timeout alone must not allow a late success to charge again. Studio's maximum of three Pending videos applies unless a lower plan-specific limit is configured.
 
 ## 6. Refunds and reversals
@@ -91,7 +93,8 @@ Unused preauthorization returns to its original source/grant and expiry. After a
 6. **Scoped key policy (TD-44):** a key limited to one catalog is rejected for a model outside it; a request whose hard maximum exceeds the key's per-request ceiling is rejected; concurrent requests cannot exceed the daily budget counting held maximums; a key without Dollar spend enabled is rejected once Credits are exhausted; a revoked key fails immediately while its in-flight request settles once; Usage filters by that key.
 7. **Request ID (TD-46):** the API response carries the request ID; the same ID appears in Usage detail and on every attempt, hold, settlement and reversal record for that request.
 8. **Provider pin (TD-48):** a Chat request pinned to an offering is served by it or rejected; no fallback occurs. Repeat via API with `offeringId`.
-9. **Media lifecycle (TD-49):** an `uncertain` job appears in the operations queue with its hold intact and shows Pending to the customer; resolving it as delivered settles once; an unresolved job auto-releases at 24 hours and a later provider cost lands in the discrepancy ledger.
+9. **Media lifecycle (TD-49):** an offering whose maximum job time plus grace reaches 24 hours is rejected at admission; an `uncertain` job appears in the operations queue with its hold intact and shows Pending to the customer; resolving it as delivered settles once; an unresolved job auto-releases at 24 hours and a later provider cost lands in the discrepancy ledger.
+10. **Basic API eligibility and promotional scope (TD-47):** a Basic-labeled API text request uses the Basic allowance after eligible AIT Earned Credit under the same limits and text windows as Chat. Engineering verifies current Free/Referral funding on Studio and API and raises any difference as a change request.
 
 Use one real funded Gateway request and one controlled failure to prove the transaction-to-Dollar-balance path and customer/provider reconciliation. Operational rate values, provider-cost ceilings and deployment configuration remain separate inputs.
 

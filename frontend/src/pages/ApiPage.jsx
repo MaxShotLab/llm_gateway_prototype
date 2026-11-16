@@ -306,7 +306,7 @@ export function ApiPage({ embedded = false }) {
                       <tr key={item.id}>
                         <td>{item.timestamp}</td>
                         <td><code>{item.id}</code></td>
-                        <td>{item.keyName}</td>
+                        <td>{item.keyName}<small className="usage-key-name">{item.keyId}</small></td>
                         <td><code>{item.model}</code></td>
                         <td>{formatNumber(item.inputTokens)} / {formatNumber(item.outputTokens)}</td>
                         <td>{item.latency}</td>

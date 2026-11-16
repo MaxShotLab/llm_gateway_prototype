@@ -1,5 +1,4 @@
-// Mirrors spec/LAUNCH_CONFIG_V0.md. The Credit unit matches the live Gateway (TD-53);
-// every other value is a placeholder, not an approved launch parameter.
+// Mirrors spec/LAUNCH_CONFIG_V0.md. Consult each row's status before using a value as a launch parameter.
 export const launchConfig = {
   version: "v0",
   creditsPerUsd: 1_000_000,

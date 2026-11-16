@@ -184,7 +184,7 @@ export function FundingPage({ billing, setBilling, tokenState, onTokens, onModel
           <div>
             <span className="eyebrow">Phase 2 proposal · simulated</span>
             <h2>Subscription</h2>
-            <p>Basic Chat Credits cover eligible web chat. Premium Credits cover eligible Chat, API, image, and video. Eligible AIT Earned Credit spends first, then subscription allowance, other promotional Credits, and Dollars.</p>
+            <p>Basic Chat Credits cover eligible Basic-labeled Chat and API text. Premium Credits cover eligible Chat, API, image, and video. Eligible AIT Earned Credit spends first, then subscription allowance, other promotional Credits, and Dollars.</p>
           </div>
           <label className="prototype-scenario">
             <span>Prototype state</span>
