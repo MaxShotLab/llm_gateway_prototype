@@ -16,14 +16,14 @@ services.
 | [`docs/MAXSHOT_GATEWAY_PRODUCT_GUIDE.md`](./docs/MAXSHOT_GATEWAY_PRODUCT_GUIDE.md) | User-facing product overview and Release 1.0 scope |
 | [`docs/MAXSHOT_GATEWAY_PRODUCT_DOCUMENT.md`](./docs/MAXSHOT_GATEWAY_PRODUCT_DOCUMENT.md) | Detailed product, workflow, and API reference |
 | [`docs/MAXSHOT_GATEWAY_USER_GUIDE.md`](./docs/MAXSHOT_GATEWAY_USER_GUIDE.md) | Screenshot-based operating manual for Gateway users |
-| [`llm-gateway-product-baselines.md`](./llm-gateway-product-baselines.md) | Single source of truth for product design, scope, phases, navigation, and terminology |
-| [`PHASE_1_PRD_AND_FEATURES.md`](./PHASE_1_PRD_AND_FEATURES.md) | Current Phase 1 usage-based product surface definition for discussion |
-| [`MAXSHOT_GATEWAY_PRD.md`](./MAXSHOT_GATEWAY_PRD.md) | Single source of truth for product and engineering delivery requirements |
+| [`spec/00_README.md`](./spec/00_README.md) | **Start here.** Development handoff: releases, build order, document precedence |
+| [`spec/DECISIONS.md`](./spec/DECISIONS.md) | Decision ledger (TD-01…) and gap register |
+| [`spec/`](./spec/) | Canonical specs: SPEC_TOKEN, SPEC_BILLING, SPEC_PROVIDERS, SPEC_ACCOUNT_VAULT, SPEC_AGENT_INTEGRATION, SPEC_ADMIN, SUBSCRIPTION, LAUNCH_CONFIG_V0, Gateway and Studio PRDs |
+| [`PHASE_1_PRD_AND_FEATURES.md`](./PHASE_1_PRD_AND_FEATURES.md) | Earlier Phase 1 surface definition for discussion (not part of the handoff) |
 | [`MAXSHOT_UI_SPECS.md`](./MAXSHOT_UI_SPECS.md) | Current visual tokens, typography, layout, and component rules |
 | [`design-qa.md`](./design-qa.md) | Visual QA status, evidence, and known differences |
 
-Product-design changes must start in the baseline and update the PRD in the
-same change.
+Product-design changes are recorded in `spec/DECISIONS.md` and applied to the owning `spec/` document in the same change.
 
 ## Current Technology
 
@@ -217,4 +217,4 @@ current pixel references.
 - No automated test suite or lint script is configured.
 
 The required implementation order and acceptance criteria are defined in
-[MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md).
+[spec/MAXSHOT_GATEWAY_PRD.md](./spec/MAXSHOT_GATEWAY_PRD.md) and the `spec/` acceptance sections.

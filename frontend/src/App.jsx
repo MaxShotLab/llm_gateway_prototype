@@ -215,7 +215,12 @@ const mockUsage = [
     funding: "Free model",
     status: "Free",
   },
-];
+].map((row, index) => ({
+  ...row,
+  // TD-46: every accepted request carries a stable request ID; API rows carry the key used (TD-44).
+  requestId: `req_demo${String(index + 1).padStart(3, "0")}`,
+  keyName: row.source === "API" ? (index === 1 ? "Production API" : "Development") : null,
+}));
 
 const dashboardChartData = {
   "7 days": [38, 52, 44, 68, 59, 74, 63],
@@ -794,8 +799,13 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
   const [selectedBillingView, setBillingView] = useState(billing.subscription ? "subscription" : "payg");
   const billingView = billing.subscription ? selectedBillingView : "payg";
   const [usageTypes, setUsageTypes] = useState({ Chat: true, Studio: true, API: true });
+  const [requestQuery, setRequestQuery] = useState("");
+  const [keyFilter, setKeyFilter] = useState("all");
+  const usageKeys = [...new Set(mockUsage.map((row) => row.keyName).filter(Boolean))];
   const visibleUsage = mockUsage.filter((row) =>
-    usageTypes[row.source] && (
+    usageTypes[row.source] &&
+    (!requestQuery.trim() || row.requestId.includes(requestQuery.trim().toLowerCase())) &&
+    (keyFilter === "all" || row.keyName === keyFilter) && (
       billingView === "subscription"
         ? row.subscriptionCost > 0 || row.subscriptionReserved > 0 || row.status === "Failed" && row.source === "Studio"
         : row.paygCreditCost > 0 || row.funding === "Free model"
@@ -896,9 +906,10 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
       {sampleUsage && <section className="panel sample-usage-detail" aria-label="Illustrative request detail">
         <div className="panel-heading"><div><h2>Latest simulated request</h2><p>{sampleUsage.time} · Chat · {sampleUsage.model} · no provider call or balance change</p></div></div>
         <div className="sample-usage-grid">
+          <div><small>Request ID</small><strong><code>{sampleUsage.requestId}</code></strong><span>{sampleUsage.pinned ? "Provider pinned · no fallback" : "Auto provider selection"}</span></div>
           <div><small>Selected offering</small><strong>{sampleOfferingLabel(sampleUsage.selected)}</strong><span>Rate {sampleUsage.selected.customerRateCard.rateCardVersion}</span></div>
           <div><small>Serving offering</small><strong>{sampleOfferingLabel(sampleUsage.serving)}</strong><span>Rate {sampleUsage.serving.customerRateCard.rateCardVersion} · {sampleUsage.fallbackReason || "no fallback"}</span></div>
-          <div><small>Verified billable units</small><strong>{sampleUsage.units.input.toLocaleString()} input · {sampleUsage.units.output.toLocaleString()} output tokens</strong><span>Sample conversion {sampleCreditsPerUsd.toLocaleString()} Credits/$1</span></div>
+          <div><small>Verified billable units</small><strong>{sampleUsage.units.input.toLocaleString()} input · {sampleUsage.units.output.toLocaleString()} output tokens</strong><span>{sampleCreditsPerUsd.toLocaleString()} Credits = $1</span></div>
           <div><small>Authorization</small><strong>Estimate {sampleUsage.estimate.toLocaleString()} · maximum {sampleUsage.maximum.toLocaleString()} Credits</strong><span>Bound 1,000 input / 800 output tokens; reserved {sampleUsage.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {sampleUsage.reserved.subscription.toLocaleString()} Premium</span></div>
           <div><small>Settled once</small><strong>{sampleUsage.charge.toLocaleString()} Credits final charge</strong><span>Used {sampleUsage.used.earned.toLocaleString()} AIT Earned Credit + {sampleUsage.used.subscription.toLocaleString()} Premium</span></div>
           <div><small>Unused hold released</small><strong>{(sampleUsage.released.earned + sampleUsage.released.subscription).toLocaleString()} Credits</strong><span>{sampleUsage.released.earned.toLocaleString()} to original AIT Earned Credit grant/expiry + {sampleUsage.released.subscription.toLocaleString()} to Premium</span></div>
@@ -910,7 +921,14 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
         <div className="panel-heading">
           <div>
             <h2>Recent activity</h2>
-            <p>Example text and generation records, including Pending reservations and Failed jobs.</p>
+            <p>Example text and generation records. Pending rows hold their maximum until settlement; an unresolved media hold releases automatically 24 hours after dispatch.</p>
+          </div>
+          <div className="usage-record-filters">
+            <input type="search" value={requestQuery} onChange={(event) => setRequestQuery(event.target.value)} placeholder="Search request ID" aria-label="Search by request ID" />
+            <select value={keyFilter} onChange={(event) => setKeyFilter(event.target.value)} aria-label="Filter by API key">
+              <option value="all">All sources and keys</option>
+              {usageKeys.map((name) => <option key={name} value={name}>API key: {name}</option>)}
+            </select>
           </div>
         </div>
         <div className="table-scroll">
@@ -918,6 +936,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
             <thead>
               <tr>
                 <th>Time</th>
+                <th>Request ID</th>
                 <th>Source</th>
                 <th>Model</th>
                 <th>Serving provider</th>
@@ -930,6 +949,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
               </tr>
             </thead>
             <tbody>
+              {visibleUsage.length === 0 && <tr><td colSpan={11} className="empty-row">No records match this request ID or key.</td></tr>}
               {visibleUsage.map((row) => {
                 const viewCost = billingView === "subscription" ? row.subscriptionCost : row.paygCreditCost;
                 const dollarDebitMicros = billingView === "subscription" ? 0 : row.dollarDebitMicros;
@@ -937,12 +957,13 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
                 return (
                 <tr key={`${billingView}-${row.time}-${row.model}`}>
                   <td>{row.time}</td>
-                  <td>{row.source}</td>
+                  <td><code>{row.requestId}</code></td>
+                  <td>{row.source}{row.keyName ? <small className="usage-key-name">{row.keyName}</small> : null}</td>
                   <td>{row.model}</td>
                   <td>{row.provider}</td>
                   <td>{row.input}</td>
                   <td>{row.output}</td>
-                  <td>{row.subscriptionReserved && billingView === "subscription" ? `0 (${row.subscriptionReserved.toLocaleString()} reserved)` : viewCost.toLocaleString()}</td>
+                  <td>{row.status === "Pending" && row.subscriptionReserved ? `${row.subscriptionReserved.toLocaleString()} held` : viewCost.toLocaleString()}</td>
                   <td>${(dollarDebitMicros / 1_000_000).toFixed(6)}</td>
                   <td>{funding}</td>
                   <td>

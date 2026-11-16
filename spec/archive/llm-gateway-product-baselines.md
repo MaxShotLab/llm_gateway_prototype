@@ -1,37 +1,41 @@
 # Maxshot LLM Gateway Product Baseline
 
-**Status:** Authoritative product specification
-**Scope:** Phase 1 usage-based release and Phase 2 advanced features
-**Updated:** October 13, 2026
+**Status:** Earlier Gateway product baseline; later overrides in the development handoff index
+**Scope:** Phase 1, Phase 2, and post-subscription growth release
+**Updated:** November 1, 2026
 
-This document is the single source of truth for Maxshot LLM Gateway product
-design. It defines the product, users, framework decisions, feature scope,
-phases, navigation, terminology, and exclusions.
+**Current handoff:** This is the earlier Gateway baseline. For unified-app navigation, Vaults, MAX/AIT, provider pricing, and later billing decisions, use the [development handoff index](./Tokenomics/DEVELOPMENT_HANDOFF_INDEX.md). Sections 6 and 8 below do not override those confirmed decisions.
 
-[MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) is the single source of truth
-for product and engineering delivery. It translates this baseline into
-requirements, ownership, acceptance criteria, and migration work without
-changing product design.
+This document records the earlier Maxshot LLM Gateway product design: users,
+framework decisions, feature scope, phases, navigation, terminology, and
+exclusions. The handoff index identifies later decisions that supersede it.
 
-Governance:
+[MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) translates this baseline into
+requirements, ownership, acceptance criteria, and migration work for its
+earlier Gateway scope. Later subject ownership follows the handoff index.
+
+Governance for this earlier baseline:
 
 - Product-design decisions are approved and updated here first.
 - Delivery detail is maintained in the PRD.
 - The PRD may clarify implementation but cannot add, remove, or reclassify
   product scope without a corresponding baseline update.
-- If the documents conflict, this baseline controls product design and both
-  documents must be corrected in the same change.
+- For later unified-app decisions, resolve conflicts through the handoff index
+  and update the relevant owning documents.
 
 ## 1. Product Definition
 
 Maxshot provides:
 
 - Multi-model web chat.
-- Studio image and video generation in the developing product.
+- Studio image and video generation, My Creations, and Discover/material reuse
+  in the live product.
 - An OpenAI-compatible API gateway.
 - Prepaid Dollar balance, promotional Credits, account funding, referral
   rewards, and spending limits.
 - Advanced reusable prompts, agents, skills, and memory after Phase 1.
+- Opt-in Studio creation sharing, curated Starters, and creator campaigns
+  after Studio and subscription foundations are ready.
 
 Users access the configured model catalog through chat or API keys. Maxshot
 manages identity, usage accounting, billing, provider routing, and privacy
@@ -285,15 +289,38 @@ Anthropic- or Gemini-compatible customer APIs are not included in Phase 2.
 - Basic Chat may use Premium after Basic is exhausted. Exhausting a 5-hour or
   weekly text window sends text to authorized PAYG; media may still use Premium.
 - Show subscription usage windows, renewal state, invoices, and PAYG fallback.
-- Show an estimated Credit charge for media, reserve funds, then reconcile
-  against actual billable usage. Charge only delivered outputs; independently
-  completed and billable preprocessing may settle even if generation fails.
-  A firm upfront Credit quote is a later improvement, not a launch requirement.
+- Show an estimated Credit charge and a hard maximum for media, reserve the
+  maximum before dispatch, then reconcile against actual billable usage within
+  it. Charge only delivered outputs; independently completed and billable
+  preprocessing may settle even if generation fails. A fixed final charge is
+  not a launch requirement; a provider overrun cannot raise the customer debit
+  above the accepted maximum.
 - Keep price, allowance, and model-eligibility versions fixed for the current
   paid period; apply catalog changes to new purchases and future renewals.
   Notify subscribers before adverse renewal changes.
 
+## Post-Subscription Growth Release
+
+- Deliver [Starter, Sharing, and Creator Campaign plans](./GROWTH_PLANS_PRD.md)
+  as staged growth releases after Studio and subscription foundations.
+- Current Studio automatically includes every completed generation in Discover
+  without creator consent. The Sharing Plan replaces this with per-work owner
+  opt-in for both Discover and guest-viewable links, result-only or approved
+  method-sharing, and revocation. Existing Discover inclusion is not consent;
+  user-owned legacy works without opt-in leave public surfaces but remain in
+  My Creations. Maxshot-owned examples require documented publication rights.
+- Let guests view public work or Starters and require login only when they
+  submit a new, separately billed generation.
+- Carry creator/source attribution through signup and generation. Preserve the
+  existing referral reward on confirmed top-ups; any additional promotional
+  Credit reward requires approved budgets and settled, qualifying usage.
+- Use curated, moderated publication. No new open creator marketplace or
+  gallery beyond the existing Discover feed, automatic royalty, or token
+  reward is implied.
+
 ## 6. Navigation
+
+The navigation below records the earlier Phase 1 baseline. The unified Gateway navigation is governed by the [current handoff index](./Tokenomics/DEVELOPMENT_HANDOFF_INDEX.md).
 
 Phase 1 navigation:
 
@@ -310,9 +337,9 @@ clearly labeled as deferred and not part of Phase 1 production scope:
 7. Agents
 8. Toolkits
 
-The developing product also exposes Studio after Chat. All four generation
-paths (text-to-image, image-to-image, text-to-video, image-to-video) are
-supported there. Their detailed behavior is owned by
+The live product also exposes Studio after Chat. All four generation paths
+(text-to-image, image-to-image, text-to-video, image-to-video), My Creations,
+Discover material details, and Try this are present. Their detailed behavior is owned by
 [MAXSHOT_STUDIO_PRD.md](./MAXSHOT_STUDIO_PRD.md); the Gateway prototype may
 show only a static Studio overview. This does not retroactively change the
 original Phase 1 acceptance scope above.
@@ -350,9 +377,12 @@ original Phase 1 acceptance scope above.
 
 ## 8. Explicitly Out Of Scope
 
+The token, trading, deposit, and on-chain exclusions below applied to this earlier Gateway baseline. The unified Vaults and gated MAX/AIT scope is governed by the [current handoff index](./Tokenomics/DEVELOPMENT_HANDOFF_INDEX.md).
+
 - Account deletion.
 - Organizations, members, roles, and permissions.
-- Public marketplaces and sharing.
+- Public marketplaces and conversation sharing; Studio creation sharing is
+  limited to the post-subscription Growth Plans PRD.
 - Agent publishing, revenue sharing, scheduled execution, and subaccounts.
 - Custom tools and user-managed MCP servers.
 - Independent agent balances or budgets.
@@ -380,6 +410,9 @@ Required alignment work:
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-11-01 | Discover consent decision | Confirmed current automatic inclusion without consent; required a recorded opt-in and legacy-work migration for Sharing Plan. |
+| 2026-11-01 | Live Studio integration | Recorded existing Discover/material reuse and scoped new opt-in public links separately from its unverified publication rules. |
+| 2026-11-01 | Post-subscription growth scope | Approved staged Starter, opt-in Sharing, and Creator Campaign plans; kept a public marketplace and automatic publication out of scope. |
 | 2026-10-23 | Confirmed subscription decisions | Made recurring cards optional, retained balance-funded renewal, actual-cost media settlement, both Core/Plus buckets, window fallback, and period-versioned plan changes. |
 | 2026-10-13 | Developing Studio and eligibility index | Recorded four supported Studio generation paths in the developing product and added B/P/F web Chat eligibility labels without changing historical Phase 1 acceptance. |
 | 2026-10-13 | Basic and premium subscription allowances | Added a capped low-cost web Chat Credit bucket alongside the shared premium pool, retaining Dollar/Credit units. |

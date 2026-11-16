@@ -25,7 +25,7 @@ import {
   starterConversations,
 } from "../data/chatData";
 import { getBillingTotals } from "../data/billingData";
-import { sampleChatQuote, sampleChatSettlement, sampleCreditsPerUsd, sampleOfferingLabel } from "../data/sampleRequest";
+import { availableOfferings, sampleChatQuote, sampleChatSettlement, sampleCreditsPerUsd, sampleOfferingLabel } from "../data/sampleRequest";
 
 const responseText =
   "The mock gateway completed this request with the selected model and recorded token usage and Credit cost. This response is streaming to demonstrate the production chat behavior.";
@@ -75,6 +75,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   );
   const [model, setModel] = useState(chatModels[0].name);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const [pinnedOfferingId, setPinnedOfferingId] = useState("");
   const [searchEnabled, setSearchEnabled] = useState(false);
   const [reasoningEnabled, setReasoningEnabled] = useState(false);
   const [files, setFiles] = useState([]);
@@ -85,7 +86,8 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeId) || null;
   const selectedModel = chatModels.find((item) => item.name === model);
-  const sampleQuote = selectedModel?.available ? sampleChatQuote(selectedModel.modelId) : null;
+  const modelOfferings = selectedModel?.available ? availableOfferings(selectedModel.modelId) : [];
+  const sampleQuote = selectedModel?.available ? sampleChatQuote(selectedModel.modelId, pinnedOfferingId) : null;
   const activeMessages = activeConversation?.messages || [];
   const billingTotals = getBillingTotals(billing);
   const billingNotice = selectedModel?.eligibilityIndex === "F"
@@ -159,6 +161,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
   const selectModel = (nextModel) => {
     setModel(nextModel.name);
     setModelMenuOpen(false);
+    setPinnedOfferingId("");
     if (!nextModel.webSearch) setSearchEnabled(false);
     if (!nextModel.reasoning) setReasoningEnabled(false);
     if (!nextModel.files) setFiles([]);
@@ -225,7 +228,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
       return;
     }
     if (selectedModel?.eligibilityIndex === "F") onFreeRequest?.();
-    const requestQuote = sampleChatQuote(selectedModel.modelId);
+    const requestQuote = sampleChatQuote(selectedModel.modelId, pinnedOfferingId);
     const prompt = promptOverride || value.trim();
     const userMessage = {
       role: "user",
@@ -445,6 +448,7 @@ export function ChatPage({ seedPrompt, onSeedConsumed, canChat = true, onLoginRe
                 </div>
               )}
             </div>
+            {modelOfferings.length > 0 && <ProviderPicker offerings={modelOfferings} value={pinnedOfferingId} onChange={setPinnedOfferingId} />}
           </div>
         </header>
 
@@ -544,12 +548,22 @@ function BillingNotice({ notice, onCreditsRequired }) {
   );
 }
 
+function ProviderPicker({ offerings, value, onChange }) {
+  return <label className="provider-picker">
+    <span>Provider</span>
+    <select aria-label="Provider" value={value} onChange={(event) => onChange(event.target.value)}>
+      <option value="">Auto</option>
+      {offerings.map((offering) => <option key={offering.offeringId} value={offering.offeringId}>{sampleOfferingLabel(offering)}</option>)}
+    </select>
+  </label>;
+}
+
 function SampleChatQuote({ quote }) {
   return <div className="sample-quote" aria-label="Illustrative request quote">
     <strong>Illustrative request quote</strong>
-    <span>{sampleOfferingLabel(quote.selected)} · rate {quote.selected.customerRateCard.rateCardVersion}{quote.backup ? " · one same-model fallback allowed" : ""}</span>
+    <span>{quote.pinned ? "Pinned" : "Auto"} · {sampleOfferingLabel(quote.selected)} · rate {quote.selected.customerRateCard.rateCardVersion}{quote.pinned ? " · no fallback" : quote.backup ? " · one same-model fallback allowed" : ""}</span>
     <span>Estimate {quote.estimate.toLocaleString()} Credits · hard maximum {quote.maximum.toLocaleString()} Credits · sample bound 1,000 input / 800 output tokens</span>
-    <span>Reserve: {quote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {quote.reserved.subscription.toLocaleString()} Premium Credits · sample conversion {sampleCreditsPerUsd.toLocaleString()} Credits/$1</span>
+    <span>Reserve: {quote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {quote.reserved.subscription.toLocaleString()} Premium Credits · {sampleCreditsPerUsd.toLocaleString()} Credits = $1</span>
     <small>Fixed sample units are used regardless of prompt length. No funded AIT Earned Credit term is active; no balance is debited. After a simulated response, inspect Credits → Usage.</small>
   </div>;
 }

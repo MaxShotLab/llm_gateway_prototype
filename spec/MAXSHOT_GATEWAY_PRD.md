@@ -1,8 +1,10 @@
 # Maxshot LLM Gateway Product Requirements Document
 
-**Status:** Authoritative delivery specification
-**Baseline:** [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
-**Updated:** October 13, 2026
+**Status:** Gateway delivery specification; later overrides in spec/00_README.md and DECISIONS.md
+**Baseline:** [archive/llm-gateway-product-baselines.md](./archive/llm-gateway-product-baselines.md) (superseded)
+**Updated:** November 1, 2026
+
+**Current handoff:** This PRD owns Chat, API and Studio-adjacent behavior only where no later spec does. Subject ownership and precedence are in [00_README §3](./00_README.md#3-document-map-and-precedence); decisions in [DECISIONS.md](./DECISIONS.md). Sections marked **Override** below are superseded in the stated respect; retain their unrelated requirements.
 
 ## 1. Purpose
 
@@ -13,9 +15,12 @@ individuals and developers one account for using configured models through a
 web chat or an OpenAI-compatible API. The developing product also includes
 Studio generation; [MAXSHOT_STUDIO_PRD.md](./MAXSHOT_STUDIO_PRD.md) owns its
 detailed feature and charging requirements.
+Post-Studio, post-subscription growth behavior is specified in
+[GROWTH_PLANS_PRD.md](../GROWTH_PLANS_PRD.md).
 
-This PRD is the single source of truth for product and engineering
-collaboration. It defines:
+This PRD owns Gateway product and engineering requirements except where the
+[00_README](./00_README.md) assigns
+later confirmed decisions to another document. It defines:
 
 - The production framework and ownership boundaries.
 - The required user paths and feature behavior.
@@ -23,10 +28,9 @@ collaboration. It defines:
 - Product terminology and acceptance conditions.
 - The work required to deliver the approved product design.
 
-[llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
-remains the single source of truth for product design. This PRD must implement
-that design without changing its scope, phase, navigation, terminology, or
-exclusions.
+[llm-gateway-product-baselines.md](./archive/llm-gateway-product-baselines.md)
+records the earlier Gateway product design. 00_README §3 identifies the
+specific unified-app, provider, subscription, and token decisions that supersede it.
 
 Governance:
 
@@ -35,8 +39,8 @@ Governance:
 - Requirement, ownership, acceptance, and migration changes are maintained
   here.
 - Product and engineering planning, implementation, and acceptance use this PRD.
-- If the documents conflict, the baseline controls product design; delivery
-  stops until both documents are corrected.
+- If documents conflict, use 00_README §3 to identify the owning rule and
+  reconcile the conflicting clauses before accepting the affected feature.
 
 ## 2. Goals
 
@@ -63,7 +67,9 @@ Governance:
 - Reproducing LibreChat or maintaining LibreChat compatibility.
 - Account deletion.
 - Team organizations, members, roles, or permissions.
-- Public marketplaces, collaboration, or builder monetization.
+- Public marketplaces, conversation collaboration, or builder monetization;
+  limited Studio sharing and promotional-Credit rewards are specified in the
+  later Growth Plans PRD.
 - Trading, deposit, token, or reserve products.
 - Postpaid balances or negative balances.
 - User-managed MCP servers or arbitrary custom tools.
@@ -207,6 +213,8 @@ Acceptance:
 
 ### P0.2 Account And Settings
 
+> **Override (16 November 2026):** API keys live in Profile → Developer settings and carry the scoped key policy in [SPEC_BILLING §3](./SPEC_BILLING.md#3-scoped-api-key-policy) (TD-44). Wallet linking follows [SPEC_ACCOUNT_VAULT §2](./SPEC_ACCOUNT_VAULT.md) (TD-50).
+
 - Email login, session persistence, and logout.
 - Profile with email and display name.
 - Account balance visible from the app shell.
@@ -219,6 +227,8 @@ Acceptance:
 - Limit changes are persisted and auditable.
 
 ### P0.3 Chat
+
+> **Override (16 November 2026):** Model picker shows only usable models per [SPEC_PROVIDERS §4.1](./SPEC_PROVIDERS.md) (TD-41) and carries a provider selector, default Auto (TD-48). Pre-submit estimate and hard maximum per [SPEC_BILLING §4](./SPEC_BILLING.md) (TD-39).
 
 - Configured default model list containing flagship models and a few free
   models.
@@ -243,6 +253,8 @@ Acceptance:
 
 ### P0.4 API
 
+> **Override (16 November 2026):** Single-call authorization with optional caller ceiling and optional `offeringId` pin; response carries the request ID; key policy and rejection codes per [SPEC_BILLING §3–4](./SPEC_BILLING.md) (TD-37/44/46/48). External-agent guide: [SPEC_AGENT_INTEGRATION](./SPEC_AGENT_INTEGRATION.md).
+
 - Create, name, display secret once at creation, copy then, and revoke keys.
 - Daily and monthly limit per key.
 - OpenAI-compatible base URL and quick-start example.
@@ -256,6 +268,8 @@ Acceptance:
 - The full API Developer key path works with an OpenAI-compatible client.
 
 ### P0.5 Usage And Billing
+
+> **Override (16 November 2026):** Ledger names, bucket eligibility, hold/spend order, request ID, Pending state and refunds are owned by [SPEC_BILLING](./SPEC_BILLING.md) (TD-15/19/39/46/47/49). Usage lives in Credits and is searchable by request ID and filterable by key.
 
 - Unified chat and API usage records.
 - Current-period request, token, and credit totals.
@@ -295,6 +309,8 @@ Acceptance:
 
 ### P0.7 Gateway
 
+> **Override (16 November 2026):** Provider admission, catalog, lowest-qualified-cost routing, one pre-output same-model fallback and pin behavior are owned by [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) (TD-26–31/48).
+
 - Configured multi-provider model catalog.
 - OpenAI-compatible request endpoint.
 - Primary route and configured eligible fallback.
@@ -307,6 +323,8 @@ Acceptance:
 - Failover preserves the requested model and applicable policy.
 
 ### P0.8 Referral And Rewards
+
+> **Override (16 November 2026):** Qualification uses the USD amount credited to Dollar balance after fees; rewards are separate promotional Credits; subscription payments do not qualify ([SPEC_ACCOUNT_VAULT §5](./SPEC_ACCOUNT_VAULT.md), TD-42).
 
 - Generate a referral link for registered users.
 - Attribute new registered users to the referring user.
@@ -354,6 +372,8 @@ Acceptance:
 
 ### P1.4 Agents
 
+> **Override (16 November 2026):** A managed Agent product, Agent Wallet or Agent Factory is not a Foundation or MAX/AIT release requirement (TD-24). The agent-facing path is the scoped-key integration in [SPEC_AGENT_INTEGRATION](./SPEC_AGENT_INTEGRATION.md).
+
 - Create, edit, delete, and search personal agents.
 - Configure model, instructions, knowledge files, skills, and allowed tools.
 - Start an agent conversation.
@@ -376,8 +396,10 @@ Acceptance:
 
 ### P1.7 Subscription
 
+> **Override (16 November 2026):** Owned by [SUBSCRIPTION.md](./SUBSCRIPTION.md); request charging by [SPEC_BILLING](./SPEC_BILLING.md).
+
 - Implement the contract in
-  [SUBSCRIPTION_FEATURE_REQUIREMENTS.md](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md).
+  [SUBSCRIPTION_FEATURE_REQUIREMENTS.md](./SUBSCRIPTION.md).
 - Keep Dollar balance, basic-chat Credits, premium Credits, free Credits, and
   referral Credits as separate ledger buckets.
 - Support Dollar-balance-first renewal with a tokenized card fallback and no
@@ -414,7 +436,18 @@ P2 is not a third delivery phase. None of this work is scheduled by this PRD.
 Adding it requires an approved product-baseline change before requirements or
 implementation begin.
 
+The separate [Growth Plans PRD](../GROWTH_PLANS_PRD.md) approves only opt-in
+Studio creation sharing, curated Starters, and reviewed creator campaigns
+after Studio and subscription. It does not bring conversation sharing or a
+public creator marketplace into Phase 2 acceptance.
+
 ## 10. Navigation
+
+> **Override (16 November 2026):** Unified sidebar is **Portfolio, Chat, Studio, Credits, Tokens, Providers, Vaults, Referrals**; API keys in Profile → Developer settings; Usage in Credits; Starters and Playground hidden ([00_README §1](./00_README.md#1-what-is-being-built)). The navigation below is the earlier baseline.
+
+This section records the earlier Phase 1 layout. The confirmed unified-app
+navigation in the [00_README](./00_README.md)
+supersedes it for the current prototype and development round.
 
 Phase 1:
 
@@ -434,9 +467,10 @@ clearly labeled as deferred and not part of Phase 1 production scope:
 Phase 2 prototype screens may remain accessible during development but must not
 be represented as Phase 1 production scope.
 
-The developing product also places Studio after Chat. Its four generation
-paths are supported, while this Gateway prototype uses a static Studio page
-to demonstrate subscription funding. This does not change the original
+The live product also places Studio after Chat. Its four generation paths,
+My Creations, Discover material details, and Try this are present, while this
+Gateway prototype uses a static Studio page to demonstrate subscription
+funding. This does not change the original
 Phase 1 acceptance list above.
 
 ## 11. Terminology
@@ -496,6 +530,8 @@ chat interaction layer; Maxshot owns the rest of the application.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-11-01 | Live Studio integration | Noted existing Discover/material reuse alongside the new growth-release link. |
+| 2026-11-01 | Growth-plan scope alignment | Linked the staged post-subscription Growth Plans PRD and narrowed public-sharing exclusions without adding a marketplace. |
 | 2026-10-13 | Subscription bucket alignment | Named separate basic-chat and premium Credit buckets and required both grants exactly once per paid period. |
 | 2026-10-13 | Developing Studio alignment | Recorded Studio and its four supported generation paths in the developing product while keeping original Phase 1 acceptance separate. |
 | 2026-09-21 | Subscription implementation contract | Added identical initial/renewal source rules, idempotent period creation, and fixed-point monetary units. |

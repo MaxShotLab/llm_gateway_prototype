@@ -7728,3 +7728,55 @@ body {
 .theme-light .api-metric-grid > div {
   background: #f8f5ee;
 }
+
+/* TD-48 provider selector (Chat and Studio) */
+.provider-picker {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: #151515;
+  color: #8f8f8f;
+  font-size: 11px;
+}
+.provider-picker select {
+  max-width: 170px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: #e8e8e8;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.theme-light .provider-picker { background: #fff; border-color: var(--border); color: var(--muted); }
+.theme-light .provider-picker select { color: var(--ink); }
+@media (max-width: 900px) { .provider-picker > span { display: none; } .provider-picker select { max-width: 110px; } }
+
+/* TD-46 Usage filters */
+.usage-record-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.usage-record-filters input,
+.usage-record-filters select { height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--panel); color: var(--ink); font: inherit; font-size: 12px; }
+.usage-record-filters input { min-width: 180px; }
+.usage-key-name { display: block; color: var(--muted); font-size: 11px; }
+.empty-row { color: var(--muted); text-align: center; }
+
+/* TD-44 key policy */
+.spending-limit-form { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.spending-limit-form > p { grid-column: 1 / -1; }
+.key-catalogs { display: grid; gap: 6px; margin: 0; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #cfcfcf; font-size: 12px; }
+.key-catalogs legend { padding: 0 4px; }
+.key-catalogs small, .spending-limit-form label small, .api-modal label small { color: #898989; font-size: 11px; line-height: 1.35; }
+.spending-limit-form .check-row, .api-modal .check-row, .key-catalogs .check-row { display: flex; align-items: center; gap: 8px; }
+.api-modal .key-catalogs { margin-bottom: 4px; }
+.theme-light .key-catalogs { border-color: var(--border); color: var(--ink); }
+.api-metric-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.spending-limit-form { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+.spending-limit-form .key-catalogs { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.spending-limit-form .key-catalogs small { flex-basis: 100%; }
+.spending-limit-form > .check-row, .spending-limit-form > button { align-self: center; }
+@media (max-width: 900px) { .spending-limit-form { grid-template-columns: 1fr; } }

@@ -1,9 +1,11 @@
 # Maxshot Studio Product Requirements Document
 
 **Status:** Developing product — four generation paths supported; later Studio features remain staged
-**Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md)
-**Prototype:** [studio-prototype/index.html](./studio-prototype/index.html)
-**Updated:** October 19, 2026
+**Related:** [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [archive/llm-gateway-product-baselines.md](./archive/llm-gateway-product-baselines.md) (superseded), [GROWTH_PLANS_PRD.md](../GROWTH_PLANS_PRD.md)
+**Prototype:** [studio-prototype/index.html](../studio-prototype/index.html)
+**Updated:** November 1, 2026
+
+**Current handoff:** This PRD owns Studio generation behavior except where a later spec does. Subject ownership and precedence are in [00_README §3](./00_README.md#3-document-map-and-precedence); decisions in [DECISIONS.md](./DECISIONS.md). Sections marked **Override** below are superseded in the stated respect; retain their unrelated requirements.
 
 ## 1. Purpose
 
@@ -14,24 +16,31 @@ generates an image or video, edits the result in place, and can draw on a
 shared library of prompts and reference material — their own and the
 community's — to start faster next time.
 
-This PRD is the working source of truth for Studio product and engineering
-collaboration. The four generation paths are in the developing-product baseline;
-editing, reuse, and social features remain staged. It defines:
+This PRD owns Studio product and engineering requirements within the
+[00_README](./00_README.md). The live product has four generation paths, My Creations,
+Discover, material details, and Try this; editing and new public-sharing
+controls remain staged. It defines:
 
 - The four generation paths and their required behavior.
 - Inline editing and asset-lineage requirements.
-- The Discover feed and the Assets section (My Creations and Liked), both
-  embedded on the Studio page.
+- The private My Creations section and the existing Discover/material reuse
+  path. New public sharing and curated Starters are specified in the Growth
+  Plans PRD.
 - Phase 1 and Phase 2 scope and priorities.
 - Terminology and acceptance conditions.
 
-The developing product supports text-to-image, image-to-image, text-to-video,
-and image-to-video generation. Studio's place in the developing product is
-recorded in [llm-gateway-product-baselines.md](./llm-gateway-product-baselines.md).
+The live product supports text-to-image, image-to-image, text-to-video,
+and image-to-video generation. Studio's place in the product is
+recorded in [llm-gateway-product-baselines.md](./archive/llm-gateway-product-baselines.md).
 This PRD retains the staged requirements for editing, asset reuse, and social
 features; it does not change the Gateway's original Phase 1 acceptance scope.
 Product-design changes still start in the baseline, while this PRD carries
 Studio requirements and acceptance details.
+The later Growth Plans PRD governs new public sharing and campaigns. Today,
+every completed generation enters Discover without creator consent. Sharing
+will replace that inclusion rule with recorded per-work opt-in for Discover
+and guest-viewable links; user-owned legacy works without opt-in remain only
+in My Creations.
 
 ## 2. Goals
 
@@ -58,12 +67,11 @@ Phase 1 is live.
 - Record what every result was made from — prompt, reference image(s), parent
   asset — so a user can reopen, compare, and remix it later, and reload that
   exact recipe with Try this.
-- Open a Discover feed where every user's own generations sit alongside
-  community- and Maxshot-published examples, all equally reusable, ranked by
-  popularity — published automatically, with no separate publish step (see
-  P1.3).
-- Let a user save any Discover item to a personal Liked list for later reuse,
-  without leaving a public trace on the item itself.
+- Reuse the live Discover feed, material detail, and Try this surfaces, while
+  changing publication to opt-in in the later Sharing Plan. New public links,
+  curated Starters, and creator campaigns follow that release. See
+  [Growth Plans](../GROWTH_PLANS_PRD.md).
+- A personal Liked list and popularity ranking remain deferred.
 - Support multi-image reference generation — more than one reference image
   tied to a single result, most commonly image-to-video — including a
   dedicated First & last frame mode for the common case of anchoring exactly
@@ -80,29 +88,23 @@ Phase 1 is live.
 - Image "editing" beyond AI-driven transformation (background removal,
   upscale, inpaint, text-guided edit) — no manual crop, filters, or layers.
 - A general-purpose asset manager (folders, tags, bulk organization). My
-  Creations, Liked, and Discover are flat, filterable-by-type galleries.
+  Creations is a simple, filterable-by-type gallery.
 - User-supplied generation-provider credentials or arbitrary custom models.
 - Real-time collaborative editing of a single result.
 - Team- or organization-owned generations. Ownership is per Maxshot account,
   consistent with [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §3.
-- Moderation, reporting, and takedown tooling for community-published content.
-  Required before Discover ships publishable community content in production;
-  out of scope for this PRD (see §9).
+- An open creator marketplace and social ranking; the existing Discover feed
+  is not a license to expose private works through new public links.
 - Public-facing like/save counts, comments, follows, or other social
-  interaction on Discover items. Liked (P1.6) is a private, per-user save
-  list — it is not shown to other users and does not factor into Discover's
-  popularity ranking.
-- A private or draft state for a generation. Every result a user generates is
-  automatically visible in Discover once Phase 2 (P1.3) ships — there is no
-  publish step, no opt-out, and no per-item privacy setting. A future privacy
-  control isn't ruled out, but it isn't designed or scheduled — see §9.
+  interaction. A private Liked list is deferred.
+- Automatic publication as a requirement for new sharing. Every new public
+  link requires the owner's explicit choice under the Growth Plans PRD.
 
 ## 4. Users And Key Paths
 
-Creator (generate) is the Phase 1 experience in full. Creator (edit) and
-Creator (reuse) describe the complete Phase 2 experience once inline editing,
-lineage, Discover, and Try this ship — see §7 and §8 for what's required in
-each phase.
+Creator (generate) and the existing My Creations/Discover reuse path are live.
+Creator (edit) describes staged inline editing. Guest-facing share links
+follow the later Growth Plans PRD.
 
 ### Creator (generate)
 
@@ -118,7 +120,7 @@ each phase.
 ### Creator (edit) — Phase 2
 
 1. Open a result from My Creations — this shows a read-only preview first
-   (media, prompt, and metadata), the same shape Discover and Liked use,
+   (media, prompt, and metadata),
    plus owner-only actions the read-only surfaces don't offer: Edit, delete,
    and (image assets) Animate.
 2. Choose Edit — from the preview, or directly from the gallery card's edit
@@ -130,24 +132,17 @@ each phase.
    back to its source.
 5. Compare the new result against the source, or jump back to the source.
 
-### Creator (reuse) — Phase 2
+### Creator (reuse) — live Studio and later growth releases
 
-1. Browse Discover, or open My Creations (or Liked, once it ships) — all
-   embedded on the same Studio page, not separate destinations.
-2. Select a result made by themselves, another creator, or Maxshot.
-3. In Discover or Liked, review a read-only preview — the media, its
-   reference image(s), and its prompt as plain text — then choose Try this.
-   In My Creations, Try this is also available directly from the gallery
-   card or from inside the full editing view.
-4. Use "Try this" to reload its exact reference image(s) and prompt into the
-   composer.
-5. Adjust the prompt or reference and generate a new result.
-
-The Reuse path is what makes Discover valuable: every item is a working
-recipe, not just a preview image. Discover and Liked are reuse-only —
-opening an item there never enters the editing view, even for the current
-user's own published work; editing an asset always happens from My
-Creations.
+1. A signed-in user opens their own work in My Creations or another creator's
+   published work in Discover. Existing material detail shows the result,
+   creator, and prompt, with Download and Try this.
+2. Try this loads the available prompt/model/settings into Studio. For a work
+   made with uploaded references, Studio asks the visitor to upload their own
+   files; it does not copy the original creator's files.
+3. The later growth release adds guest-viewable, opt-in links. Result-only
+   pages hide source inputs; method-sharing pages show only approved fields.
+   A visitor's new generation is billed to that visitor.
 
 ## 5. Product Framework
 
@@ -155,17 +150,15 @@ Creations.
 
 Studio extends the same Maxshot shell defined in
 [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.1 — same account
-session, same credit balance display, same navigation frame. It adds a
-single routed surface, Studio, which stacks three sections on one
-scrollable page, in this order: the generation composer, My Creations
-directly below it (P0.2 — a Liked tab joins it once P1.6 ships), and the
-Discover feed (P1.3) below that. My Creations, Liked, and Discover are never
-their own route or nav item — Studio is the only entry point — and none of
-this introduces a second design system or a second credit balance. Every
-asset a user generates, whatever its status (Pending, Generated, Failed —
-P0.5), lives in My Creations; there is no separate module for in-flight work.
+session, credit balance, and navigation frame. Live Studio contains the
+generation composer, private My Creations section, and an embedded Discover
+feed with material detail routes. A Liked tab and popularity ranking remain
+deferred. Every generated asset, whatever its status (Pending, Generated,
+Failed — P0.5), lives in My Creations. New public growth pages are separate,
+permission-aware views defined by the Growth Plans PRD; they do not create a
+second credit balance or expose the owner's private asset response.
 
-The current prototype ([studio-prototype/index.html](./studio-prototype/index.html))
+The current prototype ([studio-prototype/index.html](../studio-prototype/index.html))
 is a single static HTML/CSS/JS file with mocked generation (results are
 placeholder gradients, not real model output) and an in-memory asset store. It
 validates composer layout, inline editing, and the Discover/Assets
@@ -219,11 +212,10 @@ product-service data, on the same footing as conversations and prompts in
 - Asset records: type, prompt, reference image(s), model, aspect ratio,
   resolution, style, duration/audio (video), parent-asset link, edit type,
   creation date, and view count.
-- Every asset is automatically visible in Discover once generated (Phase 2)
-  — there is no publish-state field to own, since there's no publish step
-  (see §3, §9).
-- Per-user Liked state (which assets a given user has saved) — private to
-  that user, never exposed on the asset itself.
+- Current Discover auto-includes every completed generation without consent.
+  The later Growth Plans PRD requires a recorded owner-controlled share mode
+  for both Discover and guest links, revocation, and legacy-work migration.
+- A personal Liked state is deferred; Discover itself already exists.
 - Creator attribution shown on published assets.
 - Credit deduction for every generation and edit action, using the same
   ledger as the Gateway.
@@ -270,6 +262,8 @@ Nothing here depends on anything in §8.
 
 ### P0.1 Generation Composer
 
+> **Override (16 November 2026):** Model picker shows only usable models (TD-41) and carries a provider selector, default Auto (TD-48); pre-submit estimate and hard maximum per [SPEC_BILLING §4](./SPEC_BILLING.md) (TD-39).
+
 - Image/Video mode switch; Text-to-\* / Image-to-\* tab per mode.
 - Prompt field with an instructional placeholder per mode (not example-style
   copy).
@@ -281,7 +275,7 @@ Nothing here depends on anything in §8.
   enlarged preview of that reference. Uploaded thumbnails can be reordered by
   dragging — order matters for multi-image reference generation (P1.5), so
   fixing a mis-ordered upload doesn't mean starting over.
-- The prompt field has a 2,500 character limit, shown as a live counter next
+- The prompt field has a 5,000 character limit, shown as a live counter next
   to it. Exceeding the limit doesn't stop the user from typing, but flags it
   in place (the counter reads as a warning) and blocks Generate with a clear
   message until the prompt is back under the limit. The same field and limit
@@ -292,8 +286,8 @@ Nothing here depends on anything in §8.
 - Video-only duration and audio (on/off, with optional audio description)
   controls.
 - Prompt-enhance action.
-- Visible credit cost before generating, matching the amount actually
-  deducted.
+- Visible pre-submit estimate and required Credit hold; final settlement
+  follows the current billing rules rather than promising an exact match.
 - Generating never locks the composer. Clicking Generate creates the asset
   immediately in a Pending status (P0.5), clears the composer's prompt and
   reference image(s), and opens the new asset's Review page — the same
@@ -312,8 +306,8 @@ Nothing here depends on anything in §8.
   not disappear: the asset becomes Failed and stays in My Creations. Its
   Review page (and its card, on hover) explains what went wrong and what to
   do next; no credit is deducted; and the user can retry by reloading the
-  asset's prompt and reference image(s) into the composer (the same reload
-  Try this offers, P1.4) or delete it. If the user has already left the
+  asset's prompt into the composer and supplying references again (the same
+  flow Try this offers, P1.4) or delete it. If the user has already left the
   Review page, a brief notification tells them a generation failed.
 - A submission can also be blocked before it starts — for example the
   concurrent-video limit (P0.5). That shows as an inline error message in the
@@ -339,11 +333,12 @@ Acceptance:
   place to the finished result without any extra action.
 - Dragging a reference thumbnail to a new position reorders it without
   re-uploading.
-- Typing past 2,500 characters turns the counter into a warning; Generate is
+- Typing past 5,000 characters turns the counter into a warning; Generate is
   blocked with a message until the prompt is back under the limit.
 - A failed generation becomes a Failed asset in My Creations, deducts no
   credit, and explains the failure on its Review page; its prompt and
-  reference image(s) can be reloaded into the composer to retry.
+  prompt can be reloaded into the composer to retry; reference files must be
+  supplied again.
 - An inline error message (a blocked submission or a failed edit) does not
   follow the user into an unrelated context — editing the prompt, switching
   mode or tab, entering or leaving edit view, or navigating elsewhere
@@ -355,8 +350,7 @@ Acceptance:
   route or nav item. Studio is the only entry point, from Phase 1 on; only
   the actions available here change in Phase 2 (below).
 - A private, filterable-by-type (all/image/video) gallery of the current
-  user's own generations, listed newest first by creation date. There is no
-  view-count signal to sort by yet — that arrives with Discover (P1.3).
+  user's own generations, listed newest first by creation date.
 - Every generation lives here from the moment it's submitted, whatever its
   status: Pending (still generating), Generated (has a result), or Failed
   (P0.5). A status filter — a dropdown alongside the type filter, so the two
@@ -367,42 +361,43 @@ Acceptance:
 - Opening an item shows a read-only preview: the media, its prompt, its
   reference image(s) if any, and its metadata (P0.4). A Pending or Failed
   item opens the same page in its own state (P0.1, P0.5) — no result-only
-  actions (download, edit, Animate) — and only Generated results appear in
-  Discover, Liked, and the reference-image picker.
+  actions (download, edit, Animate). Only Generated results are eligible for
+  owner-requested public sharing or the reference-image picker.
 - Per-item actions, both as a direct shortcut on the gallery card and inside
   the preview: download, delete.
 - Delete asks for confirmation — a Cancel/Delete prompt — before removing
   anything; there is no one-click, no-confirm delete anywhere delete appears
   (My Creations card or preview, and the editing view's delete once P1.1
   ships). Canceling, or dismissing the prompt, leaves the asset untouched.
-- Phase 1 is view, download, and delete only. Editing, Animate, asset
-  lineage, and Try this are Phase 2 (P1.1, P1.2, P1.4) — a Phase 1 result is
-  a finished thing to keep or discard, not yet something to remix.
+- Live Studio already supports Try this and Animate. Inline editing and asset
+  lineage remain staged (P1.1, P1.2).
 
 Acceptance:
 
 - A user can find any of their own past generations by type filter and by
   status filter, and the two combine.
-- Opening a Generated item shows the read-only preview; there is no edit,
-  Animate, or Try this control on it anywhere in Phase 1. (A Failed item's
-  retry — reloading its prompt and reference image(s) into the composer — is
-  the one reload available in Phase 1, since there is no result to keep.)
+- Opening a Generated item shows the read-only preview and its available
+  live actions, including Try this or Animate where applicable. A Failed
+  item's retry requires supplying reference files again.
 - Deletion only affects the deleted asset and its own gallery entry.
 - Clicking delete shows a confirm/cancel prompt first; the asset is only
   removed after the user explicitly confirms.
 
 ### P0.3 Credit Integration
 
+> **Override (16 November 2026):** Funding buckets, hold order, Premium coverage of media, key Dollar-spend opt-in and refunds are owned by [SPEC_BILLING §2–6](./SPEC_BILLING.md) (TD-44/47/56).
+
 - Generation uses the same Gateway ledger and funding order defined in
-  [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.4. Its exact user-facing
-  Credit price is configured for the model, generation path, and billable
-  settings, and shown before submission. A successful result deducts that
-  quoted price. Phase 2 edit actions use the same quoting rule when they ship
-  (P1.1).
+  [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §5.4. Live Studio shows a
+  pre-submit Credit estimate, hard maximum customer charge, and funding hold
+  for the selected model, path, and settings. The Gateway reserves the maximum
+  before dispatch. Settlement follows actual billable usage up to that maximum;
+  any provider overrun is a platform/provider discrepancy, not a later customer debit.
+  Later edit actions must use the same funding and settlement contract.
 - Eligible generations may draw from the shared monthly premium subscription
-  allowance, never the basic-chat allowance, under [Subscription Feature Requirements](./SUBSCRIPTION_FEATURE_REQUIREMENTS.md)
+  allowance, never the basic-chat allowance, under [Subscription Feature Requirements](./SUBSCRIPTION.md)
   §3.1 and §4.3; the remainder follows the existing promotional-Credit and
-  Dollar-balance order. A Pending job holds its quoted funding until it
+  Dollar-balance order. A Pending job holds the required funding until it
   becomes Generated or Failed.
 - Studio adds no separate funding flow; it uses the Gateway's existing Credits
   page and account ledger ([MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md)
@@ -421,9 +416,7 @@ Acceptance:
   aspect ratio (for example "HD · 16:9"), and, for video, duration.
 - Resolution and aspect ratio are shown together as a compact, scannable
   summary, not as exact pixel dimensions.
-- View count joins this display once Discover ships (P1.3) — Phase 1 has no
-  popularity signal to show yet. See P1.3 for its definition (incremented once
-  per open) and how it's used.
+- Public popularity ranking and view-count display are deferred.
 
 Acceptance:
 
@@ -431,6 +424,8 @@ Acceptance:
   resolution/aspect.
 
 ### P0.5 Generation Status
+
+> **Override (16 November 2026):** Job states `accepted → dispatched → delivered | failed | uncertain → settled | released`, manual resolution of `uncertain`, 24-hour auto-release and the customer-facing Pending state with held amount are owned by [SPEC_BILLING §5](./SPEC_BILLING.md#5-media-job-lifecycle) (TD-49). Studio's Pending/Generated/Failed labels map onto those states.
 
 - Every generation has a status, shown wherever it appears in My Creations
   (P0.2) and on its Review page (P0.1):
@@ -442,7 +437,7 @@ Acceptance:
     reason is kept with the asset (P0.1).
 - Pending and Failed assets sit in My Creations alongside Generated ones —
   there is no separate module for in-flight work. Only Generated assets are
-  downloadable, editable, or eligible for Discover (P1.3), Liked (P1.6), and
+  downloadable, editable, or eligible for owner-requested public sharing and
   the reference-image picker.
 - Up to 3 videos may be Pending at once. Submitting a fourth while 3 are
   already Pending is blocked with the inline error message P0.1 defines, and
@@ -459,92 +454,21 @@ Acceptance:
   message, until fewer than 3 videos are Pending.
 - A Generated asset deducts credit and gains its result-only actions; a
   Failed one deducts nothing and keeps its reason.
-- Pending and Failed assets never appear in Discover, Liked, or the
+- Pending and Failed assets are never publicly shareable or available in the
   reference-image picker.
 
 ### P0.6 Model Pricing Page
 
-- A Pricing entry in the shell navigation (in the prototype, between Credits
-  and Referral) lists what each model costs, so a user can compare models
-  before choosing one. It is a shell-level page shared with the Gateway: the
-  Text tab is the Gateway's chat catalog, while the Image and Video tabs are
-  Studio's. Where Pricing sits in the navigation is a baseline decision (§10).
-- Three tabs — Text, Image, Video — each showing its model count. One search
-  field filters the active tab by model ID or name.
-- Image and Video list exactly the models the Studio model picker offers (the
-  configured model catalog, §11). The two stay in step: a model added to or
-  removed from the picker is added to or removed from this page.
-- Columns follow the Text tab: Model ID, Input, Output, and a Copy action for
-  the ID. Image and Video add an Abilities column — T2I and I2I for images,
-  T2V, I2V, and V2V for videos. Text keeps Input / 1M tokens, Output / 1M
-  tokens, and Cache read / 1M.
-- Prices show in Credits with the USD equivalent beneath (1 Credit =
-  $0.000001), and the billing unit appears with the price — per image, per
-  second, per 1M tokens, or per megapixel. Token rates are always quoted per
-  1M tokens. When a model has several rates, Output shows the cheapest as
-  "from"; rates for turning an existing video into a new one (V2V) are not
-  used for that headline.
-- A model with more than one rate has an "All N rates" control that expands
-  the row. It states the supported resolutions and durations, then lists the
-  rates grouped by the mode the source names (T2V, I2V, V2V, Input charges);
-  rates the source doesn't tie to a mode stay under "Mode unspecified". Each
-  group is a small table of rate, Credits, and USD, ordered base rate first
-  and then by resolution, with the unit stated once in the header.
-- A model that has providers shows "N providers"; opening it lists each
-  provider's name, tag, and prices. For Text this includes cache rates and any
-  long-prompt tier.
-- Selecting a model fills a details panel beside the list (below it on a
-  narrow window): name, ID with a Copy ID action, description, an overview, the
-  model's pricing, its providers, and its catalog fields. The overview shows
-  context window, max output, and price per 1M tokens for Text; and abilities,
-  resolutions, durations, aspect ratios, first/last-frame support, audio
-  generation, and reference-image limit for Image and Video. Every model also
-  shows its release date.
-- A price here is a reference rate. The price a user is actually charged is
-  the quote shown before submission (P0.3), and where the two differ the quote
-  governs.
+> **Override (16 November 2026):** Models & Pricing lives under Providers and compares complete customer rate cards per offering ([SPEC_PROVIDERS §4](./SPEC_PROVIDERS.md#4-pricing-and-customer-display), TD-34). No standalone Pricing item.
 
-Acceptance:
-
-- Every model in the Studio picker has a row, with a price, on the Image or
-  Video tab; no model appears there that the picker doesn't offer.
-- Searching narrows only the active tab, and switching tabs keeps each tab's
-  own selection.
-- Selecting any model shows its details; opening "All N rates" or a provider
-  list doesn't change the selection.
-- Copy puts exactly the model ID on the clipboard and confirms it.
-- A model whose source reports no price shows "-" rather than 0.
-
-Known gaps — not yet specified, to be decided before this page is final:
-
-- Studio's composer allows options some models don't support: 2–10 second
-  durations (Veo accepts only 4, 6, or 8; Seedance starts at 4), 21:9 (several
-  image models and Veo don't offer it), and up to 9 reference images (some
-  models accept 0 to 4). The page should show these limits on the row, and the
-  composer should keep an unsupported combination from being submitted.
-- No estimate of a typical single generation (for example a 4-second 720p clip
-  with audio), and no mapping from Studio's SD / HD / 2K to each model's
-  resolution tiers. Models billed per video token can't be priced per clip
-  without a tokens-per-second figure.
-- The "from" price for models with audio variants is the no-audio rate, while
-  Studio defaults audio on.
-- Not shown, though the source has them: long-prompt tier prices and other
-  charges (web search, image input) outside the provider list, mandatory
-  reasoning, batch variants shown apart from their base model, retirement
-  dates, knowledge cutoff, and per-provider context, quantization, and uptime.
-- Latency, throughput, and usage popularity have no data source in the
-  prototype; for video, expected generation time matters to the Pending
-  behavior in P0.5.
-- No sorting, filters, or paging beyond search, and no visible "updated at"
-  or refresh.
+The earlier standalone Pricing page text was moved to [archive/STUDIO_PRD_P0.6_pricing_page_superseded.md](./archive/STUDIO_PRD_P0.6_pricing_page_superseded.md). Studio model-detail ideas there are not requirements until reconciled with the live catalog.
 
 ## 8. Phase 2 Requirements
 
-Phase 2 is everything that turns a Phase 1 result into something reusable,
-editable, and discoverable. It ships iteratively after Phase 1 is live, in
-whatever order the product prioritizes — no P1 item requires another to
-ship first, with the sole exception that Liked (P1.6) surfaces items from
-Discover (P1.3), so it needs Discover live first.
+Discover, material details, Try this, and reference uploads already exist in
+live Studio. The remaining Phase 2 work here is inline editing and lineage;
+new public sharing and campaigns are staged after Studio and subscription
+under the Growth Plans PRD. Liked and popularity ranking remain deferred.
 
 ### P1.1 Inline Editing
 
@@ -577,10 +501,8 @@ Discover (P1.3), so it needs Discover live first.
 - Each edit action shows its own configured credit cost before applying,
   reflected live as the user changes which tool is selected.
 - An edit produces a new asset; it never overwrites the source.
-- Entering the editing view hides both My Creations (P0.2) and the Discover
-  feed (P1.3) below the composer — a user editing a result isn't also
-  scrolling past their own gallery or unrelated published work. Both
-  reappear once editing exits.
+- Entering the editing view hides My Creations below the composer; it
+  reappears when editing exits.
 - Applying an edit shows an in-progress state — the Generate control becomes
   indeterminate and its cost readout reads "Generating…" — and the editing
   view itself (the result, the tool selection, the mask, the typed
@@ -607,8 +529,7 @@ Acceptance:
 - The source asset is unchanged and still present after an edit.
 - Inpaint requires a painted mask and a description before it can be applied;
   remove background and upscale apply with no description required.
-- Neither My Creations nor Discover is visible anywhere on screen while the
-  editing view is open.
+- My Creations is hidden while the editing view is open.
 - The Generate control is disabled and shows its in-progress state for the
   duration of an edit request, while the rest of the editing view (image,
   tool chips, prompt) stays visible and unchanged until the result is ready.
@@ -638,66 +559,28 @@ Acceptance:
 
 ### P1.3 Discover Feed
 
-- Embedded on the Studio page below My Creations (P0.2), rather than as its
-  own routed surface — a user scrolls from composing, past their own recent
-  work, straight into Discover, without leaving Studio or losing composer
-  state.
-- A single feed combining the current user's own generations with community-
-  and Maxshot-published examples — no "mine vs. theirs" filter, only a type
-  filter (all/image/video).
-- Every generation is included automatically the moment it's Generated (P0.5)
-  — there is no publish step, review queue, or opt-out (see §3, §9). Pending
-  and Failed assets are never included.
-- Two sort modes: Most recent (by creation date) and Most viewed (by view
-  count). Most recent ships first — it needs nothing beyond the creation date
-  Phase 1 already records. Most viewed follows as a fast-follow once view
-  tracking is live; both then coexist as user-facing sort options. This
-  staged rollout is sequencing within Phase 2, not a third phase (§6).
-- View count is a simple popularity signal recorded per asset, incremented by
-  exactly one each time a user opens that asset's detail view (My Creations,
-  Discover, or Liked — any surface counts). It is not the same as Liked
-  (P1.6), which is private and does not affect either sort mode.
-- Opening any item — regardless of source, including the current user's own
-  work — shows a read-only preview: the media, its reference image(s), and
-  its prompt as plain text, not an editable field.
-- Discover never offers edit or delete, for any item, regardless of
-  ownership. Editing an owned asset happens only from My Creations (P0.2).
-- Every item supports Try this and download, from both the gallery card and
-  the preview; it also supports Like once P1.6 ships (Like stays hidden
-  while P1.6 is flagged off).
-- Non-owned items show a creator attribution badge (name, or a Maxshot-team
-  label for official examples).
-
-Acceptance:
-
-- A user can open any Discover item and see the same read-only prompt/
-  reference detail regardless of who made it, including their own.
-- No edit or delete control is offered anywhere in Discover, including on
-  the current user's own items.
-- Opening a Discover item and returning ("Back") returns to the Studio page
-  with My Creations and Discover both still in place below the composer; the
-  sidebar highlight stays on Studio throughout, since Discover has no
-  separate route.
-- Most recent sorts correctly by creation date; once Most viewed ships, the
-  feed re-sorts correctly as view counts change (highest first).
-- Opening any asset's detail view increments its view count by exactly one,
-  regardless of which surface it was opened from.
-- Every result a user generates appears in Discover without any action from
-  them.
+Already present in live Studio, embedded below My Creations. It lists
+published image/video works, links to material detail pages showing output,
+creator attribution, prompt, Download, and Try this. Every completed generation
+currently appears there without creator consent. This is the current behavior,
+not the future sharing rule. At Sharing Plan launch, Discover and guest links
+must enforce the same recorded opt-in and result-only/method disclosure mode;
+user-owned legacy works without consent leave Discover but remain in My
+Creations.
 
 ### P1.4 Try This
 
-- Available as a one-click action directly on any gallery card (My Creations,
-  Liked, or Discover), inside the read-only preview, and inside the full
-  editing view.
-- Loads the asset's own reference image(s) — itself, for an image; its stored
-  reference(s), for a video made from one or more images — and its prompt
-  into the composer, in the matching mode/tab, ready to generate.
+- Live material detail and Discover cards already offer Try this. It loads
+  available prompt/model/settings into the Studio composer. Original uploaded
+  reference files are not copied; the visitor must provide their own.
+- The later result-only public page does not offer source-recipe Try this.
+  Method sharing can expose only fields the owner approved.
 
 Acceptance:
 
-- Try this on an image-to-video result restores every reference image it was
-  made from, not only the first.
+- For an existing work with uploaded references, Try this tells the visitor
+  to upload their own files. New public method-sharing is initially limited
+  to paths without uploaded inputs under the Growth Plans PRD.
 - Try this never mutates the source asset.
 
 ### P1.5 Multi-Image Reference
@@ -705,8 +588,8 @@ Acceptance:
 - A single generation (most commonly image-to-video) may be made from more
   than one reference image.
 - The resulting asset records every reference used, in order.
-- The editing view's "reference used" row and Try this both reproduce the
-  full set.
+- The owner can inspect the references used; Try this may show their roles
+  but requires the visitor to supply their own files.
 - Image-to-Video offers a mode toggle, not a separate tab: Reference images
   (the general, order-sensitive list above) or First & last frame — a
   dedicated pair of upload slots for the frame the clip should open on and
@@ -722,63 +605,33 @@ Acceptance:
 
 Acceptance:
 
-- A result made from two reference images shows two reference thumbnails and
-  reloads both via Try this.
+- A result made from two reference images shows two reference thumbnails;
+  Try this asks the visitor to provide replacement references.
 - Generating in First & last frame mode requires both a first frame and a
   last frame; the description is optional.
 - Toggling from First & last frame to Reference images and back preserves
   whatever was uploaded on both sides.
 - A First & last frame result's reference thumbnails are visibly
-  distinguished as first vs. last in the preview, the editing view, and
-  after Try this.
+  distinguished as first vs. last in the preview and editing view; Try this
+  preserves the roles without copying the original files.
 
 ### P1.6 Liked
 
-- A user can save any Discover item (their own or someone else's) to a
-  personal Liked list with a single toggle, from the gallery card or the
-  preview.
-- Liked is the second tab in the Assets section, alongside My Creations
-  (P0.2) — both embedded on the Studio page, not a route of their own. It is
-  a flat, filterable-by-type (all/image/video) gallery of everything the
-  current user has saved.
-- Liked items behave like Discover items, not My Creations items: opening one
-  shows the same read-only preview, with Try this and download, and no edit
-  or delete control — including for the current user's own published work.
-- Unsaving an item (toggling Like off) removes it from Liked immediately.
-- Liked state is private to the user: it is never shown to other users and
-  does not affect Discover's view-count ranking (see P1.3, §3).
-- The current prototype ships this feature fully built but disabled by
-  default behind a flag — the heart toggle and the Liked tab are hidden —
-  since the product need for a personal save list hasn't been validated yet.
-  Turning it back on needs no further engineering, only a product decision,
-  and can happen independently of any other P1 item.
-
-Acceptance:
-
-- A saved item appears in Liked and can be found there by type filter.
-- Toggling Like off on a Liked-tab card removes it from that list without a
-  page reload.
-- Opening a Liked item and returning ("Back") returns to the Liked tab, not
-  Discover or the Studio composer.
-- No edit or delete control is offered on a Liked item, including one the
-  current user made themselves.
+Deferred. A disabled prototype mock does not
+constitute a production requirement or acceptance condition.
 
 Phase 2 acceptance:
 
 - Each feature works with persistent data and real account authorization, not
   the prototype's in-memory store.
-- Discover and Liked never expose a non-owned item's delete control.
+- Owned-asset reuse does not expose private inputs to other accounts.
 
 ## 9. P2 Deferred And Out-Of-Scope Work
 
-- Moderation, reporting, and takedown tooling for community-published
-  content.
-- A user-facing publish/private control. Every result is automatically
-  public in Discover by default (P1.3, §3); a future opt-out or draft state
-  isn't ruled out, but it isn't designed or scheduled.
-- Public like/save counts, comments, follows, or any other social interaction
-  on Discover items. Liked (P1.6) is explicitly in scope but is a private
-  per-user save list, not a social feature — see §3.
+- A public popularity ranking and Liked list. Discover already exists;
+  the later Growth Plans PRD requires opt-in sharing, revocation, and
+  takedown for new public links and curated placements.
+- Public like/save counts, comments, follows, or other social interaction.
 - Per-item licensing or usage-rights declarations for community content.
 - Team- or workspace-shared Discover feeds.
 - Batch/variation generation (multiple results from one request).
@@ -791,6 +644,10 @@ implementation begin.
 
 ## 10. Navigation
 
+> **Override (16 November 2026):** Unified sidebar is **Portfolio, Chat, Studio, Credits, Tokens, Providers, Vaults, Referrals** ([00_README §1](./00_README.md#1-what-is-being-built)). The navigation below is the earlier baseline.
+
+The standalone Pricing placement below is historical. The [SPEC_PROVIDERS §4](./SPEC_PROVIDERS.md#4-pricing-and-customer-display) governs current unified navigation.
+
 Phase 1 adds to [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md) §10's
 navigation exactly one item:
 
@@ -800,11 +657,10 @@ My Creations (P0.2) is not a nav item — it's a section embedded on the
 Studio page, directly below the composer, from Phase 1 on; there is no
 "Assets" route or nav entry at any point.
 
-Phase 2 does not add a nav item either. Inline editing, lineage, and Try
-this all live on the same Studio page, and Discover (P1.3) embeds below My
-Creations rather than shipping as its own page. Liked (P1.6) becomes a
-second tab alongside My Creations, in that same embedded section — not a
-new destination (currently built but disabled by default — see P1.6).
+Phase 2 does not add a nav item either. Inline editing and lineage remain on
+the Studio page. Discover is already embedded below My Creations, while
+Liked is deferred. New public links and curated Starters are defined by the
+later Growth Plans PRD.
 
 The prototype also has a Pricing item (P0.6). It is a shell-level page shared
 with the Gateway, not a Studio route; its Image and Video tabs are the part
@@ -830,8 +686,9 @@ decision, not this PRD's to make.
   (remove background, upscale, inpaint, text-guided edit, video extend).
 - **Parent asset / lineage:** The source asset an edited or extended result
   was derived from.
-- **Try this:** Reloading an asset's own reference image(s) and prompt into
-  the composer to generate a new result from the same recipe.
+- **Try this:** Loading a published or owned asset's available prompt and
+  settings into the composer; original uploaded reference files are not
+  copied and must be supplied by the new user.
 - **Animate:** A shortcut on an image asset that jumps into a new
   Image-to-Video generation with that image pre-filled as the reference —
   one click from the gallery card or read-only preview, or a Generate click
@@ -842,31 +699,18 @@ decision, not this PRD's to make.
   Generated — the result exists and is charged; Failed — no result, not
   charged, with the reason kept on the asset. All three live in My Creations
   and can be filtered by status (P0.2).
-- **My Creations:** The current user's private gallery of their own assets;
-  one of the two tabs in the Assets section, and the only one available in
-  Phase 1.
-- **Assets:** The private, tab-switched section — My Creations and (once
-  P1.6 ships) Liked — embedded on the Studio page directly below the
-  composer. Not a route or nav item; Studio is the only entry point. Introduced in Phase 1 as My Creations only; the Liked
-  tab is a Phase 2 addition.
-- **Discover:** The public feed combining every user's published generations
-  with community- and Maxshot-published examples, sortable by Most recent or
-  Most viewed. Read-only — no edit, delete, or "mine vs. theirs" filter.
-  Embedded on the Studio page below My Creations (P0.2) — not its own
-  routed page.
-- **Liked:** A user's private, per-item save list, toggled from a Discover
-  card or preview. Shown as the second tab in the Assets section (P1.6),
-  embedded on the Studio page — not a route of its own. Not visible to
-  other users and does not affect either Discover sort mode.
-- **View count:** A simple popularity signal recorded per asset, incremented
-  by exactly one each time a user opens that asset's detail view, on any
-  surface. Powers Discover's Most viewed sort (P1.3). Distinct from Liked,
-  which is private and does not factor into either sort mode.
-- **Creator attribution:** The name or label shown on a published,
-  non-owned Discover item identifying who made it — an individual creator's
-  name, or "Maxshot Team" for the platform's own examples. Both are shown
-  with the same badge treatment; there is no separate "verified" or
-  "official" visual style.
+- **My Creations:** The current user's private gallery of their own assets,
+  embedded below the Studio composer.
+- **Assets:** The private My Creations section, not a separate route. A Liked
+  tab is deferred and is not part of current acceptance.
+- **Discover:** The existing embedded feed of published image/video works,
+  with material details and Try this. It currently auto-includes completed
+  generations without consent; Sharing Plan changes this to per-work opt-in.
+- **Liked:** A deferred private save list; not part of the Growth Plans launch.
+- **View count:** A deferred public-popularity signal; Growth Plans instead
+  track visitor-to-generation conversion without a public ranking.
+- **Creator attribution:** The creator name or identifier shown on a live
+  Discover item and, later, on an opted-in public work or Starter example.
 - **First & last frame:** An Image-to-Video mode where the user supplies
   exactly two reference images — the frame the clip opens on and the frame
   it closes on — instead of the general, unordered reference-image list
@@ -885,8 +729,9 @@ decision, not this PRD's to make.
   Pricing page (P0.6): T2I (text to image), I2I (image to image), T2V (text to
   video), I2V (image to video), and V2V (video to video).
 - **Reference rate:** A model's published price converted to Credits for the
-  Pricing page (P0.6). It informs model choice; the quote shown before
-  submission (P0.3) is what is charged.
+  Pricing page (P0.6). It informs model choice; the composer shows a
+  pre-submit estimate, hard maximum and required hold, with actual-cost
+  settlement capped at that maximum (P0.3).
 
 ## 12. Prototype Migration
 
@@ -909,11 +754,10 @@ Migration order:
 5. Ship the generation composer, My Creations, and result metadata against
    persisted data (Phase 1) — this alone is a releasable product.
 6. Add inline editing and asset lineage against real accounts (Phase 2).
-7. Launch Discover — automatically published, sorted Most recent — plus Try
-   this and multi-image reference against real accounts (Phase 2); add
-   Most viewed once per-open view tracking is live.
-8. Enable Liked once prioritized; it ships code-complete alongside Discover
-   but flagged off, so this step needs no engineering lead time (Phase 2).
+7. Retain the live Try this and multi-image reference behavior while adding
+   any remaining owned-asset improvements (Phase 2).
+8. After Studio and subscription, add opt-in public links and curated Starters
+   under the Growth Plans PRD. Discover already exists; Liked remains deferred.
 
 The [live-demo/](../live-demo) proof of concept may inform step 1 and 2's
 request shape but its API-key handling and lack of persistence must not carry
@@ -923,6 +767,9 @@ into production.
 
 | Date | Version | Changes |
 |---|---|---|
+| 2026-11-01 | Discover consent decision | Confirmed automatic inclusion of every completed generation without consent today; required recorded opt-in and legacy migration for Sharing Plan. |
+| 2026-11-01 | Live Studio alignment | Recorded existing Discover/material detail, Try this, reference re-upload, and 5,000-character prompt limit; kept new sharing permission-aware and Liked deferred. |
+| 2026-11-01 | Growth-plan alignment | Superseded automatic Discover publication with private-by-default, opt-in sharing after Studio and subscription; deferred broad Discover/Liked and public input reuse. |
 | 2026-10-13 | Developing-product status | Recorded all four generation paths as supported in the developing product; retained staged requirements for later Studio features. |
 | 2026-10-13 | Subscription pool clarification | Studio uses the premium allowance, not restricted basic-chat Credits. |
 | 2026-10-12 | Multimodal subscription alignment | Replaced one cost per media type with firm model-and-settings quotes; linked eligible Studio jobs to the shared subscription allowance and clarified two-unit ledger and Pending holds. |

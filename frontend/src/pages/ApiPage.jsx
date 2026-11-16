@@ -16,10 +16,31 @@ import {
   starterApiKeys,
   starterRequestLogs,
 } from "../data/apiData";
+import { launchConfig } from "../data/launchConfig";
 
 const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value);
 const formatDollarCents = (value) => `$${(value / 100).toFixed(2)}`;
 const formatDollarMicros = (value) => `$${(value / 1_000_000).toFixed(6)}`;
+
+const catalogLabel = (id) => launchConfig.catalogs.find((item) => item.id === id)?.label || id;
+
+function KeyPolicyFields({ policy }) {
+  return <>
+    <fieldset className="key-catalogs">
+      <legend>Allowed catalogs</legend>
+      {launchConfig.catalogs.map((catalog) => <label key={catalog.id} className="check-row"><input type="checkbox" name="catalogs" value={catalog.id} defaultChecked={policy.allowedCatalogs.includes(catalog.id)} />{catalog.label}</label>)}
+      <small>A model is allowed when its current catalog is selected. None selected means no model can be called.</small>
+    </fieldset>
+    <label>Per-request ceiling<span className="currency-input"><i>$</i><input name="perRequestCeiling" type="number" min="0" step="0.01" defaultValue={policy.perRequestCeilingCents / 100} aria-label="Per-request ceiling" /></span><small>0 = no key ceiling. A lower caller ceiling still applies.</small></label>
+    <label className="check-row"><input type="checkbox" name="dollarSpend" defaultChecked={policy.dollarSpend} />Allow Dollar balance after Credits are used</label>
+  </>;
+}
+
+const readPolicy = (form) => ({
+  allowedCatalogs: form.getAll("catalogs"),
+  perRequestCeilingCents: Math.round((Number(form.get("perRequestCeiling")) || 0) * 100),
+  dollarSpend: form.get("dollarSpend") === "on",
+});
 
 export function ApiPage({ embedded = false }) {
   const [keys, setKeys] = useState(starterApiKeys);
@@ -57,7 +78,7 @@ export function ApiPage({ embedded = false }) {
     const dailyLimitCents = Math.round((Number(form.get("dailyLimit")) || 0) * 100);
     const monthlyLimitCents = Math.round((Number(form.get("monthlyLimit")) || 0) * 100);
     const expires = form.get("expires") || "Never";
-    const created = createMockApiKey(name, dailyLimitCents, monthlyLimitCents, expires, keys.length + 1);
+    const created = createMockApiKey(name, dailyLimitCents, monthlyLimitCents, expires, keys.length + 1, readPolicy(form));
 
     setKeys((current) => [...current, created.key]);
     setSelectedKeyId(created.key.id);
@@ -72,7 +93,7 @@ export function ApiPage({ embedded = false }) {
     const monthlyLimitCents = Math.round((Number(form.get("monthlyLimit")) || 0) * 100);
     setKeys((current) =>
       current.map((item) =>
-        item.id === selectedKey.id ? { ...item, dailyLimitCents, monthlyLimitCents } : item,
+        item.id === selectedKey.id ? { ...item, dailyLimitCents, monthlyLimitCents, ...readPolicy(form) } : item,
       ),
     );
   };
@@ -197,6 +218,8 @@ export function ApiPage({ embedded = false }) {
                 label="Monthly remaining"
                 value={selectedKey.monthlyLimitCents ? formatDollarCents(Math.max(selectedKey.monthlyLimitCents - selectedKey.spentCents, 0)) : "Unlimited"}
               />
+              <ApiMetric label="Catalogs" value={selectedKey.allowedCatalogs.length ? selectedKey.allowedCatalogs.map(catalogLabel).join(", ") : "None"} />
+              <ApiMetric label="Funding" value={selectedKey.dollarSpend ? "Credits, then Dollar" : "Credits only"} />
             </div>
             <form className="spending-limit-form" onSubmit={updateLimit}>
               <label>
@@ -229,8 +252,9 @@ export function ApiPage({ embedded = false }) {
                   />
                 </span>
               </label>
-              <button className="secondary-button compact" type="submit">Save limits</button>
-              <p>Limits apply to all API usage.</p>
+              <KeyPolicyFields policy={selectedKey} key={`${selectedKey.id}-policy`} />
+              <button className="secondary-button compact" type="submit">Save policy</button>
+              <p>Budgets count settled charges plus held maximums. Credits are spent first; Dollar balance only when allowed. This key's calls may use the account's subscription text windows.</p>
             </form>
           </section>
 
@@ -266,6 +290,7 @@ export function ApiPage({ embedded = false }) {
                 <thead>
                   <tr>
                     <th>Time</th>
+                    <th>Request ID</th>
                     <th>Key</th>
                     <th>Requested model</th>
                     <th>Tokens in / out</th>
@@ -280,6 +305,7 @@ export function ApiPage({ embedded = false }) {
                   {filteredLogs.map((item) => (
                       <tr key={item.id}>
                         <td>{item.timestamp}</td>
+                        <td><code>{item.id}</code></td>
                         <td>{item.keyName}</td>
                         <td><code>{item.model}</code></td>
                         <td>{formatNumber(item.inputTokens)} / {formatNumber(item.outputTokens)}</td>
@@ -306,8 +332,9 @@ export function ApiPage({ embedded = false }) {
             <h2 id="create-key-title">Create API key</h2>
             <form onSubmit={createKey}>
               <label>Key name<input name="name" placeholder="Production API" required autoFocus /></label>
-              <label>Daily spending limit<span className="currency-input"><i>$</i><input name="dailyLimit" type="number" min="0" step="1" defaultValue="25" /></span></label>
-              <label>Monthly spending limit<span className="currency-input"><i>$</i><input name="monthlyLimit" type="number" min="0" step="1" defaultValue="100" /></span></label>
+              <label>Daily spending limit<span className="currency-input"><i>$</i><input name="dailyLimit" type="number" min="0" step="1" defaultValue={launchConfig.keyDefaults.dailyBudgetCents / 100} /></span></label>
+              <label>Monthly spending limit<span className="currency-input"><i>$</i><input name="monthlyLimit" type="number" min="0" step="1" defaultValue={launchConfig.keyDefaults.monthlyBudgetCents / 100} /></span></label>
+              <KeyPolicyFields policy={launchConfig.keyDefaults} />
               <label>Expiry<select name="expires" defaultValue="Never"><option>Never</option><option>30 days</option><option>90 days</option><option>1 year</option></select></label>
               <div className="form-actions">
                 <button type="button" className="secondary-button" onClick={() => setCreateOpen(false)}>Cancel</button>

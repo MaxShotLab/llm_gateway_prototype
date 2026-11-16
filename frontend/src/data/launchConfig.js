@@ -1,0 +1,17 @@
+// Mirrors spec/LAUNCH_CONFIG_V0.md. The Credit unit matches the live Gateway (TD-53);
+// every other value is a placeholder, not an approved launch parameter.
+export const launchConfig = {
+  version: "v0",
+  creditsPerUsd: 1_000_000,
+  catalogs: [
+    { id: "catalog_text", label: "Text" },
+    { id: "catalog_image", label: "Image" },
+    { id: "catalog_video", label: "Video" },
+  ],
+  aitEarnedCreditCatalogs: ["catalog_text"],
+  keyDefaults: { dailyBudgetCents: 2_000, monthlyBudgetCents: 20_000, perRequestCeilingCents: 0, allowedCatalogs: [], dollarSpend: false },
+  holdAutoReleaseHours: 24,
+  uncertainJobGraceMinutes: 15,
+};
+
+export const newRequestId = () => `req_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;

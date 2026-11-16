@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUp, DownloadSimple, MagicWand, Plus, ShareNetwork, Trash, UploadSimple } from "@phosphor-icons/react";
 import { getBillingTotals } from "../data/billingData";
 import { getUsableModels, providerSnapshot } from "../data/providerCatalog";
-import { sampleCreditsPerUsd, sampleImageQuote, sampleOfferingLabel, sampleVideoQuote } from "../data/sampleRequest";
+import { availableOfferings, sampleCreditsPerUsd, sampleImageQuote, sampleOfferingLabel, sampleVideoQuote } from "../data/sampleRequest";
 import "./studio.css";
 
 const paths = {
@@ -61,6 +61,7 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
   const [path, setPath] = useState("Text to Image");
   const [model, setModel] = useState(defaultModel("Image"));
   const [prompt, setPrompt] = useState("");
+  const [pinChoice, setPinChoice] = useState("");
   const [resolution, setResolution] = useState("1K");
   const [aspect, setAspect] = useState("16:9");
   const [duration, setDuration] = useState(4);
@@ -107,7 +108,10 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
   const isReferencePath = path.startsWith("Image to");
   const modelUnavailable = !models[kind].includes(model);
   const modelId = catalogModels.find((item) => modelNames[item.modelId] === model)?.modelId;
-  const sampleQuote = modelUnavailable ? null : kind === "Image" ? sampleImageQuote(modelId, resolution) : sampleVideoQuote(modelId, resolution, duration);
+  const modelOfferings = modelUnavailable || !modelId ? [] : availableOfferings(modelId);
+  // A pin belongs to one model; switching model returns to Auto (TD-48).
+  const pinnedOfferingId = modelOfferings.some((item) => item.offeringId === pinChoice) ? pinChoice : "";
+  const sampleQuote = modelUnavailable ? null : kind === "Image" ? sampleImageQuote(modelId, resolution, pinnedOfferingId) : sampleVideoQuote(modelId, resolution, duration, pinnedOfferingId);
   const needsReferences = isReferencePath && (firstLast && kind === "Video" ? !firstFrame || !lastFrame : references.length === 0);
   const baseCost = kind === "Video" ? 300_000 : 120_000;
   const estimate = sampleQuote?.estimate ?? Math.round(baseCost * (resolution === "2K" || resolution === "1080p" ? 1.5 : 1) * (kind === "Video" ? duration / 4 : 1));
@@ -267,13 +271,14 @@ export function StudioPage({ billing, canGenerateAccount, onLoginRequired, seed,
             <label className="studio-prompt"><textarea value={prompt} maxLength={5000} onChange={(event) => setPrompt(event.target.value)} placeholder={`Describe the ${kind.toLowerCase()} you want to create...`} /><span>{prompt.length} / 5,000</span></label>
             <div className="studio-controls">
               <label>Model<select aria-label="Model" value={model} onChange={(event) => { setModel(event.target.value); if (!soundtrackModels.has(event.target.value)) { setAudio("Model audio"); setSoundtrack(""); } }}>{models[kind].map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+              {modelOfferings.length > 0 && <label>Provider<select aria-label="Provider" value={pinnedOfferingId} onChange={(event) => setPinChoice(event.target.value)}><option value="">Auto</option>{modelOfferings.map((offering) => <option key={offering.offeringId} value={offering.offeringId}>{sampleOfferingLabel(offering)}</option>)}</select></label>}
               <label>Aspect<select aria-label="Aspect ratio" value={aspect} onChange={(event) => setAspect(event.target.value)}>{["16:9", "9:16", "1:1", "4:3"].map((option) => <option key={option}>{option}</option>)}</select></label>
               <label>Resolution<select aria-label="Resolution" value={resolution} onChange={(event) => setResolution(event.target.value)}>{(kind === "Image" ? ["1K", "2K"] : ["720p", "1080p"]).map((option) => <option key={option}>{option}</option>)}</select></label>
               {kind === "Video" && <><label>Duration<select aria-label="Duration" value={duration} onChange={(event) => setDuration(Number(event.target.value))}>{[4, 6, 8].map((option) => <option key={option} value={option}>{option}s</option>)}</select></label><label>Audio<select aria-label="Audio" value={audio} onChange={(event) => setAudio(event.target.value)}><option>Model audio</option><option>No audio</option>{soundtrackModels.has(model) && <option>Upload soundtrack</option>}</select></label></>}
               {path === "Image to Image" && <label>Reference strength<select aria-label="Reference strength" value={strength} onChange={(event) => setStrength(event.target.value)}><option>Low</option><option>Medium</option><option>High</option></select></label>}
               <button className="studio-optimize" disabled={!prompt.trim()} onClick={() => { setPrompt((value) => `${value.trim()}\nClear composition, coherent lighting, detailed textures.`); setNotice("Prompt optimization is simulated; no Credits were used."); }} title="Simulated prompt optimization"><MagicWand size={17} /> Optimize</button>
             </div>
-            {sampleQuote && <div className="studio-sample-quote" aria-label="Illustrative media request quote"><strong>Illustrative request quote</strong><span>{sampleOfferingLabel(sampleQuote.selected)} · rate {sampleQuote.selected.customerRateCard.rateCardVersion}{sampleQuote.backup ? " · same-model fallback covered" : ""}</span><span>Estimate {sampleQuote.estimate.toLocaleString()} Credits · hard maximum {sampleQuote.maximum.toLocaleString()} Credits · {kind === "Image" ? `one ${resolution} image` : `${duration}s ${resolution} video`}</span><span>Reserve: {sampleQuote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {sampleQuote.reserved.subscription.toLocaleString()} Premium Credits</span><small>Sample conversion {sampleCreditsPerUsd.toLocaleString()} Credits/$1. No funded AIT Earned Credit term is active; generation does not debit balances.</small></div>}
+            {sampleQuote && <div className="studio-sample-quote" aria-label="Illustrative media request quote"><strong>Illustrative request quote</strong><span>{sampleQuote.pinned ? "Pinned" : "Auto"} · {sampleOfferingLabel(sampleQuote.selected)} · rate {sampleQuote.selected.customerRateCard.rateCardVersion}{sampleQuote.pinned ? " · no fallback" : sampleQuote.backup ? " · same-model fallback covered" : ""}</span><span>Estimate {sampleQuote.estimate.toLocaleString()} Credits · hard maximum {sampleQuote.maximum.toLocaleString()} Credits · {kind === "Image" ? `one ${resolution} image` : `${duration}s ${resolution} video`}</span><span>Reserve: {sampleQuote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {sampleQuote.reserved.subscription.toLocaleString()} Premium Credits</span><small>{sampleCreditsPerUsd.toLocaleString()} Credits = $1. Rates are illustrative. No funded AIT Earned Credit term is active; generation does not debit balances.</small></div>}
             {kind === "Video" && audio === "Upload soundtrack" && <label className="studio-soundtrack">Soundtrack (MP3 or WAV)<input type="file" accept="audio/mpeg,audio/wav" onChange={(event) => setSoundtrack(event.target.files?.[0]?.name || "")} /><span>{soundtrack || "Choose audio file"}</span></label>}
             <div className="studio-submit-row"><p>{modelUnavailable ? <strong>{model} is unavailable. Select a current model to continue.</strong> : prompt.trim() ? <>Illustrative maximum {hold.toLocaleString()} Credits · no balance change</> : "Enter a prompt to simulate a request."}{available < hold && prompt.trim() && !modelUnavailable && <strong> Insufficient mock balance.</strong>}{sourceAttribution && <span> · Source: {sourceAttribution}</span>}</p><button className="studio-generate" disabled={!canGenerate} onClick={generate} aria-label="Generate"><ArrowUp size={19} /></button></div>
           </section>

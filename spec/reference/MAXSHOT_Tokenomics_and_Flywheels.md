@@ -4,7 +4,7 @@
 
 **Founder decision update (2026-11-11):** The active mint position is merged per controller, with uniform terms and no position time lock. A burn moves proportional MAX into a pending redemption balance. Every burn restarts a seven-day wait for the controller's entire pending balance. HWM refills use the exact two-part rule below. MAX and AIT use 18 decimals. Launch approval remains separate.
 
-**Development-round decisions:** See `MAXSHOT_Decision_Gaps_and_Handoff_Addendum.md` for the authoritative override of older source wording on MAX eligibility, cross-chain scope, pause controls and Credit ledger behavior.
+**Development-round decisions:** See `../DECISIONS.md` for the authoritative override of older source wording on MAX eligibility, cross-chain scope, pause controls and Credit ledger behavior.
 
 ## 1. Economic map
 
@@ -95,7 +95,7 @@ MAX_charge = refill × R(H) + [L(H + newPeak) − L(H)]
 H_after = max(H, O + q)
 ```
 
-Thus, AIT minted into the gap below the old HWM is charged at `R(H)` per AIT. The portion that crosses above the old HWM is charged by the curve integral. For example, after debt peaks at 30,000 and falls to 20,000, a 15,000-AIT mint charges the first 10,000 at `R(30,000) = 1,032 MAX/AIT` and the next 5,000 at `L(35,000) − L(30,000)`; the HWM becomes 35,000. The **50,000 cap applies to outstanding debt**, not lifetime cumulative mints. Round the exact total MAX charge **once up** to the next MAX wei using the deterministic integer evaluation in the [addendum §5](./MAXSHOT_Decision_Gaps_and_Handoff_Addendum.md#5-confirmed-integer-mint-quote). Protocol AIT buybacks remain inventory until a separately approved, debt-safe retirement method exists.
+Thus, AIT minted into the gap below the old HWM is charged at `R(H)` per AIT. The portion that crosses above the old HWM is charged by the curve integral. For example, after debt peaks at 30,000 and falls to 20,000, a 15,000-AIT mint charges the first 10,000 at `R(30,000) = 1,032 MAX/AIT` and the next 5,000 at `L(35,000) − L(30,000)`; the HWM becomes 35,000. The **50,000 cap applies to outstanding debt**, not lifetime cumulative mints. Round the exact total MAX charge **once up** to the next MAX wei using the deterministic integer evaluation in the [addendum §5](../SPEC_TOKEN.md#3-confirmed-integer-mint-quote). Protocol AIT buybacks remain inventory until a separately approved, debt-safe retirement method exists.
 
 **Contract handoff invariants:** at launch, with AIT confined to Ethereum and absent a separately specified recovery state, `Σ active D = outstandingMintDebt = Ethereum AIT totalSupply`; `Σ active M + Σ pending MAX = MAX allocated to user claims`; `HWM >= outstandingMintDebt` and never decreases. AIT acquired into protocol inventory remains in total supply and does not retire debt. A cross-chain MAX transfer does not affect AIT debt. If AIT bridging is later enabled, replace the local-supply equality with global supply including in-flight messages; a bridge burn is not position redemption. A partial position burn must move no more than proportional active MAX; a full burn must move all residual active MAX.
 

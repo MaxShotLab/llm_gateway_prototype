@@ -5,7 +5,7 @@
 
 ## Product contract
 
-- Auto chooses a provider-model offering for a Chat request under [Multi-Provider Routing Design](./MULTI_PROVIDER_ROUTING_DESIGN.md). OpenRouter is one provider, not a distinct aggregator role.
+- Auto chooses a provider-model offering for a Chat request under [Multi-Provider Routing Design](../SPEC_PROVIDERS.md). OpenRouter is one provider, not a distinct aggregator role.
 - The user can always pin an offering manually. Auto shows the selected provider and model for each answer and never silently exceeds the displayed per-message cost ceiling.
 - Auto starts with three task labels: **ordinary chat**, **coding**, and **complex reasoning**. A model may carry multiple labels. Existing catalog labels such as Flagship, Code, and Free are not Auto task labels.
 - Files, image input, search, Think, context length, and tool support are capability requirements, not additional task labels. Explicit user controls take precedence over prompt inference.

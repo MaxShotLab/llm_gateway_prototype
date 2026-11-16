@@ -10,6 +10,9 @@ export const starterApiKeys = [
     dailySpentCents: 842,
     monthlyLimitCents: 2_500,
     spentCents: 842,
+    allowedCatalogs: ["catalog_text"],
+    perRequestCeilingCents: 50,
+    dollarSpend: false,
     requests: 842,
     inputTokens: 684220,
     outputTokens: 192480,
@@ -26,6 +29,9 @@ export const starterApiKeys = [
     dailySpentCents: 1_218,
     monthlyLimitCents: 10_000,
     spentCents: 4_276,
+    allowedCatalogs: ["catalog_text", "catalog_image"],
+    perRequestCeilingCents: 200,
+    dollarSpend: true,
     requests: 3241,
     inputTokens: 2841900,
     outputTokens: 718420,
@@ -106,7 +112,7 @@ export const starterRequestLogs = [
   },
 ];
 
-export function createMockApiKey(name, dailyLimitCents, monthlyLimitCents, expires, index) {
+export function createMockApiKey(name, dailyLimitCents, monthlyLimitCents, expires, index, policy = {}) {
   const suffix = Math.random().toString(36).slice(2, 10).toUpperCase();
 
   return {
@@ -121,6 +127,9 @@ export function createMockApiKey(name, dailyLimitCents, monthlyLimitCents, expir
       dailySpentCents: 0,
       monthlyLimitCents,
       spentCents: 0,
+      allowedCatalogs: policy.allowedCatalogs || [],
+      perRequestCeilingCents: policy.perRequestCeilingCents || 0,
+      dollarSpend: Boolean(policy.dollarSpend),
       requests: 0,
       inputTokens: 0,
       outputTokens: 0,
