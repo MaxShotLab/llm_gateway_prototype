@@ -15,3 +15,5 @@ Documents merged into the canonical `spec/` files on 16 November 2026 (TD-55). T
 | SUBSCRIPTION_FEATURE_REQUIREMENTS.md, SUBSCRIPTION_ECONOMICS_DESIGN.md | `../SUBSCRIPTION.md` |
 | llm-gateway-product-baselines.md | Superseded by `../MAXSHOT_GATEWAY_PRD.md` with override banners and `../00_README.md` §4 |
 | STUDIO_PRD_P0.6_pricing_page_superseded.md | Moved out of `../MAXSHOT_STUDIO_PRD.md` §P0.6; superseded by TD-34 and `../SPEC_PROVIDERS.md` §4 |
+| DECISIONS_full_record_2026-11-16.md | Full wording of TD-01–TD-61 as made, including the prior source wording each replaced; `../DECISIONS.md` is now a one-row-per-decision index |
+| COMPACTION_TRACE_*.md | Rule-by-rule traces from the 16 November 2026 compaction of each spec |

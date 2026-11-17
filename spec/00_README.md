@@ -45,7 +45,7 @@ Read a document as authoritative **for its subject**. Where a later explicit dec
 
 | Subject | Owning document | Notes |
 | --- | --- | --- |
-| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-56. The single override record. |
+| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-61, one row each, pointing to the rules that carry the decision. |
 | MAX/AIT contracts, positions, staking, Earned Credit grants, chain scope | [SPEC_TOKEN.md](./SPEC_TOKEN.md) | Includes exact integer mint quote and B5 acceptance. |
 | Request authorization, funding buckets, API keys, settlement, refunds, media jobs | [SPEC_BILLING.md](./SPEC_BILLING.md) | Includes funding eligibility matrix, key policy, request ID and B2 acceptance. |
 | Provider admission, catalog, routing, pricing display | [SPEC_PROVIDERS.md](./SPEC_PROVIDERS.md) | Includes B1 data contract and B4 acceptance. |
@@ -53,11 +53,41 @@ Read a document as authoritative **for its subject**. Where a later explicit dec
 | External-agent integration guide | [SPEC_AGENT_INTEGRATION.md](./SPEC_AGENT_INTEGRATION.md) | Product-owned; engineering fills verified values. |
 | Admin and operations surfaces | [SPEC_ADMIN.md](./SPEC_ADMIN.md) | Read-only phase 1 plus write actions by release. |
 | Subscription plans, lifecycle, allowances, pricing rule | [SUBSCRIPTION.md](./SUBSCRIPTION.md) | |
-| Placeholder launch parameters for fixtures and tests | [LAUNCH_CONFIG_V0.md](./LAUNCH_CONFIG_V0.md) | Every value marked not approved. |
+| Launch parameters for fixtures and tests | [LAUNCH_CONFIG_V0.md](./LAUNCH_CONFIG_V0.md) | Each row is labeled **Decided**, **Existing configuration; verify values**, **Pending commercial approval**, or **Placeholder**. Only Decided values are approved; existing-configuration values must be checked against the live Gateway; pending values have no approved figure yet; placeholders are for fixtures and tests only. |
 | Chat, API, Studio behavior outside the above | [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [MAXSHOT_STUDIO_PRD.md](./MAXSHOT_STUDIO_PRD.md) | Superseded sections carry inline override banners. |
 | Frontend prototype | [../frontend/AGENTS.md](../frontend/AGENTS.md), [../frontend/TOKEN_UI_REFERENCE_MAP.md](../frontend/TOKEN_UI_REFERENCE_MAP.md) | Simulation only. |
 
 `reference/` holds context that is not a rule: the read-only token source PRD and marketing deck (do not edit), the tokenomics economic companion, the one-pager and the Auto routing pilot design. `archive/` holds the documents merged into the specs above; they are kept for history and are not authoritative.
+
+### Rule IDs and what to read
+
+Every rule in the specs has one ID, stated once; other documents cite it rather than restating it. Acceptance cases name the rules they test.
+
+| Prefix | File | Covers |
+| --- | --- | --- |
+| `TOK-R` | [SPEC_TOKEN](./SPEC_TOKEN.md) | MAX genesis and bridge, merged position, mint quote, burn and redemption, staking, AIT Earned Credit grants |
+| `BIL-R` | [SPEC_BILLING](./SPEC_BILLING.md) | Ledgers, funding order, API keys, request ID, quote, hold, settlement, media jobs, refunds |
+| `PRV-R` | [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) | Provider admission, catalog contract, routing and fallback, pricing display, measurement |
+| `ACC-R` | [SPEC_ACCOUNT_VAULT](./SPEC_ACCOUNT_VAULT.md) | App boundary, wallet link use, Portfolio, Vaults, referrals, migration |
+| `ADM-R` | [SPEC_ADMIN](./SPEC_ADMIN.md) | Read-only operations views, audited admin actions and views |
+| `AGT-R` | [SPEC_AGENT_INTEGRATION](./SPEC_AGENT_INTEGRATION.md) | External-agent guide content and acceptance |
+| `SUB-R` | [SUBSCRIPTION](./SUBSCRIPTION.md) | Plans, allowances, lifecycle, plan payments, pricing rule |
+
+**What to read for a task** (always this README first; DECISIONS only to see why a rule exists):
+
+| Task | Read |
+| --- | --- |
+| Token contracts, bridge, mint quote | SPEC_TOKEN §1–3, §5.1 |
+| Staking index, wallet link, Credit grants | SPEC_TOKEN §4, §5.2–5.3; SPEC_BILLING §2 |
+| Request authorization, funding, settlement, refunds | SPEC_BILLING; SUBSCRIPTION §3 for allowances |
+| API keys and the external-agent path | SPEC_BILLING §3–4; SPEC_AGENT_INTEGRATION |
+| Provider onboarding, catalog, routing | SPEC_PROVIDERS; SPEC_BILLING §4 |
+| Media jobs | SPEC_BILLING §5; SPEC_PROVIDERS §1.2 |
+| Vaults, Portfolio, referrals, redirects | SPEC_ACCOUNT_VAULT; SPEC_TOKEN §4.1 |
+| Subscription plans and renewal | SUBSCRIPTION |
+| Admin and operations | SPEC_ADMIN plus the spec named in each row |
+| Fixture or test values | LAUNCH_CONFIG_V0 (check each row's status) |
+| Chat, Studio composer, memory, prompts and other app features | Gateway or Studio PRD, only when the task names those features |
 
 ## 4. Explicitly superseded clauses
 
@@ -80,11 +110,13 @@ Read a document as authoritative **for its subject**. Where a later explicit dec
 
 ## 6. How an agent or engineer should work here
 
-1. **Locate the owning rule** in §3, then the relevant decision in DECISIONS.md. Distinguish confirmed behavior from proposed economics and operational inputs; the read-only source PRD still supplies requirements that later decisions have not superseded.
-2. **State the task and its success check.** For a UI change, name the screen and rule it must show. For implementation, name the acceptance case in the owning spec and the evidence required. Resolve real product ambiguity with the product owner; leave schema and routine engineering choices to the team.
-3. **Make a narrow change.** Keep the shared catalog, Credit naming and authorized-maximum rules consistent across Providers, Chat, Studio, Credits and API. Do not replace the Vault transaction flow or add a managed Agent product.
-4. **Verify at the right boundary.** Prototype: `npm run build` in `frontend/` and inspect the screen. Contracts/backend: the integer vectors in SPEC_TOKEN and the live proofs in each spec's acceptance section. Report what remains unverified.
-5. **Update the owning document when a decision changes**, add a TD entry, and keep this README's map current. One source of truth per subject.
+1. **Locate the governing rule** with the tables in §3. Cite its ID in the task, test and change. Treat only Decided values in LAUNCH_CONFIG_V0 as approved.
+2. **State the task and its success check** as the acceptance case in the owning spec that will prove it, and the evidence required.
+3. **Interfaces are proposals.** Schemas, storage, endpoint paths, field names, identifiers, contract function signatures and events are engineering decisions within the rules. An agent proposes them for engineering review and does not treat its own proposal as approved.
+4. **Never fill a gap by assumption.** If a rule is missing, ambiguous, or conflicts with another rule or a DECISIONS row, stop and raise it with product. Items marked `[verify]`, Placeholder or Pending commercial approval are not to be invented or finalized.
+5. **Make a narrow change.** Keep the shared catalog, Credit naming and hard-maximum rules consistent across Providers, Chat, Studio, Credits and API. Do not replace the Vault transaction flow or add a managed Agent product.
+6. **Verify at the right boundary.** Prototype: `npm run build` in `frontend/` and inspect the screen. Contracts and backend: the integer vectors in SPEC_TOKEN and the live cases in each spec's acceptance section. Report what remains unverified.
+7. **When a decision changes,** add one DECISIONS row with its governing rule IDs and change the rule in the owning spec in the same change. One source of truth per subject.
 
 ## 7. Current state (16 November 2026)
 

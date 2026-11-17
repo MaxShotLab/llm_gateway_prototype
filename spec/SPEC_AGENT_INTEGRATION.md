@@ -1,33 +1,38 @@
 # SPEC_AGENT_INTEGRATION — external-agent integration guide
 
-**Status:** Product-owned specification, 16 November 2026 (TD-24/45). Engineering supplies the verified live URLs, response shapes and error codes marked `[verify]`; nothing marked `[verify]` may appear in public instructions until confirmed against the live Gateway. This file defines the **content** of the agent-consumable guide; the published guide and its machine-readable copy are generated from it.
+**Status:** Product-owned specification, compacted 16 November 2026 (TD-24/45). Every rule has one ID (`AGT-Rnn`). Request, key and funding behavior is owned by [SPEC_BILLING](./SPEC_BILLING.md) and the catalog by [SPEC_PROVIDERS](./SPEC_PROVIDERS.md); this file defines what the published guide must say and cites those rules. Engineering supplies every value marked `[verify]`; nothing marked `[verify]` appears in public instructions until confirmed against the live Gateway.
 
-**Release:** Foundation (build-order step 4). Earned Credit eligibility is added on the same path in the MAX/AIT release when a funded program is active.
+**Release:** Foundation (build-order step 4). The same path gains AIT Earned Credit in the MAX/AIT release when a funded term is active.
+
+## Overview
+
+An external agent is a client that a developer or creator runs against the Gateway. It uses the owner's account and a scoped API key, and goes through exactly the same authorization, funding and Usage records as the web app. The product deliverable is a versioned guide, plus a machine-readable copy generated from it, that lets an agent authenticate, find an allowed model, make one funded call and find that call in Usage.
 
 ## 1. Boundary
 
-An **external agent** is a developer- or creator-operated client of the Gateway. It uses the owner's Gateway account, a scoped API key and the same Credit ledger and request lifecycle as the UI. It does not get a second balance, an Agent object, an Agent Wallet, a managed template system or a Tokenomics portal; those are separate later decisions (TD-24). An MCP surface is not required (TD-45).
+- **AGT-R01 · Same account, same ledger.** An agent uses the owner's account, a scoped key (BIL-R12–R17) and the account's Credit ledger. It gets no separate balance, Agent object, Agent Wallet, template system or Tokenomics portal; those are later decisions (TD-24). An MCP surface is not required (TD-45).
 
 ## 2. Guide content
 
-| Section | Content | Source of truth |
-| --- | --- | --- |
-| 1. Credential | How the account owner creates a key in Profile → Developer settings and sets its policy: allowed catalogs, per-request ceiling, daily and monthly budgets, Dollar-spend toggle (default off), expiry. How the agent presents the key `[verify: header name]`. | [SPEC_BILLING §3](./SPEC_BILLING.md#3-scoped-api-key-policy) |
-| 2. Discovery | One read of the catalog snapshot filtered by the key's allowed catalogs and current availability; returns usable models with their offerings and current rate-card versions. No separate discovery endpoint `[verify: URL, viewer-scoped filter]`. | [SPEC_PROVIDERS §2](./SPEC_PROVIDERS.md#2-catalog-data-contract-formerly-b1), TD-45 |
-| 3. Request | The single-call API: model ID, bounded settings, optional caller ceiling, optional `offeringId` pin. The Gateway computes and reserves the hard maximum before dispatch. Response carries selected/serving offering, rate version, verified units, final charge and the **request ID** (header and body) `[verify: field names]`. | [SPEC_BILLING §4](./SPEC_BILLING.md#4-one-accepted-request), TD-37/46/48 |
-| 4. Pre-dispatch rejections | Fixed code set: `key_invalid`, `key_revoked`, `key_expired`, `catalog_not_allowed`, `model_unavailable`, `pinned_offering_ineligible`, `over_request_ceiling`, `over_daily_budget`, `over_monthly_budget`, `insufficient_funding`, `job_limit_exceeded` `[verify: exact strings and HTTP status]`. None produces a provider attempt or a debit; none carries a request ID (TD-46). | [SPEC_BILLING §4](./SPEC_BILLING.md#4-one-accepted-request) |
-| 5. Usage lookup | Fetch one request by request ID; list requests by key ID; each row shows selected vs serving offering, fallback, units, funding sources, final charge, released hold, Pending state for media `[verify: URL]`. | [SPEC_BILLING §4–5](./SPEC_BILLING.md) |
-| 6. Funding | What the key can spend: Credits in the account order, Dollar balance only if enabled; that an API call may consume the owner's subscription text windows. In the MAX/AIT release: AIT Earned Credit applies when the model's catalog is in the funded program set. | [SPEC_BILLING §2](./SPEC_BILLING.md#2-funding-buckets-and-eligibility) |
-| 7. Versioning | The guide carries a version; breaking changes bump it; the acceptance test runs against the version it names. | this file |
+- **AGT-R02 · Credential.** How the owner creates a key in Profile → Developer settings and sets its policy (BIL-R12–R16), and how the agent presents it `[verify: header name]`.
+- **AGT-R03 · Discovery (TD-45).** One read of the catalog snapshot filtered by the key's allowed catalogs and current availability, returning usable models with their offerings and rate-card versions (PRV-R16–R19). No separate discovery endpoint `[verify: URL and viewer-scoped filter]`.
+- **AGT-R04 · Request.** The single-call API: model ID, bounded settings, optional caller ceiling and optional `offeringId` pin (BIL-R13, R20–R22). The response carries the selected and serving offering, rate version, verified units, final charge and the request ID in a header and the body (BIL-R18) `[verify: field names]`.
+- **AGT-R05 · Rejection codes.** Each BIL-R24 condition has one stable code: `key_invalid`, `key_revoked`, `key_expired`, `catalog_not_allowed`, `model_unavailable`, `pinned_offering_ineligible`, `over_request_ceiling`, `over_daily_budget`, `over_monthly_budget`, `insufficient_funding` (including Dollar spend not enabled on the key), `job_limit_exceeded` `[verify: exact strings and HTTP status]`.
+- **AGT-R06 · Usage lookup.** Fetch one request by ID and list requests by key, with the BIL-R31 fields and the Pending state for media (BIL-R38) `[verify: URLs]`.
+- **AGT-R07 · Funding.** What the key can spend (BIL-R15) and that its calls may use the owner's subscription text windows (BIL-R09). From the MAX/AIT release, AIT Earned Credit applies when the model's catalog is in the funded term's set (BIL-R06).
+- **AGT-R08 · Versioning.** The guide carries a version; a breaking change bumps it; acceptance runs against the version it names.
+- **AGT-R09 · Machine-readable copy.** A `SKILL.md` (or equivalent agent-consumable file) is generated from the guide with verified values filled in and is never maintained by hand. It contains the credential steps, discovery read, a request example, rejection codes, Usage lookup and the version, and never names URLs, models, rates or actions that are not live.
 
-## 3. Machine-readable copy
+## 3. Acceptance
 
-A `SKILL.md` (or equivalent agent-consumable file) is generated from §2 with the verified values filled in; it is never hand-maintained separately. It contains the credential instructions, discovery read, request example, rejection codes, Usage lookup and version. It must not name URLs, models, rates or actions that are not live.
+A supported external agent following only the published guide at its named version (AGT-R08–R09):
+1. authenticates with a scoped key (AGT-R02);
+2. discovers an allowed model from the filtered catalog read (AGT-R03);
+3. makes one funded call within the key's limits (AGT-R04, R07);
+4. finds the same request by ID in Usage with one charge and one ledger entry (AGT-R06).
 
-## 4. Acceptance
+Negative cases (AGT-R05): a revoked key, a model outside the key's catalogs, a request over the key's per-request ceiling and a request over the daily budget each stop before provider dispatch with the documented code. In the MAX/AIT release, the same call spends eligible AIT Earned Credit first when a term is funded (AGT-R07).
 
-A supported external agent, following only the published guide at its named version: (1) authenticates with a scoped key; (2) discovers an eligible model from the filtered catalog read; (3) makes one funded call within the key's limits; (4) finds the same request by ID in Usage with one charge and one account-ledger entry. Negative cases: a revoked key, a model outside the key's catalogs, a request over the key's per-request ceiling and a request over the daily budget each stop before provider dispatch with the documented code. In the MAX/AIT release, the same call consumes eligible AIT Earned Credit first when the program is funded.
+## 4. Open items for engineering
 
-## 5. Open items for engineering
-
-Verified base URL, authentication header, catalog read path and viewer-scoped filter, request/response field names, rejection code strings and statuses, Usage lookup paths. These are `[verify]` inputs, not product decisions.
+Base URL, authentication header, catalog read path and viewer filter, request and response field names, rejection code strings and HTTP statuses, Usage lookup paths. These are `[verify]` inputs, not product decisions.

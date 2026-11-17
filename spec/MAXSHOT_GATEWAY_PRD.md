@@ -228,7 +228,7 @@ Acceptance:
 
 ### P0.3 Chat
 
-> **Override (16 November 2026):** Model picker shows only usable models per [SPEC_PROVIDERS §4.1](./SPEC_PROVIDERS.md) (TD-41) and carries a provider selector, default Auto (TD-48). Pre-submit estimate and hard maximum per [SPEC_BILLING §4](./SPEC_BILLING.md) (TD-39).
+> **Override (16 November 2026):** Model picker shows only usable models per [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) PRV-R29–R30 (TD-41) and carries a provider selector, default Auto (TD-48). Pre-submit estimate and hard maximum per [SPEC_BILLING §4](./SPEC_BILLING.md) (TD-39).
 
 - Configured default model list containing flagship models and a few free
   models.
@@ -309,41 +309,13 @@ Acceptance:
 
 ### P0.7 Gateway
 
-> **Override (16 November 2026):** Provider admission, catalog, lowest-qualified-cost routing, one pre-output same-model fallback and pin behavior are owned by [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) (TD-26–31/48).
+- OpenAI-compatible request endpoint for chat completions.
 
-- Configured multi-provider model catalog.
-- OpenAI-compatible request endpoint.
-- Primary route and configured eligible fallback.
-- Meter requested model, serving provider, tokens, latency, status, and cost.
-- Enforce privacy, balance, and spending-limit eligibility before billable use.
-
-Acceptance:
-
-- Every successful billable request has traceable routing and metering IDs.
-- Failover preserves the requested model and applicable policy.
+Provider catalog, routing, fallback, metering and eligibility rules moved to [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) (PRV-R16–R28) and [SPEC_BILLING](./SPEC_BILLING.md) (BIL-R18, R24–R31) on 16 November 2026. The earlier "primary route and configured eligible fallback" wording is replaced by lowest-qualified-cost routing with one same-model backup (TD-26/31).
 
 ### P0.8 Referral And Rewards
 
-> **Override (16 November 2026):** Qualification uses the USD amount credited to Dollar balance after fees; rewards are separate promotional Credits; subscription payments do not qualify ([SPEC_ACCOUNT_VAULT §5](./SPEC_ACCOUNT_VAULT.md), TD-42).
-
-- Generate a referral link for registered users.
-- Attribute new registered users to the referring user.
-- Reward the referrer when a referred user completes a confirmed top-up.
-- Default reward rate is 10% of the referred user's confirmed top-up amount.
-- Reward rate and maximum reward cap are configurable.
-- Default maximum reward cap is $50 from each referred user.
-- Show referral link, referred top-ups, earned rewards, and reward status.
-- Grant rewards only after the referred top-up is confirmed.
-- Withhold rewards for failed top-ups and revoke or withhold rewards for
-  abusive top-ups.
-
-Acceptance:
-
-- A registered user can generate and share a referral link.
-- A referred user's confirmed top-up creates at most one reward for the
-  referrer.
-- Referral rewards are tracked separately from Dollar balance and must not
-  appear as one combined balance.
+Moved to [SPEC_ACCOUNT_VAULT §5](./SPEC_ACCOUNT_VAULT.md#5-referrals) (ACC-R11–R15) on 16 November 2026. Reward rate and cap are pending commercial approval (TD-42). The earlier default (10% of a confirmed top-up, capped at $50 per referred user) and the 1% shown on the live page are kept in [LAUNCH_CONFIG_V0](./LAUNCH_CONFIG_V0.md) as historical context only.
 
 ## 8. Phase 2 Requirements
 

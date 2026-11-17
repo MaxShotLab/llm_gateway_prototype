@@ -197,7 +197,7 @@ snapshot of the public OpenRouter model catalog taken on October 19, 2026,
 converted to Credits; they are reference rates for the page, not the quote P0.3
 shows before a generation.
 
-A separate proof-of-concept ([live-demo/](../live-demo)) wires text-to-image
+A separate proof-of-concept (`live-demo/`, not in this repository) wires text-to-image
 and text-to-video composer actions to fal.ai for real generation, proving the
 composer-to-provider request shape works end to end. It does not implement
 editing, Assets, or credit metering, and its API key handling is
@@ -222,14 +222,7 @@ product-service data, on the same footing as conversations and prompts in
 
 ### 5.3 Generation Routing
 
-Image and video generation need the same kind of provider abstraction the
-Gateway PRD defines for chat in §5.3: a routing layer in front of
-configured image/video providers (for example the models named in §11) that
-accepts a generation request, returns a job result, and reports cost and
-status back to Maxshot services for metering. This PRD assumes such a layer
-exists or is built alongside Studio; it is not itself a chat-completion
-route and should not be forced through the Gateway's OpenAI-compatible
-endpoint.
+Moved to [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) PRV-R11 on 16 November 2026: image and video generation use a provider routing layer under the same offering and admission rules, not the chat-completion endpoint.
 
 ### 5.4 Data Ownership
 
@@ -759,7 +752,7 @@ Migration order:
 8. After Studio and subscription, add opt-in public links and curated Starters
    under the Growth Plans PRD. Discover already exists; Liked remains deferred.
 
-The [live-demo/](../live-demo) proof of concept may inform step 1 and 2's
+The `live-demo/` proof of concept (not in this repository) may inform step 1 and 2's
 request shape but its API-key handling and lack of persistence must not carry
 into production.
 
