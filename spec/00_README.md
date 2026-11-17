@@ -45,7 +45,7 @@ Read a document as authoritative **for its subject**. Where a later explicit dec
 
 | Subject | Owning document | Notes |
 | --- | --- | --- |
-| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-65, one row each, pointing to the rules that carry the decision. |
+| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-67, one row each, pointing to the rules that carry the decision. |
 | MAX/AIT contracts, positions, staking, Earned Credit grants, chain scope | [SPEC_TOKEN.md](./SPEC_TOKEN.md) | Includes exact integer mint quote and B5 acceptance. |
 | Request authorization, funding buckets, API keys, settlement, refunds, media jobs | [SPEC_BILLING.md](./SPEC_BILLING.md) | Includes funding eligibility matrix, key policy, request ID and B2 acceptance. |
 | Provider admission, catalog, routing, pricing display | [SPEC_PROVIDERS.md](./SPEC_PROVIDERS.md) | Includes B1 data contract and B4 acceptance. |

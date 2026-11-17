@@ -73,12 +73,14 @@
 | TD-57 | A refunded settled charge restores allowance, Free and Referral portions to the original bucket if still valid, otherwise they lapse. | BIL-R42 | Decided |
 | TD-58 | A nonconforming upstream router is not admitted or routed, even when pinned. | PRV-R10 | Decided |
 | TD-59 | No exploration traffic at launch; unpinned routing is strictly lowest quoted cost. | PRV-R23 | Decided |
-| TD-60 | Staking accrues only from the later of stake time and verified link time. | TOK-R20, TOK-R21, TOK-R25 | Decided |
+| TD-60 | Staking accrues only from the later of stake time and verified link time (extended by TD-67). | TOK-R20, TOK-R21, TOK-R25 | Decided |
 | TD-61 | MAX Boost Bonus Pool and MAX fee-staking rights move to a later release. | SPEC_TOKEN §6 | Decided |
 | TD-62 | The source's coverage panel and reserve dashboard are an internal admin view in the MAX/AIT release; a public coverage panel is a later decision needing legal sign-off. | TOK-R30, ADM-R23 | Decided |
 | TD-63 | Treasury-, team- and protocol-held AIT accrues no AIT Earned Credit at launch (source DEC-19 default). | TOK-R36 | Decided |
 | TD-64 | On a coverage breach, a limit on AIT Earned Credit spend for high-cost models is a prospective routing or availability control for new requests only; it never changes a term's locked catalog set, rate or length. | TOK-R23, TOK-R30 | Decided |
 | TD-65 | Deployment confirmation, monitoring and rollback evidence are required only for tasks that deploy or change a running service; development and documentation tasks close without them. | XCT-R03 | Decided |
+| TD-66 | The mint view shows the exact contract-quoted MAX for the chosen AIT amount and a separate user-set maximum-MAX-in guard, and may show the derived average MAX per AIT. It replaces the source's "implied reference cost"; no USD estimate is required. | TOK-R28 | Decided |
+| TD-67 | Staking is open with no active funded term and accrues nothing then. Accrual starts at the latest of stake time, verified link time, term start and acceptance of that term's terms version; an existing stake needs acceptance of each new term. | TOK-R20, TOK-R21, TOK-R29 | Decided |
 
 ## 3. Remaining gaps (release inputs, not product-behavior decisions)
 
@@ -96,7 +98,7 @@ These are **not** resolved by the decisions above. Assign each to the named work
 | P2 | DEC-13/14/15: PT rights, jurisdiction, LP fee ownership and AIT buyback handling | Per-provider legal instrument, AMM fee-capture proof and debt-safe reserve policy | PT/MAX market |
 | Cross-cutting | DEC-20 and §§12–14: agent authority, audits, economic stress and incident controls | Named approvers, audit/invariant evidence, multisig/pauses and runbooks | Irreversible production actions |
 
-Closed since 15 November 2026 by TD-43…TD-65: build order, key policy, agent guide ownership, request ID, funding matrix, provider pin scope, media job lifecycle, wallet link method, finality rule, admin write actions, placeholder configuration, stale clauses and document structure.
+Closed since 15 November 2026 by TD-43…TD-67: build order, key policy, agent guide ownership, request ID, funding matrix, provider pin scope, media job lifecycle, wallet link method, finality rule, admin write actions, placeholder configuration, stale clauses and document structure.
 
 The compute-first Gateway, genesis MAX contract, Ethereum merged position state machine, Ethereum-only staking, off-chain Credit ledger and four-chain MAX bridge have no remaining founder-level **product-behavior** decision blocking development. Economic approval, production configuration, security review and live verification remain release gates. None of this authorizes production token launch or a funded Credit promise.
 

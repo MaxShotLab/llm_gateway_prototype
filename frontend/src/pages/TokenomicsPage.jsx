@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ArrowRight, ArrowsLeftRight, Coins, ClockCountdown, LockKey, ShieldCheck, Wallet } from "@phosphor-icons/react";
+import { ArrowRight, ArrowsLeftRight, ClockCountdown, ShieldCheck, Wallet } from "@phosphor-icons/react";
 import { PricingPage } from "./PricingPage";
 import { providerOfferings, providerProfiles } from "../data/providerCatalog";
 import "./tokenomics.css";
 
 const CAP = 50_000;
-const TABS = ["Overview", "Mint", "Stake & Credit", "Burn & Withdraw", "Market"];
+const SAMPLE_TERM_VERSION = "sample-v1";
+const TABS = ["Overview", "Mint", "Stake & Credit", "Burn & Withdraw", "Networks"];
 const rate = (s) => 600 * (1 + 2 * (s / CAP) ** 2);
 const curve = (s) => 600 * s + (400 * s ** 3) / CAP ** 2;
 const fmt = (value, digits = 2) => Number(value).toLocaleString("en-US", { maximumFractionDigits: digits });
@@ -19,42 +20,52 @@ export const initialTokenState = {
   outstanding: 21_000, highWaterMark: 30_000,
   walletMax: 250_000, walletAit: 40, stakedAit: 80,
   debt: 120, collateral: 112_800, pendingMax: 0, withdrawalAt: null,
-  history: [{ action: "Stake", detail: "80 AIT staked for weekly AIT Earned Credit", time: "Sample history" }, { action: "Mint", detail: "120 AIT added to one merged position", time: "Sample history" }],
+  history: [{ action: "Stake", detail: "80 AIT staked; no funded Credit term active", time: "Sample history" }, { action: "Mint", detail: "120 AIT added to one merged position", time: "Sample history" }],
 };
 
-export function TokenomicsPage({ onCredits, state, setState }) {
+export function TokenomicsPage({ onCredits, state, setState, linkedWallet }) {
   const [tab, setTab] = useState("Overview");
   const [mintAmount, setMintAmount] = useState("10");
+  const [mintReview, setMintReview] = useState(false);
+  const [maxMaxInput, setMaxMaxInput] = useState("");
+  const [deadlineInput, setDeadlineInput] = useState("");
   const [stakeAmount, setStakeAmount] = useState("10");
   const [burnAmount, setBurnAmount] = useState("10");
+  const [previewTerm, setPreviewTerm] = useState(false);
+  const [acceptedPreviewTerms, setAcceptedPreviewTerms] = useState(false);
+  const [walletAction, setWalletAction] = useState(null);
   const [notice, setNotice] = useState("");
   const mint = Number(mintAmount);
   const stake = Number(stakeAmount);
   const burn = Number(burnAmount);
   const mintQuote = Number.isFinite(mint) && mint > 0 ? quoteMint(state.outstanding, state.highWaterMark, mint) : null;
+  const reviewReady = mintReview && mintQuote && Number.isFinite(Number(maxMaxInput)) && Number(maxMaxInput) >= mintQuote.max && new Date(deadlineInput).getTime() > Date.now();
   const burnMax = Number.isFinite(burn) && burn > 0 && burn <= state.debt ? burn === state.debt ? state.collateral : burn * state.collateral / state.debt : 0;
+  const burnShortfall = Number.isFinite(burn) && burn > state.walletAit && burn <= state.debt ? burn - state.walletAit : 0;
   const nextWithdrawal = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const sampleTermEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const record = (action, detail) => ({ action, detail, time: "Just now · simulated" });
 
   const simulateMint = () => {
-    if (!mintQuote || mint > CAP - state.outstanding || mintQuote.max > state.walletMax) return;
+    if (!mintReview || !mintQuote || Number(maxMaxInput) < mintQuote.max || !(new Date(deadlineInput).getTime() > Date.now()) || mint > CAP - state.outstanding || mintQuote.max > state.walletMax) return;
     setState((s) => ({
       ...s, outstanding: s.outstanding + mint, highWaterMark: Math.max(s.highWaterMark, s.outstanding + mint),
       walletMax: s.walletMax - mintQuote.max, walletAit: s.walletAit + mint,
       debt: s.debt + mint, collateral: s.collateral + mintQuote.max,
       history: [record("Mint", `${fmt(mint)} AIT for ${fmt(mintQuote.max)} MAX · merged position`), ...s.history],
     }));
+    setMintReview(false);
     setNotice("Mint simulated. AIT and MAX balances updated in this browser session.");
   };
   const simulateStake = (direction) => {
     const available = direction === "Stake" ? state.walletAit : state.stakedAit;
-    if (!Number.isFinite(stake) || stake <= 0 || stake > available) return;
+    if (!Number.isFinite(stake) || stake <= 0 || stake > available || (direction === "Stake" && previewTerm && !acceptedPreviewTerms)) return;
     setState((s) => ({ ...s,
       walletAit: s.walletAit + (direction === "Stake" ? -stake : stake),
       stakedAit: s.stakedAit + (direction === "Stake" ? stake : -stake),
-      history: [record(direction, `${fmt(stake)} AIT ${direction === "Stake" ? "staked" : "returned to wallet"}`), ...s.history],
+      history: [record(direction, `${fmt(stake)} AIT ${direction === "Stake" ? "staked" : "returned to wallet"}${previewTerm ? " · sample term preview" : ""}`), ...s.history],
     }));
-    setNotice(direction === "Stake" ? "Stake simulated. AIT Earned Credit accrual starts from confirmed staking." : "Unstake simulated. New accrual stops; accrued but ungranted AIT Earned Credit is preserved.");
+    setNotice(previewTerm ? `${direction} simulated under sample terms. No Credit posted.` : `${direction} simulated. AIT Earned Credit is inactive.`);
   };
   const simulateBurn = () => {
     if (!Number.isFinite(burn) || burn <= 0 || burn > state.debt || burn > state.walletAit) return;
@@ -65,7 +76,8 @@ export function TokenomicsPage({ onCredits, state, setState }) {
       pendingMax: s.pendingMax + burnMax, withdrawalAt,
       history: [record("Burn", `${fmt(burn)} AIT burned · ${fmt(burnMax)} MAX pending until ${new Date(withdrawalAt).toLocaleDateString()}`), ...s.history],
     }));
-    setNotice("Burn simulated. The seven-day wait now applies to the entire pending MAX balance.");
+    setBurnAmount("");
+    setNotice(state.pendingMax ? "Burn simulated. Withdrawal time reset for all pending MAX." : "Burn simulated. MAX is available in seven days.");
   };
   const withdraw = () => {
     if (!state.pendingMax || Date.now() < new Date(state.withdrawalAt).getTime()) return;
@@ -73,30 +85,136 @@ export function TokenomicsPage({ onCredits, state, setState }) {
       history: [record("Withdraw", `${fmt(s.pendingMax)} MAX returned to wallet`), ...s.history] }));
     setNotice("Withdrawal simulated.");
   };
+  const confirmWalletAction = () => {
+    const action = walletAction;
+    setWalletAction(null);
+    if (action === "Mint") simulateMint();
+    if (action === "Stake" || action === "Unstake") simulateStake(action);
+    if (action === "Burn") simulateBurn();
+    if (action === "Withdraw") withdraw();
+  };
 
   return <main className="content-page token-page">
     <div className="page-heading"><div><span className="eyebrow">Ethereum home chain · interactive prototype</span><h1>MAX & AIT</h1><p>Lock MAX, mint AIT, earn eligible compute Credit, and redeem MAX through one merged position.</p></div><span className="token-demo-pill">Simulated balances · no wallet transaction</span></div>
-    <div className="token-tabs" role="tablist" aria-label="MAX and AIT"><>{TABS.map((item) => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} onClick={() => { setTab(item); setNotice(""); }}>{item}</button>)}</></div>
+    <div className="token-tabs" role="tablist" aria-label="MAX and AIT"><>{TABS.map((item) => <button key={item} role="tab" aria-selected={tab === item} className={tab === item ? "active" : ""} onClick={() => { setTab(item); setMintReview(false); setNotice(""); }}>{item}</button>)}</></div>
     {notice && <p className="token-notice" role="status">{notice}</p>}
 
     {tab === "Overview" && <>
       <div className="token-metrics">
-        <article><span>MAX in wallet</span><strong>{fmt(state.walletMax)} <small>MAX</small></strong><p>Ethereum · available to mint</p></article>
-        <article><span>AIT in wallet</span><strong>{fmt(state.walletAit)} <small>AIT</small></strong><p>{fmt(state.stakedAit)} AIT staked separately</p></article>
-        <article><span>Active position</span><strong>{fmt(state.debt)} <small>AIT debt</small></strong><p>{fmt(state.collateral)} MAX locked</p></article>
+        <article><span>Active AIT debt</span><strong>{fmt(state.debt)} <small>AIT</small></strong><p>Owed by this position</p></article>
+        <article><span>MAX locked</span><strong>{fmt(state.collateral)} <small>MAX</small></strong><p>Backing active AIT debt</p></article>
+        <article><span>Blended MAX / AIT</span><strong>{state.debt ? fmt(state.collateral / state.debt, 4) : "—"}</strong><p>Current position ratio</p></article>
         <article><span>Pending redemption</span><strong>{fmt(state.pendingMax)} <small>MAX</small></strong><p>{state.withdrawalAt ? `Available ${new Date(state.withdrawalAt).toLocaleString()}` : "No withdrawal pending"}</p></article>
       </div>
-      <div className="token-two-col"><section className="panel token-feature"><div className="token-icon peach"><LockKey size={22} /></div><span className="eyebrow">One merged position</span><h2>Mint into a single MAX claim</h2><p>Every mint adds AIT debt and locked MAX to the same non-transferable position. Burns redeem MAX at its current blended ratio.</p><button className="secondary-button compact" onClick={() => setTab("Mint")}>Explore mint <ArrowRight size={14} /></button></section><section className="panel token-feature"><div className="token-icon blue"><Coins size={22} /></div><span className="eyebrow">Optional funded program</span><h2>Stake AIT for compute Credit</h2><p>Eligible staking time accrues from confirmation. The Gateway posts weekly AIT Earned Credit grants that expire seven days after issuance.</p><button className="secondary-button compact" onClick={() => setTab("Stake & Credit")}>Explore staking <ArrowRight size={14} /></button></section></div>
       <section className="panel token-history"><div className="panel-heading"><div><h2>Position activity</h2><p>Example events and actions simulated in this session.</p></div></div>{state.history.map((event, i) => <div className="token-history-row" key={`${event.action}-${i}`}><span>{event.action}</span><p>{event.detail}</p><small>{event.time}</small></div>)}</section>
     </>}
 
-    {tab === "Mint" && <div className="token-two-col"><section className="panel token-action"><span className="eyebrow">MAX → AIT · Ethereum</span><h2>Mint AIT</h2><p>Any transferable MAX in your Ethereum wallet can be locked. The quote is based on the global high-water mark and current outstanding AIT.</p><label>AIT to mint<input type="number" min="0" step="any" value={mintAmount} onChange={(e) => setMintAmount(e.target.value)} /></label><div className="token-quick"><button onClick={() => setMintAmount("1")}>1 AIT</button><button onClick={() => setMintAmount("10")}>10 AIT</button><button onClick={() => setMintAmount("100")}>100 AIT</button></div><button className="primary-button" disabled={!mintQuote || mint > CAP - state.outstanding || mintQuote.max > state.walletMax} onClick={simulateMint}>Simulate mint <ArrowRight size={14} /></button><small className="token-fine">Production flow: review quote and slippage → approve MAX → lock MAX and mint AIT. No approval or transaction occurs here.</small></section><section className="panel token-breakdown"><h2>Curve quote</h2><div><span>MAX required</span><strong>{mintQuote ? fmt(mintQuote.max) : "—"} MAX</strong></div><div><span>Protocol fee</span><strong>Pending configuration</strong></div><div><span>Refill at HWM rate</span><strong>{mintQuote ? `${fmt(mintQuote.refill)} AIT` : "—"}</strong></div><div><span>Above-peak curve</span><strong>{mintQuote ? `${fmt(mintQuote.abovePeak)} AIT` : "—"}</strong></div><div><span>Current position debt</span><strong>{fmt(state.debt)} AIT</strong></div><div><span>Current outstanding / cap</span><strong>{fmt(state.outstanding)} / {fmt(CAP)} AIT</strong></div><div><span>High-water mark</span><strong>{fmt(state.highWaterMark)} AIT</strong></div><div><span>Current HWM marginal rate</span><strong>{fmt(rate(state.highWaterMark))} MAX / AIT</strong></div><p className="token-callout">Burning AIT lowers outstanding debt but never lowers the high-water mark. Minting below the high-water mark uses its fixed marginal rate; a mint crossing it splits into refill and new-peak portions.</p><small>MAX stays locked while AIT debt remains; if AIT is sold, reacquire it to burn and redeem MAX. No time lock applies to the active position. Curve and cap are proposed Genesis parameters awaiting economic approval.</small></section></div>}
+    {tab === "Mint" && (mintReview ? <section className="panel token-action token-breakdown token-mint-review">
+      <h2>Review mint</h2>
+      <div><span>AIT to mint</span><strong>{fmt(mint)} AIT</strong></div>
+      <div><span>MAX required · illustrative</span><strong>{fmt(mintQuote.max)} MAX</strong></div>
+      <label>Maximum MAX input<input type="number" min="0" step="any" value={maxMaxInput} onChange={(e) => setMaxMaxInput(e.target.value)} /></label>
+      {maxMaxInput && Number(maxMaxInput) < mintQuote.max && <small className="token-review-error">Limit below quote</small>}
+      <label>Deadline<input type="datetime-local" value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)} /></label>
+      {deadlineInput && !(new Date(deadlineInput).getTime() > Date.now()) && <small className="token-review-error">Choose a future time</small>}
+      <div className="token-review-actions"><button className="secondary-button" onClick={() => setMintReview(false)}>Back</button><button className="primary-button" disabled={!reviewReady} onClick={() => setWalletAction("Mint")}>Continue to wallet</button></div>
+      <small className="token-fine">Illustrative quote only. No wallet transaction occurs.</small>
+    </section> : <div className="token-two-col">
+      <section className="panel token-action">
+        <span className="eyebrow">MAX → AIT · Ethereum</span><h2>Mint AIT</h2>
+        <p>Any transferable MAX in your Ethereum wallet can be locked. The quote is based on the global high-water mark and current outstanding AIT.</p>
+        <label>AIT to mint<input type="number" min="0" step="any" value={mintAmount} onChange={(e) => setMintAmount(e.target.value)} /></label>
+        <div className="token-quick"><button onClick={() => setMintAmount("1")}>1 AIT</button><button onClick={() => setMintAmount("10")}>10 AIT</button><button onClick={() => setMintAmount("100")}>100 AIT</button></div>
+        <button className="primary-button" disabled={!mintQuote || mint > CAP - state.outstanding || mintQuote.max > state.walletMax} onClick={() => { setMaxMaxInput(String(mintQuote.max)); setDeadlineInput(""); setMintReview(true); }}>Review mint <ArrowRight size={14} /></button>
+        <small className="token-fine">Illustrative quote only. No wallet transaction occurs here.</small>
+        <div className="token-mint-activity"><h3>Recent position activity</h3>{state.history.filter(({ action }) => ["Mint", "Burn", "Withdraw"].includes(action)).slice(0, 3).map((event, i) => <div className="token-history-row" key={`${event.action}-${i}`}><span>{event.action}</span><p>{event.detail}</p><small>{event.time}</small></div>)}</div>
+      </section>
+      <section className="panel token-breakdown">
+        <h2>Mint quote · illustrative</h2>
+        <div><span>MAX required for {mintQuote ? `${fmt(mint)} AIT` : "—"}</span><strong>{mintQuote ? fmt(mintQuote.max) : "—"} MAX</strong></div>
+        <div><span>Protocol fee</span><strong>Pending configuration</strong></div>
+        <div><span>Maximum MAX input · slippage guard</span><strong>Set at transaction review</strong></div>
+        <div><span>Cap remaining</span><strong>{fmt(CAP - state.outstanding)} AIT</strong></div>
+        <div><span>High-water mark</span><strong>{fmt(state.highWaterMark)} AIT</strong></div>
+        <div><span>Current position</span><strong>{fmt(state.debt)} AIT debt · {fmt(state.collateral)} MAX locked</strong></div>
+        <p className="token-callout">MAX stays locked while AIT debt remains. There is no automatic liquidation; AIT sold must be reacquired to unlock MAX. AIT and MAX market prices can change.</p>
+        <details className="token-details"><summary>How the quote works</summary>
+          <div><span>Average MAX / AIT</span><strong>{mintQuote ? fmt(mintQuote.max / mint, 4) : "—"}</strong></div>
+          <div><span>Refill at HWM rate</span><strong>{mintQuote ? `${fmt(mintQuote.refill)} AIT` : "—"}</strong></div>
+          <div><span>Above-peak curve</span><strong>{mintQuote ? `${fmt(mintQuote.abovePeak)} AIT` : "—"}</strong></div>
+          <div><span>Current outstanding / cap</span><strong>{fmt(state.outstanding)} / {fmt(CAP)} AIT</strong></div>
+          <div><span>Current HWM marginal rate</span><strong>{fmt(rate(state.highWaterMark))} MAX / AIT</strong></div>
+          <p>Burning lowers outstanding but never the HWM. A mint below the HWM uses its fixed marginal rate; a mint crossing it splits into refill and new-peak portions.</p>
+        </details>
+        <small>No position time lock applies. This browser quote uses illustrative floating-point math; production uses the exact integer contract quote. Curve and cap are proposed Genesis parameters awaiting economic approval.</small>
+      </section>
+    </div>)}
 
-    {tab === "Stake & Credit" && <><div className="token-two-col"><section className="panel token-action"><span className="eyebrow">AIT staking · Ethereum</span><h2>Stake AIT</h2><p>One verified Ethereum wallet is linked to this Gateway account. Staking and unstaking have no lock or warm-up period.</p><div className="token-wallet-line"><span>Wallet AIT <strong>{fmt(state.walletAit)}</strong></span><span>Staked AIT <strong>{fmt(state.stakedAit)}</strong></span></div><label>AIT amount<input type="number" min="0" step="any" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} /></label><div className="token-actions"><button className="primary-button" disabled={!Number.isFinite(stake) || stake <= 0 || stake > state.walletAit} onClick={() => simulateStake("Stake")}>Simulate stake</button><button className="secondary-button" disabled={!Number.isFinite(stake) || stake <= 0 || stake > state.stakedAit} onClick={() => simulateStake("Unstake")}>Simulate unstake</button></div><small className="token-fine">Unstake AIT before burning it to redeem MAX. Confirmed unstaking stops new accrual; already accrued Credit is retained for the next program batch.</small></section><section className="panel token-breakdown"><h2>AIT Earned Credit terms</h2><div><span>Program status</span><strong>Draft · funding unverified</strong></div><div><span>Illustrative base rate</span><strong>$12 / 365 days / staked AIT</strong></div><div><span>Grant timing</span><strong>Every 7 days from program start</strong></div><div><span>Grant expiry</span><strong>7 days after issuance</strong></div><div><span>Eligible usage</span><strong>Approved model catalogs</strong></div><div><span>Credit location</span><strong>Gateway account ledger</strong></div><p className="token-callout">A funded, finite program term and approved model catalogs must be published before production staking rewards begin. This prototype does not represent an active reward promise.</p><button className="secondary-button compact" onClick={onCredits}>View Credits & Subscription <ArrowRight size={14} /></button></section></div><section className="panel token-history"><div className="panel-heading"><div><h2>Weekly grant flow</h2><p>Credit accrues by actual eligible staking time; the Gateway posts grants automatically after Ethereum finality.</p></div></div><div className="token-flow"><span>Stake AIT</span><ArrowRight size={16} /><span>Time-weighted accrual</span><ArrowRight size={16} /><span>Weekly AIT Earned Credit</span><ArrowRight size={16} /><span>Eligible model usage</span></div><p className="token-fine">The UI and authorized external agents share AIT Earned Credit. For eligible requests, spend earliest-expiring AIT Earned grants, then subscription allowance, other promotional Credits, and Dollar balance. Ineligible models skip AIT Earned Credit.</p></section></>}
+    {tab === "Stake & Credit" && <div className="token-two-col">
+      <section className="panel token-action">
+        <span className="eyebrow">AIT staking · Ethereum</span><h2>Stake AIT</h2>
+        <p>Linked staking wallet · Ethereum · <strong>{linkedWallet}</strong></p>
+        <div className="token-wallet-line"><span>Wallet AIT <strong>{fmt(state.walletAit)}</strong></span><span>Staked AIT <strong>{fmt(state.stakedAit)}</strong></span></div>
+        <label>AIT amount<input type="number" min="0" step="any" value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} /></label>
+        <div className="token-actions"><button className="primary-button" disabled={!Number.isFinite(stake) || stake <= 0 || stake > state.walletAit || (previewTerm && !acceptedPreviewTerms)} onClick={() => setWalletAction("Stake")}>Simulate stake</button><button className="secondary-button" disabled={!Number.isFinite(stake) || stake <= 0 || stake > state.stakedAit} onClick={() => setWalletAction("Unstake")}>Simulate unstake</button></div>
+        <small className="token-fine">No lock or warm-up. Unstake before burning; unstaking stops new Credit accrual.</small>
+      </section>
+      <section className="panel token-breakdown">
+        <h2>AIT Earned Credit: {previewTerm ? "Sample term" : "Inactive"}</h2>
+        <p>{previewTerm ? "Preview only; no Credit is posted." : "Staking is available; no Credit accrues now."}</p>
+        <button className="secondary-button compact" onClick={() => setPreviewTerm(!previewTerm)}>{previewTerm ? "Exit preview" : "Preview sample term"}</button>
+        {previewTerm ? <>
+          <div><span>Funding</span><strong>Sample prefunded</strong></div>
+          <div><span>Sample end</span><strong>{sampleTermEnd.toLocaleDateString()}</strong></div>
+          <div><span>Sample rate</span><strong>$12 / year / staked AIT</strong></div>
+          <div><span>Eligible models</span><strong>Sample catalog set</strong></div>
+          <div><span>Grant expiry</span><strong>7 days</strong></div>
+          <div><span>Terms version</span><strong>{SAMPLE_TERM_VERSION}</strong></div>
+          <div><span>Accepted version</span><strong>{acceptedPreviewTerms ? SAMPLE_TERM_VERSION : "None"}</strong></div>
+          <button className="secondary-button compact" disabled={acceptedPreviewTerms} onClick={() => setAcceptedPreviewTerms(true)}>{acceptedPreviewTerms ? "Sample terms accepted" : "Accept sample terms"}</button>
+        </> : <details className="token-details"><summary>Term details</summary>
+          <div><span>Funded term</span><strong>Not published</strong></div>
+          <div><span>Term end</span><strong>Not set</strong></div>
+          <div><span>Illustrative rate</span><strong>$12 / year / staked AIT</strong></div>
+          <div><span>Eligible models</span><strong>Not published</strong></div>
+          <div><span>Terms version</span><strong>Not published</strong></div>
+          <div><span>Accepted version</span><strong>None</strong></div>
+          <p>Review and accept published terms before Credit earning.</p>
+        </details>}
+        <details className="token-details"><summary>How Credit works</summary><p>During a funded term, linked AIT stake earns Credit. Gateway grants post every seven days, expire seven days later, and spend on eligible models before subscription allowances.</p></details>
+        <button className="secondary-button compact" onClick={onCredits}>View Credits <ArrowRight size={14} /></button>
+      </section>
+    </div>}
 
-    {tab === "Burn & Withdraw" && <div className="token-two-col"><section className="panel token-action"><span className="eyebrow">AIT → pending MAX · Ethereum</span><h2>Burn AIT</h2><p>Burn AIT from your wallet against the merged position. The current blended MAX/AIT ratio determines how much MAX moves to pending redemption.</p><label>AIT to burn<input type="number" min="0" step="any" value={burnAmount} onChange={(e) => setBurnAmount(e.target.value)} /></label><div className="token-quick"><button onClick={() => setBurnAmount(String(state.walletAit))}>Wallet max</button><button onClick={() => setBurnAmount(String(state.debt))}>Full debt</button></div><div className="token-quote"><span>MAX moved to pending</span><strong>{fmt(burnMax)} MAX</strong></div><button className="primary-button" disabled={!burnMax || burn > state.walletAit} onClick={simulateBurn}>Simulate burn</button><small className="token-fine">Staked AIT must be unstaked first. AIT acquired in the market can be burned for your position debt.</small></section><section className="panel token-breakdown"><h2>Position & redemption</h2><div><span>Active AIT debt</span><strong>{fmt(state.debt)} AIT</strong></div><div><span>Active MAX collateral</span><strong>{fmt(state.collateral)} MAX</strong></div><div><span>Blended ratio</span><strong>{state.debt ? fmt(state.collateral / state.debt, 4) : "—"} MAX / AIT</strong></div><div><span>Pending MAX</span><strong>{fmt(state.pendingMax)} MAX</strong></div><div><span>Withdrawal time</span><strong>{state.withdrawalAt ? new Date(state.withdrawalAt).toLocaleString() : "—"}</strong></div><button className="secondary-button compact" disabled={!state.pendingMax || Date.now() < new Date(state.withdrawalAt).getTime()} onClick={withdraw}>Withdraw pending MAX</button><p className="token-callout"><ClockCountdown size={17} /> Each burn starts or resets a seven-day wait for the <strong>entire still-pending MAX balance</strong>. Burning again now would set its withdrawal time to {nextWithdrawal.toLocaleDateString()}.</p></section></div>}
+    {tab === "Burn & Withdraw" && <div className="token-two-col">
+      <section className="panel token-action">
+        <span className="eyebrow">AIT → pending MAX · Ethereum</span><h2>Burn AIT</h2>
+        <p>Burn AIT from your wallet against the merged position. Its blended MAX/AIT ratio sets the MAX redemption amount.</p>
+        <label>AIT to burn<input type="number" min="0" step="any" value={burnAmount} onChange={(e) => setBurnAmount(e.target.value)} /></label>
+        <div className="token-quick"><button onClick={() => setBurnAmount(String(state.walletAit))}>Wallet max</button><button onClick={() => setBurnAmount(String(state.debt))}>Full debt</button></div>
+        <div className="token-quote"><span>MAX moved to pending</span><strong>{burnMax ? `${fmt(burnMax)} MAX` : "—"}</strong></div>
+        <button className="primary-button" disabled={!burnMax || burn > state.walletAit} onClick={() => setWalletAction("Burn")}>Simulate burn</button>
+        <small className="token-fine">{burnShortfall ? `Need ${fmt(burnShortfall)} more AIT to burn. Unstake or obtain AIT.` : "Unstake AIT before burning it."}</small>
+      </section>
+      <section className="panel token-breakdown">
+        <h2>Position & redemption</h2>
+        <div><span>Active AIT debt</span><strong>{fmt(state.debt)} AIT</strong></div>
+        <div><span>Active MAX collateral</span><strong>{fmt(state.collateral)} MAX</strong></div>
+        <div><span>Blended ratio</span><strong>{state.debt ? fmt(state.collateral / state.debt, 4) : "—"} MAX / AIT</strong></div>
+        <div><span>Pending MAX</span><strong>{fmt(state.pendingMax)} MAX</strong></div>
+        <div><span>Withdrawal time</span><strong>{state.withdrawalAt ? new Date(state.withdrawalAt).toLocaleString() : "—"}</strong></div>
+        <button className="secondary-button compact" disabled={!state.pendingMax || Date.now() < new Date(state.withdrawalAt).getTime()} onClick={() => setWalletAction("Withdraw")}>Withdraw pending MAX</button>
+        <p className="token-callout"><ClockCountdown size={17} /> {state.pendingMax ? `Another burn resets the seven-day wait for all pending MAX to ${nextWithdrawal.toLocaleDateString()}.` : "Burning starts a seven-day wait before MAX can be withdrawn."}</p>
+      </section>
+    </div>}
 
-    {tab === "Market" && <div className="token-two-col"><section className="panel token-feature"><div className="token-icon peach"><ArrowsLeftRight size={22} /></div><span className="eyebrow">MAX · LayerZero routes</span><h2>MAX across four chains</h2><p>MAX can move directly among Ethereum, Base, Arbitrum One, and Robinhood Chain. Return MAX to Ethereum before locking it to mint AIT.</p><div className="token-chain-list"><span>Ethereum</span><span>Base</span><span>Arbitrum One</span><span>Robinhood Chain</span></div><small className="token-fine">Bridge execution, route status and fees are outside this simulated screen.</small></section><section className="panel token-feature"><div className="token-icon blue"><Wallet size={22} /></div><span className="eyebrow">AIT · Ethereum only at launch</span><h2>Hold, transfer, or stake AIT</h2><p>AIT is transferable on Ethereum. Market-bought AIT can be staked for an eligible funded program or burned against your own position debt; buying AIT alone does not close debt.</p><p className="token-callout"><ShieldCheck size={17} /> AIT cross-chain capability is designed for a later release and is inactive at launch.</p></section></div>}
+    {tab === "Networks" && <div className="token-two-col"><section className="panel token-feature"><div className="token-icon peach"><ArrowsLeftRight size={22} /></div><span className="eyebrow">MAX · LayerZero routes</span><h2>MAX across four chains</h2><p>MAX can move directly among Ethereum, Base, Arbitrum One, and Robinhood Chain. Return MAX to Ethereum before locking it to mint AIT.</p><div className="token-chain-list"><span>Ethereum</span><span>Base</span><span>Arbitrum One</span><span>Robinhood Chain</span></div><small className="token-fine">Bridge execution, route status and fees are outside this simulated screen.</small></section><section className="panel token-feature"><div className="token-icon blue"><Wallet size={22} /></div><span className="eyebrow">AIT · Ethereum only at launch</span><h2>Hold, transfer, or stake AIT</h2><p>AIT is transferable on Ethereum. Market-bought AIT can be staked for an eligible funded program or burned against your own position debt; buying AIT alone does not close debt.</p><p className="token-callout"><ShieldCheck size={17} /> AIT cross-chain capability is designed for a later release and is inactive at launch.</p></section></div>}
+    {walletAction && <div className="token-wallet-backdrop"><section className="panel token-wallet-dialog" role="dialog" aria-modal="true" aria-labelledby="token-wallet-title">
+      <h2 id="token-wallet-title">Confirm in wallet</h2>
+      <p>{walletAction === "Withdraw" ? `${fmt(state.pendingMax)} MAX` : `${fmt(walletAction === "Mint" ? mint : walletAction === "Burn" ? burn : stake)} AIT`} · {walletAction}</p>
+      <small>Wallet authorization required. This is a simulation.</small>
+      <div className="token-review-actions"><button className="secondary-button" onClick={() => setWalletAction(null)}>Cancel</button><button className="primary-button" onClick={confirmWalletAction}>Confirm simulation</button></div>
+    </section></div>}
   </main>;
 }
 

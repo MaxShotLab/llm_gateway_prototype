@@ -25,7 +25,7 @@ import {
   subscriptionPlans,
 } from "../data/billingData";
 
-export function FundingPage({ billing, setBilling, tokenState, onTokens, onModelPricing, usageContent, initialView = "subscription" }) {
+export function FundingPage({ billing, setBilling, onTokens, onModelPricing, usageContent, initialView = "subscription" }) {
   const [billingView, setBillingView] = useState(initialView);
   const [amount, setAmount] = useState(25);
   const [methodId, setMethodId] = useState("crypto");
@@ -173,8 +173,8 @@ export function FundingPage({ billing, setBilling, tokenState, onTokens, onModel
       {billingView === "usage" && usageContent}
 
       {billingView !== "usage" && <section className="panel token-credit-summary">
-        <div><span className="eyebrow">MAX & AIT · prototype</span><h2>AIT Earned Credit</h2><p>{tokenState.stakedAit.toLocaleString()} AIT staked on Ethereum · weekly grants are off-chain and expire seven days after posting. No funded term is active in this simulation. On eligible requests, AIT Earned Credit spends before subscription allowances.</p></div>
-        <button className="secondary-button compact" onClick={onTokens}>View MAX & AIT <ArrowRight size={14} /></button>
+        <div><span className="eyebrow">MAX & AIT · prototype</span><h2>AIT Earned Credit: Inactive</h2><p>Staking is available; no Credit accrues now.</p></div>
+        <button className="secondary-button compact" onClick={onTokens}>Open MAX & AIT <ArrowRight size={14} /></button>
       </section>}
 
       {billingView === "subscription" && (

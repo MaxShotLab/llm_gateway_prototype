@@ -22,9 +22,9 @@
 | FR-TOK-004 | Superseded | TD-03/04 → TOK-R11, R12 |
 | FR-TOK-005 | Rule | TOK-R10, R14 |
 | FR-TOK-006 | Superseded | TD-10 → TOK-R07 (custody controls instead of mint eligibility) |
-| FR-TOK-007 | Rule | TOK-R27, R28 |
+| FR-TOK-007 | Rule | TOK-R27, R28 (TD-66: average MAX per AIT replaces implied reference cost) |
 | FR-TOK-008 | Rule | TOK-R20–R22 |
-| FR-TOK-009 | Rule | TOK-R29 |
+| FR-TOK-009 | Rule | TOK-R29; acceptance gates accrual (TD-67) |
 | FR-TOK-010 | Superseded | TD-11 (position non-transferable); transfer is Later |
 | FR-CR-001 | Rule | BIL-R02, R44; TOK-R24, R31 |
 | FR-CR-002 | Rule | TOK-R23, R30 |
@@ -117,7 +117,7 @@
 | §3.3 Financial flows | Context | — |
 | §4.1–4.3 Unit, curve, HWM | Rule | TOK-R10, R16 (TD-05 exact refill) |
 | §4.4 Position and debt model | Superseded | TD-01–04 → TOK-R09–R12 |
-| §4.5 Mint controls | Rule | Source TOK-R08 (TD-10); cap TOK-R10; capital sufficiency XCT-G03; mint speed TOK-R34; pause TOK-R05, R34; quote transparency TOK-R28; restrictions TOK-R07; curve updates TOK-R33 |
+| §4.5 Mint controls | Rule | Source TOK-R08 (TD-10); cap TOK-R10; capital sufficiency XCT-G03; mint speed TOK-R34; pause TOK-R05, R34; quote transparency TOK-R28 (implied reference cost superseded by TD-66); restrictions TOK-R07; curve updates TOK-R33 |
 | §4.6 Market dynamics | Rule + Context | TOK-R35; XCT-R10; remaining text Context |
 | §5.1 User-facing unit | Rule | TOK-R23, R29; warm-up superseded by TD-14 |
 | §5.2 Genesis obligation, 90-day program | Rule | TOK-R23, R29, R31 |

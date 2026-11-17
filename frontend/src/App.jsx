@@ -1598,7 +1598,7 @@ export function App() {
         />
       );
     }
-    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} initialView="usage" usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
+    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} initialView="usage" usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
     if (active === "studio") return <StudioPage billing={billing} canGenerateAccount={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to generate."); setLoginOpen(true); }} seed={studioSeed} onSeedConsumed={() => setStudioSeed(null)} publicWorks={publicWorks} onPublish={(work) => setPublicWorks((current) => [publicWork(work), ...current.filter((item) => item.id !== work.id)])} onUnshare={(id) => setPublicWorks((current) => current.filter((item) => item.id !== id))} onOpenShare={openShare} />;
     if (active === "starters") return <StartersPage canRun={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to run this example."); setLoginOpen(true); }} onOpenStudio={openStudio} onPricing={() => navigate("pricing")} onApi={() => navigate("api")} onPlayground={() => navigate("playground")} />;
     if (active === "playground") return <PlaygroundPage onOpenChat={(prompt) => { setChatSeed(prompt); navigate("chat"); }} onOpenStudio={openStudio} onApi={() => navigate("api")} onPricing={() => navigate("pricing")} />;
@@ -1608,10 +1608,10 @@ export function App() {
     }} />;
     if (active === "pricing") return <ProviderMarketPage initialView="Models & Pricing" />;
     if (active === "api") return <SettingsPage user={user} onLogout={logout} initialView="developer" />;
-    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} tokenState={tokenState} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
+    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
     if (active === "portfolio") return <PortfolioPage billing={billing} tokenState={tokenState} onNavigate={navigate} />;
     if (active === "vaults") return <VaultsPage accountSignedIn={Boolean(user)} onPortfolio={() => navigate("portfolio")} />;
-    if (active === "tokens") return <TokenomicsPage state={tokenState} setState={setTokenState} onCredits={() => navigate("topup")} />;
+    if (active === "tokens") return <TokenomicsPage state={tokenState} setState={setTokenState} linkedWallet={prototypeWallet} onCredits={() => navigate("topup")} />;
     if (active === "providers") return <ProviderMarketPage />;
     if (active === "referral") return <ReferralPage />;
     if (active === "settings") return <SettingsPage user={user} onLogout={logout} />;

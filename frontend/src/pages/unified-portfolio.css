@@ -8,13 +8,11 @@
 .unified-summary-grid strong { display: block; margin: 17px 0 8px; font-size: 22px; letter-spacing: -.03em; }
 .unified-summary-grid strong em { font-size: 12px; font-style: normal; font-weight: 500; }
 .unified-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.unified-section { min-height: 280px; }
+.unified-section { min-height: 190px; }
 .guest-vault-connect { min-height: 0; margin-bottom: 12px; }
 .unified-section-icon { display: grid; place-items: center; width: 38px; height: 38px; margin-bottom: 17px; border-radius: 9px; background: var(--blue); }
 .unified-section h2 { margin: 4px 0 8px; font-size: 18px; }
 .unified-section p { color: var(--muted); font-size: 11px; line-height: 1.55; }
-.unified-stat-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
-.unified-stat-row > span, .unified-stat-row small { color: var(--muted); font-weight: 400; }
 .unified-section > button { margin-top: 16px; }
 .unified-vault-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
 .unified-vault-grid article { padding: 16px; border: 1px solid var(--border); border-radius: 9px; }
