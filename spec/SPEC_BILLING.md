@@ -53,6 +53,8 @@ One policy per key, editable by the account owner in Profile → Developer setti
 - **BIL-R16 · Expiry and revocation.** Optional expiry; an expired key behaves as revoked. Revocation takes effect immediately; in-flight requests complete and settle once.
 - **BIL-R17 · Attribution.** Every Usage row carries the key ID, and Usage can be filtered by key.
 
+- **BIL-R43 · Key secrets.** A key's secret is shown once, at creation, then only masked; it is stored hashed or in a secret manager and never written to logs.
+
 ## 4. One accepted request
 
 ### 4.1 Identify and select
@@ -101,6 +103,10 @@ One policy per key, editable by the account owner in Profile → Developer setti
 
 - **BIL-R42 · Reverse a settled charge (TD-19/57).** When a settled charge is refunded for provider fault or overcharge, reverse it once, idempotently, traced to the request ID. Restore the AIT Earned Credit portion as a **new seven-day grant**; the Dollar portion to Dollar balance; subscription-allowance, Free and Referral portions to their original bucket with the original period or expiry if still valid, otherwise that portion lapses. Unused holds follow BIL-R28, not this rule.
 
+## 6a. Ledger integrity
+
+- **BIL-R44 · Money movement.** Every spend, hold, release, reversal, provider settlement and grant is an idempotent, auditable double-entry or invariant-preserving transition, never an unchecked balance decrement. Manual adjustments to any Dollar or Credit balance record actor, reason and approval.
+
 ## 7. Acceptance
 
 Prove each case against the live Gateway with one real funded request and one controlled failure where noted.
@@ -117,6 +123,7 @@ Prove each case against the live Gateway with one real funded request and one co
 10. **Basic API and promotional scope** (BIL-R06, R08, R09): a Basic-labeled API text request uses the Basic allowance after eligible AIT Earned Credit, with the same limits and text windows as Chat. Engineering verifies live Free/Referral funding on Studio and API and raises any difference as a change request.
 11. **Subscription limits** (BIL-R09, R10, R11): a 90% warning appears once per window or bucket; Basic exhaustion moves eligible Chat and API text to Premium with a notice; window exhaustion skips both allowances for text while other buckets fund the request; an image or video job still uses Premium when a text window is exhausted, subject to its own job and concurrency limits.
 12. **Refund portions** (BIL-R42): a refunded request funded by AIT Earned Credit, Premium and Dollar restores a new seven-day AIT grant, Premium to its original period if still open, and Dollar to Dollar balance, once. Lapse example: a request settled in the last subscription period with Premium and Referral Credits is refunded after that period ended and after the Referral Credits' original expiry; the Premium and Referral portions are not restored to any bucket, and the refund record shows them as lapsed. The AIT and Dollar portions are still restored.
+13. **Key secret and ledger integrity** (BIL-R43, R44): a new key's secret appears once and is masked afterward and absent from logs; a manual balance adjustment shows actor, reason and approval; replaying any money movement changes nothing.
 
 ## 8. Inputs, open items and out of scope
 

@@ -23,6 +23,8 @@ An external agent is a client that a developer or creator runs against the Gatew
 - **AGT-R08 · Versioning.** The guide carries a version; a breaking change bumps it; acceptance runs against the version it names.
 - **AGT-R09 · Machine-readable copy.** A `SKILL.md` (or equivalent agent-consumable file) is generated from the guide with verified values filled in and is never maintained by hand. It contains the credential steps, discovery read, a request example, rejection codes, Usage lookup and the version, and never names URLs, models, rates or actions that are not live.
 
+- **AGT-R10 · Safe first use.** The guide makes a pay-as-you-go (or eligible trial) call the default first use, never a token purchase; describes MAX, AIT and Credit features only once deployed and verified; never asks for or displays private keys, seed phrases, full API keys or long-lived secrets in chat; and states which routes are supported (OpenAI-compatible endpoint, custom SDK), that a hosted agent's own reasoning model is not rerouted through Maxshot, and that auxiliary model paths must be verified separately.
+
 ## 3. Acceptance
 
 A supported external agent following only the published guide at its named version (AGT-R08–R09):
@@ -30,6 +32,8 @@ A supported external agent following only the published guide at its named versi
 2. discovers an allowed model from the filtered catalog read (AGT-R03);
 3. makes one funded call within the key's limits (AGT-R04, R07);
 4. finds the same request by ID in Usage with one charge and one ledger entry (AGT-R06).
+
+A review of the guide finds a PAYG first call, no undeployed token feature, and no request to share secrets (AGT-R10).
 
 Negative cases (AGT-R05): a revoked key, a model outside the key's catalogs, a request over the key's per-request ceiling and a request over the daily budget each stop before provider dispatch with the documented code. In the MAX/AIT release, the same call spends eligible AIT Earned Credit first when a term is funded (AGT-R07).
 

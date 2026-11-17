@@ -45,11 +45,13 @@ MAX and AIT token precision: 18 decimals each
 - **TOK-R06 · Genesis supply (TD-08).** Before any user operation, the genesis transactions place all 1,000,000,000 MAX into the approved purpose-specific custodian wallets; the allocation manifest sums to exactly 1B and reconciles to wallet balances. No administrator can mint more MAX afterward. Bridge sends and receives only move existing supply, with global conservation checked across the four chains and in-flight messages.
 - **TOK-R07 · Restricted custody (TD-10).** Unsold Treasury and team allocations stay under custody or vesting controls and cannot be released without their own authorization. Treasury sale receipts reconcile separately from token balances.
 - **TOK-R08 · Any transferable MAX may lock (TD-10).** Any transferable ERC-20 MAX on Ethereum, including MAX bought on a secondary market, can be locked; the minter does not track provenance.
+- **TOK-R35 · Distribution labels.** Every MAX movement out of the genesis custodian wallets is labeled with its purpose: primary sale to Treasury, secondary trade, protocol LP transfer, team vesting, ecosystem incentive or another explicit category. Treasury capital increases only with actual inflows legally attributable to Treasury; secondary purchases, locks and token valuation are never counted as Treasury receipts.
 
 ### 2.3 Mint
 
 - **TOK-R09 · Merged position (TD-02/11).** Each controller has one non-transferable active position. Every mint adds its AIT to `D` and its MAX charge to `M`; `P` and `unlockAt` are unaffected. The displayed ratio is `M/D` when `D > 0`; with `D = 0` there is no ratio. Each mint and burn is kept as an immutable event with its quote and before/after state.
 - **TOK-R10 · Mint quote and HWM (TD-05).** Mint on the curve below, with the outstanding cap, a maximum-MAX-in (slippage) guard and a deadline. A mint at or below the HWM costs `R(H)` per AIT; the part that crosses the HWM costs the curve integral. Burns never lower the HWM. The integer evaluation is in §3.
+- **TOK-R34 · Mint rate limits.** The minter supports configurable per-block and per-epoch mint limits and optional opening windows (values are release inputs). Pausing new mints leaves burns and withdrawals available unless their own pause is set for a specific security emergency (TOK-R05).
 
 ```text
 R(s) = 600 × [1 + 2(s/C)^2]       MAX per marginal AIT
@@ -105,6 +107,7 @@ H >= O and H never decreases
 ```
 
 - **TOK-R15 · Buyback inventory.** AIT bought on the market, including any protocol buyback, stays in circulating supply and never retires debt unless it is actually burned against a position; there is no automatic burn.
+- **TOK-R33 · Contract governance.** No upgrade changes the curve or debt of existing positions retroactively. Upgrades go through the multisig with a time delay and public disclosure; contract source is publicly verified and addresses are published in a contract registry (XCT-G01, G08). No pause or emergency control can seize assets, mint beyond the cap, alter existing debt or bypass governance.
 
 ## 3. Confirmed integer mint quote
 
@@ -168,10 +171,18 @@ Illustrative vectors (`A_num/A_den = 12/1 USD per AIT per year` and `N/D = 100 C
 
 Splitting the day-3-to-day-10 stake into adjacent stake and unstake events gives the same `W` and the same 13 + 10 grants; replaying either boundary issues nothing more.
 
+- **TOK-R30 · Coverage guard (TD-62).** Each day, check that eligible liquid fulfillment resources are at least the maximum cost of unexpired AIT Earned Credit, plus in-flight API commitments, plus unpaid provider liabilities allocated to Credit, plus the policy buffer. A term's budget is the lesser of its contractual ceiling, ring-fenced cash or prepaid capacity, the modeled maximum fulfillment cost and legally available reserve. On a breach, stop any new term commitment and any grant not covered by its funded reservation, optionally limit AIT Earned Credit spend on high-cost models in the set for new requests only, by routing or availability control, lifted once coverage is restored (TD-64), and page the designated owner; the term's locked catalog set, rate and length do not change; already funded active-term entitlement, issued grants and in-flight requests are honored. Future uncommitted terms may be reduced or suspended only with prospective notice.
+- **TOK-R31 · Grant records and expiry.** Each grant records a unique ID, account, amount, issue time, expiry time, program ID and funding reservation ID, and traces to exactly one approved program and funded reservation. Expiry releases only unused funding capacity, after settled and in-flight costs are deducted, and never removes an in-flight provider obligation. AIT Earned Credit cannot be transferred, paid out as cash or USDC, or used to fund AIT buybacks.
+- **TOK-R36 · Treasury and team AIT (TD-63).** AIT held by Treasury, team or protocol wallets does not accrue AIT Earned Credit at launch; any change is a new decision published before mint.
+
 ### 4.3 Spending, refunds and display
 
 - **TOK-R26 · Spend and refund.** AIT Earned Credit is spent first in the funding order (BIL-R08), only on models whose catalog is in the term's set (BIL-R06), from the UI or a scoped key against the same account balance. Unused holds return to the original grant and expiry (BIL-R28). A refund of a settled charge restores the AIT portion as a new seven-day grant (BIL-R42).
 - **TOK-R27 · Display (TD-07/51).** The position view shows active AIT debt, active MAX, the `M/D` ratio, pending MAX, the next withdrawal time and that another burn would reset it. The staking view shows a stake only after its block is finalized, plus the funded term, its end and the remaining obligation.
+
+- **TOK-R28 · Mint view.** The mint view shows the outstanding cap and current outstanding AIT, the HWM, the quote (MAX amount, implied reference cost, AIT minted, fees and maximum-MAX-in), cap progress, the position's debt and locked MAX, the unlock requirement and its risks (no automatic liquidation; AIT sold must be reacquired to unlock; price risk), and transaction history. Displayed values match independently recomputed contract state.
+- **TOK-R29 · Staking terms.** Before staking, the user sees the funded term, its end date, its funding status, the accrual rate approved and locked for that term (TOK-R23; any shorthand such as "about $1 per month" only if it matches that rate and only inside the term), the seven-day grant expiry and the terms version; the accepted terms version is recorded. No screen claims a lifetime, guaranteed or permanent rate.
+- **TOK-R32 · No fixed AIT conversion.** AIT is never converted to Credits or Dollars at a fixed rate, and burning AIT never grants Credit or Dollar balance. An opt-in AIT-to-USDC swap that tops up Dollar balance at an executable market rate is later scope.
 
 ## 5. Acceptance (formerly B5)
 
@@ -188,6 +199,9 @@ The browser prototype is illustrative; this repository has no production contrac
 | Burn and redeem (TOK-R11–R13) | Only unstaked AIT against the controller's own debt burns; a partial burn rounds MAX down and a full burn moves all residual MAX; a second burn resets the whole pending wait; early withdrawal fails and an on-time withdrawal transfers once; withdrawn MAX is untouched by later burns. |
 | Invariants and inventory (TOK-R14–R15) | All invariants reconcile after every transition, across partial burn → remint, full-burn dust, refill, HWM crossing, the cap boundary, repeated burns and pause transitions; market-bought AIT never reduces debt. |
 | Pauses (TOK-R05) | Each pause blocks only its own operation; Pause All blocks all position actions; global and directed-route bridge pauses affect only the bridge. |
+| Governance and limits (TOK-R33–R34) | An upgrade cannot change existing debt or the curve for existing positions and waits out its time delay; no pause can seize assets, mint past the cap or alter debt; per-block and per-epoch mint limits hold; pausing mints leaves burn and withdraw working. |
+| Distribution labels (TOK-R35) | Every movement out of custody carries a purpose label; a secondary MAX purchase or a lock never appears as a Treasury receipt. |
+| Mint view (TOK-R28) | Every displayed cap, quote, debt and history value matches an independent recomputation of contract state, and the view states that there is no automatic liquidation. |
 
 Contract audit and security review remain release gates.
 
@@ -207,6 +221,10 @@ Contract audit and security review remain release gates.
 | Program boundary (TOK-R23–R24) | Accrual happens only inside the funded term and for eligible linked time; the final short boundary grants once; an unstaked wallet receives its accrued amount at the next boundary, then nothing more; no grant posts without reserve coverage. |
 | Grant ledger (TOK-R24–R25) | For each account, term and boundary, exactly one automatic grant with amount, issue time, seven-day expiry and program can be rebuilt from finalized events; a zero entitlement creates no grant; the vectors above reproduce exactly; grants, spending and expiry reconcile to the balance. |
 | Spend and refund (TOK-R26) | Covered by SPEC_BILLING §7 cases 1, 6, 10 and 12. |
+| Coverage guard (TOK-R30) | With 0% Treasury income, no new unfunded term or grant is created while the funded active term is honored; a coverage breach stops uncovered grants and pages the owner; any high-cost model limit applies only to new requests and leaves the term's locked catalog set, rate and length unchanged. |
+| Grant records and expiry (TOK-R31) | Every grant carries its program and funding reservation; an expired grant releases only unused capacity after in-flight costs; Earned Credit cannot be cashed out or transferred. |
+| Treasury and team AIT (TOK-R36) | A stake from a Treasury, team or protocol wallet accrues nothing. |
+| Terms and conversion (TOK-R29, R32) | The terms screen shows term, end, funding status, rate and terms version before staking and records acceptance; burning AIT grants no Credit or Dollar balance. |
 | Display (TOK-R27) | The position view shows debt, MAX, ratio, pending MAX and next withdrawal time and warns that another burn resets it; the staking view shows only finalized stakes. |
 
 ## 6. Inputs, open items and out of scope

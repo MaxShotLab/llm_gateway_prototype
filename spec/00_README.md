@@ -45,19 +45,21 @@ Read a document as authoritative **for its subject**. Where a later explicit dec
 
 | Subject | Owning document | Notes |
 | --- | --- | --- |
-| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-61, one row each, pointing to the rules that carry the decision. |
+| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-65, one row each, pointing to the rules that carry the decision. |
 | MAX/AIT contracts, positions, staking, Earned Credit grants, chain scope | [SPEC_TOKEN.md](./SPEC_TOKEN.md) | Includes exact integer mint quote and B5 acceptance. |
 | Request authorization, funding buckets, API keys, settlement, refunds, media jobs | [SPEC_BILLING.md](./SPEC_BILLING.md) | Includes funding eligibility matrix, key policy, request ID and B2 acceptance. |
 | Provider admission, catalog, routing, pricing display | [SPEC_PROVIDERS.md](./SPEC_PROVIDERS.md) | Includes B1 data contract and B4 acceptance. |
 | Account, wallet link, Portfolio, Vaults, Referrals, migration | [SPEC_ACCOUNT_VAULT.md](./SPEC_ACCOUNT_VAULT.md) | Includes B3 acceptance. |
 | External-agent integration guide | [SPEC_AGENT_INTEGRATION.md](./SPEC_AGENT_INTEGRATION.md) | Product-owned; engineering fills verified values. |
 | Admin and operations surfaces | [SPEC_ADMIN.md](./SPEC_ADMIN.md) | Read-only phase 1 plus write actions by release. |
+| Agent risk tiers, security, NFRs, accounting and claims, launch gates | [SPEC_CROSS_CUTTING.md](./SPEC_CROSS_CUTTING.md) | Applies to every spec; launch gates XCT-G01–G08 do not block scoped development. |
+| Source PRD to canonical rule trace | [SOURCE_COVERAGE.md](./SOURCE_COVERAGE.md) | Every source requirement and where it binds now. |
 | Subscription plans, lifecycle, allowances, pricing rule | [SUBSCRIPTION.md](./SUBSCRIPTION.md) | |
 | Launch parameters for fixtures and tests | [LAUNCH_CONFIG_V0.md](./LAUNCH_CONFIG_V0.md) | Each row is labeled **Decided**, **Existing configuration; verify values**, **Pending commercial approval**, or **Placeholder**. Only Decided values are approved; existing-configuration values must be checked against the live Gateway; pending values have no approved figure yet; placeholders are for fixtures and tests only. |
 | Chat, API, Studio behavior outside the above | [MAXSHOT_GATEWAY_PRD.md](./MAXSHOT_GATEWAY_PRD.md), [MAXSHOT_STUDIO_PRD.md](./MAXSHOT_STUDIO_PRD.md) | Superseded sections carry inline override banners. |
 | Frontend prototype | [../frontend/AGENTS.md](../frontend/AGENTS.md), [../frontend/TOKEN_UI_REFERENCE_MAP.md](../frontend/TOKEN_UI_REFERENCE_MAP.md) | Simulation only. |
 
-`reference/` holds context that is not a rule: the read-only token source PRD and marketing deck (do not edit), the tokenomics economic companion, the one-pager and the Auto routing pilot design. `archive/` holds the documents merged into the specs above; they are kept for history and are not authoritative.
+`reference/` holds context that is not a rule. The read-only token source PRD is **reference-only**: each of its surviving requirements binds through the canonical rule, gate or decision named in [SOURCE_COVERAGE](./SOURCE_COVERAGE.md), and nothing in it binds otherwise. Also in `reference/` (do not edit the PRD or deck): the marketing deck, the tokenomics economic companion, the one-pager and the Auto routing pilot design. `archive/` holds the documents merged into the specs above; they are kept for history and are not authoritative.
 
 ### Rule IDs and what to read
 
@@ -72,6 +74,7 @@ Every rule in the specs has one ID, stated once; other documents cite it rather 
 | `ADM-R` | [SPEC_ADMIN](./SPEC_ADMIN.md) | Read-only operations views, audited admin actions and views |
 | `AGT-R` | [SPEC_AGENT_INTEGRATION](./SPEC_AGENT_INTEGRATION.md) | External-agent guide content and acceptance |
 | `SUB-R` | [SUBSCRIPTION](./SUBSCRIPTION.md) | Plans, allowances, lifecycle, plan payments, pricing rule |
+| `XCT-R`, `XCT-G` | [SPEC_CROSS_CUTTING](./SPEC_CROSS_CUTTING.md) | Agent risk tiers, security, NFRs, accounting and claims; launch gates |
 
 **What to read for a task** (always this README first; DECISIONS only to see why a rule exists):
 
@@ -86,6 +89,7 @@ Every rule in the specs has one ID, stated once; other documents cite it rather 
 | Vaults, Portfolio, referrals, redirects | SPEC_ACCOUNT_VAULT; SPEC_TOKEN §4.1 |
 | Subscription plans and renewal | SUBSCRIPTION |
 | Admin and operations | SPEC_ADMIN plus the spec named in each row |
+| Security, NFRs, accounting, public claims, launch gates | SPEC_CROSS_CUTTING |
 | Fixture or test values | LAUNCH_CONFIG_V0 (check each row's status) |
 | Chat, Studio composer, memory, prompts and other app features | Gateway or Studio PRD, only when the task names those features |
 

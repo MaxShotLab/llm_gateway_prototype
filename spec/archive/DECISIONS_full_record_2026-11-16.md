@@ -102,3 +102,13 @@ The compute-first Gateway, genesis MAX contract, Ethereum merged position state 
 2. If a decision changes a formula, user right, reserve obligation or unlock timing, update this file and the owning spec together, in one change.
 3. Engineering includes a source-plus-decisions requirement matrix and the acceptance cases of each spec in its handoff package.
 4. Public launch materials must be reconciled to deployed contracts, funded programs and legal terms. A working decision here is not a live-product claim.
+
+
+## Addendum — source-coverage pass, 16 November 2026
+
+Approval record for the decisions added after this record was cut.
+
+- **TD-62.** Question put to Snow during the coverage pass: should the source's coverage panel and reserve dashboard (FR-CR-008) be public at launch? Options were internal now and public later, or public at launch. Snow chose "Internal now, public later". The source proposed a public panel; this replaces it for the MAX/AIT release.
+- **TD-63.** Question put to Snow: should Treasury-, team- and protocol-held AIT accrue AIT Earned Credit? The source DEC-19 default was no. Snow chose "Carry default: no".
+- **TD-64.** Set by Snow's review of the coverage pass. The earlier TOK-R30 wording, "optionally remove high-cost models from the term's catalog set for new requests", conflicted with TOK-R23's locked catalog set. It is replaced by a prospective routing or availability control.
+- **TD-65.** Set by Snow's review of the coverage pass. The source §15.1 Definition of Done required deployment confirmation for every task. Deployment, monitoring and rollback evidence now applies only to deployment tasks.

@@ -4,11 +4,11 @@
 
 ## 1. How to use this file
 
-- A **Decided** row overrides conflicting wording in the read-only source PRD for that subject only; unlisted source requirements still apply.
+- The read-only source PRD is reference-only. Its surviving requirements bind through the rules, gates and decisions named in [SOURCE_COVERAGE.md](./SOURCE_COVERAGE.md); a source requirement not carried there does not bind. A **Decided** row records why a source requirement was replaced.
 - A decision is a working product and engineering decision, **not** approval of a token sale, Credit funding, legal availability or mainnet deployment.
 - Link tests to the governing rule ID and, where useful, the TD number.
 
-**Source requirements still in force:** the 50,000 outstanding AIT cap as a working proposed parameter; no cash or NAV redemption; no automatic liquidation; no AIT buyback burn without debt-safe settlement; funded, finite Credit terms; separate paid, earned and Treasury ledgers; contract audit, legal review and reserve gates. Minter provenance tracking, the one-chain launch assumption and per-agent Credit allocation are superseded (TD-10/12/13/24).
+**Source requirements carried into rules:** the 50,000 outstanding AIT cap as a working proposed parameter (TOK-R10); no cash or NAV redemption (TOK-R12, R13); no automatic liquidation (TOK-R13); no AIT buyback burn without debt-safe settlement (TOK-R15); funded, finite Credit terms (TOK-R23, R31); separate paid, earned and Treasury ledgers (BIL-R02, XCT-R10); contract audit, legal review and reserve gates (XCT-G01, G02, G05). Minter provenance tracking, the one-chain launch assumption and per-agent Credit allocation are superseded (TD-10/12/13/24).
 
 ## 2. Decisions
 
@@ -75,6 +75,10 @@
 | TD-59 | No exploration traffic at launch; unpinned routing is strictly lowest quoted cost. | PRV-R23 | Decided |
 | TD-60 | Staking accrues only from the later of stake time and verified link time. | TOK-R20, TOK-R21, TOK-R25 | Decided |
 | TD-61 | MAX Boost Bonus Pool and MAX fee-staking rights move to a later release. | SPEC_TOKEN §6 | Decided |
+| TD-62 | The source's coverage panel and reserve dashboard are an internal admin view in the MAX/AIT release; a public coverage panel is a later decision needing legal sign-off. | TOK-R30, ADM-R23 | Decided |
+| TD-63 | Treasury-, team- and protocol-held AIT accrues no AIT Earned Credit at launch (source DEC-19 default). | TOK-R36 | Decided |
+| TD-64 | On a coverage breach, a limit on AIT Earned Credit spend for high-cost models is a prospective routing or availability control for new requests only; it never changes a term's locked catalog set, rate or length. | TOK-R23, TOK-R30 | Decided |
+| TD-65 | Deployment confirmation, monitoring and rollback evidence are required only for tasks that deploy or change a running service; development and documentation tasks close without them. | XCT-R03 | Decided |
 
 ## 3. Remaining gaps (release inputs, not product-behavior decisions)
 
@@ -92,7 +96,7 @@ These are **not** resolved by the decisions above. Assign each to the named work
 | P2 | DEC-13/14/15: PT rights, jurisdiction, LP fee ownership and AIT buyback handling | Per-provider legal instrument, AMM fee-capture proof and debt-safe reserve policy | PT/MAX market |
 | Cross-cutting | DEC-20 and §§12–14: agent authority, audits, economic stress and incident controls | Named approvers, audit/invariant evidence, multisig/pauses and runbooks | Irreversible production actions |
 
-Closed since 15 November 2026 by TD-43…TD-61: build order, key policy, agent guide ownership, request ID, funding matrix, provider pin scope, media job lifecycle, wallet link method, finality rule, admin write actions, placeholder configuration, stale clauses and document structure.
+Closed since 15 November 2026 by TD-43…TD-65: build order, key policy, agent guide ownership, request ID, funding matrix, provider pin scope, media job lifecycle, wallet link method, finality rule, admin write actions, placeholder configuration, stale clauses and document structure.
 
 The compute-first Gateway, genesis MAX contract, Ethereum merged position state machine, Ethereum-only staking, off-chain Credit ledger and four-chain MAX bridge have no remaining founder-level **product-behavior** decision blocking development. Economic approval, production configuration, security review and live verification remain release gates. None of this authorizes production token launch or a funded Credit promise.
 
@@ -100,5 +104,5 @@ The compute-first Gateway, genesis MAX contract, Ethereum merged position state 
 
 1. Keep the read-only source intact. Record each new decision here as one row with its governing rule IDs; put the behavior in the owning spec in the same change.
 2. A decision that changes a formula, user right, reserve obligation or unlock timing updates this file and the owning spec together.
-3. Engineering's handoff package includes a requirement matrix by rule ID and the acceptance cases of each spec.
+3. Engineering's handoff package includes a requirement matrix by rule ID and the acceptance cases of each spec. Source traceability is [SOURCE_COVERAGE.md](./SOURCE_COVERAGE.md); a change to a carried source requirement updates that file in the same change.
 4. Public launch materials are reconciled to deployed contracts, funded programs and legal terms; a working decision here is not a live-product claim.

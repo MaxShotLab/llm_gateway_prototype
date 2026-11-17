@@ -40,7 +40,7 @@ Exceptions observed at handoff, to verify during implementation (examples, not f
 
 ## 2. Admin actions and views by release (phase 2)
 
-- **ADM-R12 · Audit every action.** Every §2 write action (ADM-R13–R19) records actor, time, before and after state, and reason. ADM-R20–R22 are read-only views.
+- **ADM-R12 · Audit every action.** Every §2 write action (ADM-R13–R19) records actor, time, before and after state, and reason. ADM-R20–R23 are read-only views.
 
 | # | ID | Action | Release | Required by | Minimum behavior |
 | --- | --- | --- | --- | --- | --- |
@@ -54,6 +54,7 @@ Exceptions observed at handoff, to verify during implementation (examples, not f
 | 2.8 | ADM-R20 | Grant ledger view | MAX/AIT | TOK-R24–R25 | Per account, term and boundary: eligible AIT-wei-seconds, cumulative entitlement, grant, expiry and spend, rebuildable from finalized events. |
 | 2.9 | ADM-R21 | Wallet link registry view | Unified app | ACC-R04, TOK-R18 | Account ↔ wallet, link time and proof reference; read-only (no relink, TD-50). |
 | 2.10 | ADM-R22 | Pause state display | MAX/AIT | TOK-R05 | Read-only state of Mint, Burn, Withdraw, Pause All and bridge pauses; control stays with the multisig. |
+| 2.11 | ADM-R23 | Credit coverage view | MAX/AIT | TOK-R30, TD-62 | Per term and grant: funded, granted, used, in-flight, reserved and expiring amounts, reconciled to provider payables, with each day's coverage result and any breach. Internal only; a public panel needs legal sign-off (TD-62). |
 
 Vault Merkle distribution publishing and history stay in the existing Vault operations tooling and are referenced, not rebuilt (TD-52).
 
@@ -69,4 +70,4 @@ Vault Merkle distribution publishing and history stay in the existing Vault oper
 
 **Phase 2 actions:** for each action ADM-R13–R19, an operator performs it, the audit log records it (ADM-R12), and the owning spec's acceptance observes the effect, for example ADM-R13 → SPEC_PROVIDERS §7.2 "disabled or unhealthy offering"; ADM-R16 → SPEC_BILLING §7 case 9; ADM-R19 → SPEC_TOKEN §5.3.
 
-**Phase 2 views:** ADM-R20 rebuilds each account's grants from finalized events and matches the Credit ledger (SPEC_TOKEN §5.3); ADM-R21 shows each verified link with its time and proof reference and offers no relink or edit; ADM-R22 shows the current state of every position and bridge pause and offers no control.
+**Phase 2 views:** ADM-R20 rebuilds each account's grants from finalized events and matches the Credit ledger (SPEC_TOKEN §5.3); ADM-R21 shows each verified link with its time and proof reference and offers no relink or edit; ADM-R22 shows the current state of every position and bridge pause and offers no control; ADM-R23 reconciles each term's funded, granted, used, in-flight, reserved and expiring amounts to provider payables and shows each daily coverage result (SPEC_TOKEN §5.3).

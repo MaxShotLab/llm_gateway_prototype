@@ -56,6 +56,8 @@ account → link one wallet (TOK-R18) → Portfolio: Vault deposits | MAX/AIT po
 - **ACC-R14 · Reward.** An approved reward is granted as Referral Credits, a promotional bucket separate from Dollar balance, at the program's versioned Credit/USD conversion. Reward rate, per-referred-user cap, funding and abuse policy are configurable commercial inputs ([LAUNCH_CONFIG_V0](./LAUNCH_CONFIG_V0.md)).
 - **ACC-R15 · Referrer view.** The referrer sees the link, referred top-ups in USD, earned rewards and each reward's status. The admin referral ledger is SPEC_ADMIN ADM-R09.
 
+- **ACC-R16 · Partner AIT rewards.** AIT paid by the Partner Referral Program comes from market purchases or existing inventory funded by real partner net revenue; it is never newly minted without a MAX lock. A reward pool already fully allocated (for example the PT 50/30/20 split) never pays an extra referral share unless that schedule is amended.
+
 ## 6. Acceptance (formerly B3)
 
 | Scenario | Required result |
@@ -65,6 +67,7 @@ account → link one wallet (TOK-R18) → Portfolio: Vault deposits | MAX/AIT po
 | An account verifies and links one wallet (ACC-R04–R05, R08) | Portfolio shows only that wallet's Vault positions, its separate MAX/AIT position and the account's Gateway balances; a second link or duplicate attribution is rejected. |
 | The linked wallet deposits, withdraws and claims a Vault distribution (ACC-R02, R06, R09) | Calls, amounts, fees and statuses match the existing app and contract; the 14-day Merkle cycle and AIT claims stay separate from Gateway AIT Earned Credit grants. |
 | An old app link or deep link is used after cutover (ACC-R01, R10) | The user reaches the matching Gateway destination, including wallet-only exit, without a forced link; no retired portal performs a new economic action. |
+| A partner AIT reward is paid (ACC-R16) | The AIT traces to a market purchase or existing inventory and to partner revenue; no mint occurs. |
 | A referred user registers through a link and completes a confirmed top-up (ACC-R11–R15) | Exactly one reward is created for that top-up, measured on the USD credited after fees, granted as Referral Credits shown apart from Dollar balance; a failed top-up or a subscription payment creates none; a withheld or revoked reward shows its reason. |
 
 Engineering captures the live contract addresses and chain IDs, connector behavior, index and claim source, route inventory and transaction evidence as implementation artifacts; this specification does not invent those values.
