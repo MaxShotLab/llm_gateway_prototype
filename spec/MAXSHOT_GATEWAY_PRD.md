@@ -30,7 +30,7 @@ later confirmed decisions to another document. It defines:
 
 [llm-gateway-product-baselines.md](./archive/llm-gateway-product-baselines.md)
 records the earlier Gateway product design. 00_README §3 identifies the
-specific unified-app, provider, subscription, and token decisions that supersede it.
+specific Gateway navigation, provider, subscription, and token decisions that supersede it.
 
 Governance:
 
@@ -415,9 +415,9 @@ public creator marketplace into Phase 2 acceptance.
 
 ## 10. Navigation
 
-> **Override (16 November 2026):** Unified sidebar is **Portfolio, Chat, Studio, Credits, Tokens, Providers, Vaults, Referrals**; API keys in Profile → Developer settings; Usage in Credits; Starters and Playground hidden ([00_README §1](./00_README.md#1-what-is-being-built)). The navigation below is the earlier baseline.
+> **Override (18 November 2026; TD-68/69):** Gateway sidebar is **Chat, Studio, Credits, Tokenomics, Models, Providers, Referrals**; API keys in Profile → Developer settings; Usage in Credits; Vaults and partner referrals remain in the standalone AIT Earn portal linked from Tokenomics; Starters and Playground stay hidden ([00_README §1](./00_README.md#1-what-is-being-built)). The navigation below is the earlier baseline.
 
-This section records the earlier Phase 1 layout. The confirmed unified-app
+This section records the earlier Phase 1 layout. The confirmed Gateway
 navigation in the [00_README](./00_README.md)
 supersedes it for the current prototype and development round.
 

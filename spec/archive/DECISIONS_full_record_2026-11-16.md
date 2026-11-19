@@ -114,3 +114,25 @@ Approval record for the decisions added after this record was cut.
 - **TD-65.** Set by Snow's review of the coverage pass. The source §15.1 Definition of Done required deployment confirmation for every task. Deployment, monitoring and rollback evidence now applies only to deployment tasks.
 - **TD-66.** Approved by Snow on 17 November 2026 during the prototype review. The source (§4.5 quote transparency, FR-TOK-007) required the mint view to show an "implied reference cost". The mint view now shows the exact contract-quoted MAX and a separate user-set maximum-MAX-in guard, and may show the derived average MAX per AIT; no USD estimate is required.
 - **TD-67.** Approved by Snow on 17 November 2026 during the prototype review. The earlier rule started accrual at the later of stake time and link time (TD-60). Staking is now open with no funded term, and accrues nothing until there is one. Accrual starts at the latest of stake time, link time, term start and acceptance of the term's version. An existing stake must accept each new term.
+
+## Addendum — Gateway navigation and Tokenomics single page, 18 November 2026
+
+All six decisions were set by Snow in the 18 November 2026 prototype and spec update, then reviewed before commit.
+
+- **TD-68.** Replaces the unified-app navigation, which had Portfolio, Chat, Studio, Credits, Tokens, Providers, Vaults and Referrals, with Vaults and both referral programs inside Gateway (former ACC-R01, R02, R05, R11). Gateway now has no Portfolio. Vaults and the Partner Referral Program stay in the standalone `app.maxshot.ai` AIT Earn portal, and Gateway Referrals shows only the Maxshot Referrals Program. The release formerly named "Unified app" is now "Gateway and AIT Earn integration".
+- **TD-69.** Adds the guided entry choices (Mint & stake, Mint only, Stake existing, Get MAX/AIT), CoW Swap buy links once verified tokens are deployed, and the external AIT Earn entry.
+- **TD-70.** Puts minting and staking in one entry form with a stake-after-mint option. The curve and projected balances respond to the chosen amount, and the curve never replaces the contract quote.
+- **TD-71.** Moves position, entry, exit and Earn AIT onto one page and replaces the earlier two-page layout. Mint & stake and unstake & burn become the default guided paths.
+- **TD-72.** Replaces the main-page Activity feed with a compact MAX/AIT network dashboard. Prototype figures are illustrative.
+- **TD-73.** Gives all four actions one shared position preview with available balances, and keeps the mint curve visible. In review, the original wording moved general risks into documentation. That would have dropped two carried source requirements: unlock risk and transaction history (FR-TOK-007, §4.5). The mint review now keeps a one-line unlock-risk statement, and a History section lists the user's own transactions.
+
+## Addendum — Tokenomics quote, Earned Credit display and term rules, 18–19 November 2026
+
+Snow set these decisions in the 18–19 November 2026 prototype update and the review that followed.
+
+- **TD-74.** The user chooses a slippage tolerance. The maximum MAX in is derived from the reviewed quote, and there is no deadline. Snow confirmed "slippage, no deadline" when asked. This replaces the user-entered maximum and the deadline (TD-66, TOK-R10), and supersedes the source's §4.2 deadline guard.
+- **TD-75, TD-76.** Earning status and 12 weeks of grant history live in Tokenomics. The spendable AIT Earned Credit balance and its expiry live in Credits, next to Dollar balance.
+- **TD-77.** The base rate is $12 per AIT-year (`A_num/A_den = 12/1`), confirming the source's DEC-07 default. Maxshot funds successor terms so a term is normally active. The draft first recorded $1 per AIT per week; Snow corrected it to $12 per AIT-year before commit. Funded successor terms are an operating practice; no screen or public document promises them (DEC-06, XCT-R12).
+- **TD-78.** Gap 1, 19 November 2026. When no funded term is active, nothing pauses: every action works, no Credits accrue, and a single notice says so.
+- **TD-79.** Gap 2, 19 November 2026. Accepting terms never gates staking. The UI prompts the user to accept terms to start earning, and accrual starts at acceptance.
+- **TD-80.** Gap 3, 19 November 2026. The "Active funded term" label is the funding status required by FR-TOK-009; there is no separate funding field.

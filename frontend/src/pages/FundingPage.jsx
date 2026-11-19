@@ -24,8 +24,9 @@ import {
   starterSubscriptionInvoices,
   subscriptionPlans,
 } from "../data/billingData";
+import { sampleGrantDate } from "../data/earnedCreditSample";
 
-export function FundingPage({ billing, setBilling, onTokens, onModelPricing, usageContent, initialView = "subscription" }) {
+export function FundingPage({ billing, setBilling, earnedGrants, onModelPricing, usageContent, initialView = "subscription" }) {
   const [billingView, setBillingView] = useState(initialView);
   const [amount, setAmount] = useState(25);
   const [methodId, setMethodId] = useState("crypto");
@@ -155,6 +156,10 @@ export function FundingPage({ billing, setBilling, onTokens, onModelPricing, usa
     return "Payment method required";
   };
 
+  const availableEarnedGrants = earnedGrants.filter((grant) => grant.expiresAt > new Date());
+  const earnedCreditBalance = availableEarnedGrants.reduce((total, grant) => total + grant.amount, 0);
+  const nextEarnedExpiry = availableEarnedGrants.reduce((earliest, grant) => earliest && earliest < grant.expiresAt ? earliest : grant.expiresAt, null);
+
   return (
     <main className="content-page funding-page">
       <div className="page-heading">
@@ -164,6 +169,13 @@ export function FundingPage({ billing, setBilling, onTokens, onModelPricing, usa
         <button className="secondary-button compact" onClick={onModelPricing}>Compare model prices <ArrowRight size={14} /></button>
       </div>
 
+      <section className="credit-balance-grid" aria-label="Balances">
+        <BalanceCard icon={<CurrencyCircleDollar size={20} />} label="Dollar balance" value={formatCents(totals.dollarBalanceCents)} note="For PAYG usage or subscription" />
+        <BalanceCard icon={<Coins size={20} />} label="AIT Earned Credit" value={earnedCreditBalance.toLocaleString()} note={nextEarnedExpiry ? `Expires ${sampleGrantDate(nextEarnedExpiry)} · sample` : "No available grants"} />
+        <BalanceCard icon={<Coins size={20} />} label="Free credits" value={billing.balances.free.toLocaleString()} note="Consumed before Dollar balance" />
+        <BalanceCard icon={<CurrencyCircleDollar size={20} />} label="Referral rewards" value={billing.balances.referral.toLocaleString()} note="Promotional credits" />
+      </section>
+
       <div className="billing-scope-tabs" role="tablist" aria-label="Billing type">
         <button className={billingView === "payg" ? "active" : ""} onClick={() => setBillingView("payg")} role="tab" aria-selected={billingView === "payg"}>PAYG</button>
         <button className={billingView === "subscription" ? "active" : ""} onClick={() => setBillingView("subscription")} role="tab" aria-selected={billingView === "subscription"}>Subscription</button>
@@ -171,11 +183,6 @@ export function FundingPage({ billing, setBilling, onTokens, onModelPricing, usa
       </div>
 
       {billingView === "usage" && usageContent}
-
-      {billingView !== "usage" && <section className="panel token-credit-summary">
-        <div><span className="eyebrow">MAX & AIT · prototype</span><h2>AIT Earned Credit: Inactive</h2><p>Staking is available; no Credit accrues now.</p></div>
-        <button className="secondary-button compact" onClick={onTokens}>Open MAX & AIT <ArrowRight size={14} /></button>
-      </section>}
 
       {billingView === "subscription" && (
       <>
@@ -321,27 +328,6 @@ export function FundingPage({ billing, setBilling, onTokens, onModelPricing, usa
 
       {billingView === "payg" && (
       <>
-      <section className="credit-balance-grid">
-        <BalanceCard
-          icon={<CurrencyCircleDollar size={20} />}
-          label="Dollar balance"
-          value={formatCents(totals.dollarBalanceCents)}
-          note="For PAYG usage or subscription"
-        />
-        <BalanceCard
-          icon={<Coins size={20} />}
-          label="Free credits"
-          value={billing.balances.free.toLocaleString()}
-          note="Consumed before Dollar balance"
-        />
-        <BalanceCard
-          icon={<CurrencyCircleDollar size={20} />}
-          label="Referral rewards"
-          value={billing.balances.referral.toLocaleString()}
-          note="Promotional credits"
-        />
-      </section>
-
       <div className="funding-mode-tabs" role="tablist" aria-label="Add funds method">
         <button className={fundingMode === "checkout" ? "active" : ""} onClick={() => setFundingMode("checkout")} role="tab" aria-selected={fundingMode === "checkout"}>Instant Checkout</button>
         <button className={fundingMode === "deposit" ? "active" : ""} onClick={() => setFundingMode("deposit")} role="tab" aria-selected={fundingMode === "deposit"}>Deposit Address</button>

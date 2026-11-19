@@ -564,7 +564,7 @@ function SampleChatQuote({ quote }) {
     <span>{quote.pinned ? "Pinned" : "Auto"} · {sampleOfferingLabel(quote.selected)} · rate {quote.selected.customerRateCard.rateCardVersion}{quote.pinned ? " · no fallback" : quote.backup ? " · one same-model fallback allowed" : ""}</span>
     <span>Estimate {quote.estimate.toLocaleString()} Credits · hard maximum {quote.maximum.toLocaleString()} Credits · sample bound 1,000 input / 800 output tokens</span>
     <span>Reserve: {quote.reserved.earned.toLocaleString()} hypothetical AIT Earned Credit + {quote.reserved.subscription.toLocaleString()} Premium Credits · {sampleCreditsPerUsd.toLocaleString()} Credits = $1</span>
-    <small>Fixed sample units are used regardless of prompt length. No funded AIT Earned Credit term is active; no balance is debited. After a simulated response, inspect Credits → Usage.</small>
+    <small>Fixed sample units are used regardless of prompt length; no balance is debited. After a simulated response, inspect Credits → Usage.</small>
   </div>;
 }
 

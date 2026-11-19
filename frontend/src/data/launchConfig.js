@@ -1,7 +1,8 @@
 // Mirrors spec/LAUNCH_CONFIG_V0.md. Consult each row's status before using a value as a launch parameter.
 export const launchConfig = {
-  version: "v0",
+  version: "v0.2",
   creditsPerUsd: 1_000_000,
+  aitUsdPerYear: 12,
   catalogs: [
     { id: "catalog_text", label: "Text" },
     { id: "catalog_image", label: "Image" },

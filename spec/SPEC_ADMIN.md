@@ -1,6 +1,6 @@
 # SPEC_ADMIN — administrator and operations surfaces
 
-**Status:** Canonical specification, compacted 16 November 2026 (TD-52). Every rule has one ID (`ADM-Rnn`). §1 carries the read-only requirements of the former `ADMIN_GATEWAY_EARLY_OPERATIONS_PRD.md` (9 November 2026) in their original scope; §2 adds the actions and views the Foundation, Unified app and MAX/AIT acceptance cases need.
+**Status:** Canonical specification, compacted 16 November 2026 (TD-52). Every rule has one ID (`ADM-Rnn`). §1 carries the read-only requirements of the former `ADMIN_GATEWAY_EARLY_OPERATIONS_PRD.md` (9 November 2026) in their original scope; §2 adds the actions and views the Foundation, Gateway and AIT Earn integration, and MAX/AIT acceptance cases need.
 
 ## Overview
 
@@ -52,7 +52,7 @@ Exceptions observed at handoff, to verify during implementation (examples, not f
 | 2.6 | ADM-R18 | Discrepancy ledger review | Foundation | BIL-R27, BIL-R36 | Provider cost above the accepted maximum or after auto-release, with request ID and disposition. |
 | 2.7 | ADM-R19 | Funded term configuration | MAX/AIT | TOK-R23 | Term start and end, versioned Credits-per-USD rate, rational annual base accrual, allowed catalog set, reserve reference; locked once the term starts. |
 | 2.8 | ADM-R20 | Grant ledger view | MAX/AIT | TOK-R24–R25 | Per account, term and boundary: eligible AIT-wei-seconds, cumulative entitlement, grant, expiry and spend, rebuildable from finalized events. |
-| 2.9 | ADM-R21 | Wallet link registry view | Unified app | ACC-R04, TOK-R18 | Account ↔ wallet, link time and proof reference; read-only (no relink, TD-50). |
+| 2.9 | ADM-R21 | Wallet link registry view | Gateway and AIT Earn integration | ACC-R04, TOK-R18 | Account ↔ wallet, link time and proof reference; read-only (no relink, TD-50). |
 | 2.10 | ADM-R22 | Pause state display | MAX/AIT | TOK-R05 | Read-only state of Mint, Burn, Withdraw, Pause All and bridge pauses; control stays with the multisig. |
 | 2.11 | ADM-R23 | Credit coverage view | MAX/AIT | TOK-R30, TD-62 | Per term and grant: funded, granted, used, in-flight, reserved and expiring amounts, reconciled to provider payables, with each day's coverage result and any breach. Internal only; a public panel needs legal sign-off (TD-62). |
 

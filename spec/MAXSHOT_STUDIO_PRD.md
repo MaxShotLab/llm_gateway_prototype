@@ -637,7 +637,7 @@ implementation begin.
 
 ## 10. Navigation
 
-> **Override (16 November 2026):** Unified sidebar is **Portfolio, Chat, Studio, Credits, Tokens, Providers, Vaults, Referrals** ([00_README §1](./00_README.md#1-what-is-being-built)). The navigation below is the earlier baseline.
+> **Override (18 November 2026; TD-68/69):** Gateway sidebar is **Chat, Studio, Credits, Tokenomics, Models, Providers, Referrals**; Vaults and partner referrals stay in the standalone AIT Earn portal linked from Tokenomics ([00_README §1](./00_README.md#1-what-is-being-built)). The navigation below is the earlier baseline.
 
 The standalone Pricing placement below is historical. The [SPEC_PROVIDERS §4](./SPEC_PROVIDERS.md#4-pricing-and-customer-display) governs current unified navigation.
 

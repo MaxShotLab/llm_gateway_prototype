@@ -24,7 +24,7 @@ function catalogPrice(model, kind) {
   return price(components.reduce((lowest, current) => Number(current.amount) < Number(lowest.amount) ? current : lowest), components.length > 1);
 }
 
-export function PricingPage({ embedded = false, initialModelId }) {
+export function PricingPage({ initialModelId }) {
   const initialModel = modelCatalog.find((model) => model.id === initialModelId) || firstAvailableModel(modelTypes[0]);
   const [type, setType] = useState(initialModel.type);
   const [query, setQuery] = useState("");
@@ -39,8 +39,8 @@ export function PricingPage({ embedded = false, initialModelId }) {
   };
 
   return (
-    <div className={`${embedded ? "pricing-embedded" : "content-page"} pricing-page`}>
-      <div className="pricing-heading">{embedded ? <h2>Model Pricing</h2> : <h1>Model Pricing</h1>}<span>Illustrative catalog and rates</span></div>
+    <main className="content-page pricing-page">
+      <div className="pricing-heading"><h1>Models</h1><span>Compare provider prices · sample data</span></div>
       <div className="pricing-layout">
         <section className="pricing-catalog" aria-label="Models">
           <div className="pricing-catalog-heading"><h2>Models</h2><input type="search" aria-label="Search models" placeholder="Search models" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
@@ -77,6 +77,6 @@ export function PricingPage({ embedded = false, initialModelId }) {
           </> : <p>Select a sample model to see its rates.</p>}
         </aside>
       </div>
-    </div>
+    </main>
   );
 }

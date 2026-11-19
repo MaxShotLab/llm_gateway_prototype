@@ -6,7 +6,7 @@
 
 Maxshot is a multi-model inference Gateway with one customer account for Chat, Studio image/video generation, API and external-agent calls, provider discovery, funding, subscription allowances, Credits and Usage. For a customer-selected model the Gateway picks the lowest quoted provider cost among qualified offerings, authorizes a hard maximum charge before dispatch, meters the actual serving offering and settles the account once. An unpinned request may use at most one same-model fallback after a pre-output failure; a pinned offering never falls back. Customers can use the Gateway without holding MAX or AIT.
 
-`gateway.maxshot.ai` is the single application. The former `app.maxshot.ai` Mint, Dashboard, Staking, Markets and Agents Factory portals are retired. Vaults keep their existing deposit/withdrawal contracts and move under the unified account. Unified sidebar: **Portfolio, Chat, Studio, Credits, Tokens, Providers, Vaults, Referrals**. Tokens opens MAX & AIT; API keys live in Profile → Developer settings; Usage lives in Credits. Starters and Playground stay hidden.
+`gateway.maxshot.ai` hosts Gateway and MAX/AIT activity. The former `app.maxshot.ai` Mint, Dashboard, Staking, Markets and Agents Factory portals are retired. Vaults and Partner Referral Program remain in the standalone `app.maxshot.ai` AIT Earn portal, linked from Tokenomics. Gateway sidebar: **Chat, Studio, Credits, Tokenomics, Models, Providers, Referrals**. Credits holds Dollar balance, Credit buckets, subscription and Usage; Profile holds the linked wallet and Developer settings. Tokenomics is one page for MAX/AIT position, entry, exit, Buy MAX/AIT, Earn AIT and the network dashboard. Starters and Playground stay hidden (TD-68/69/71/72).
 
 Three instruments, summarized (full rules in [`SPEC_TOKEN.md`](./SPEC_TOKEN.md)):
 
@@ -14,7 +14,7 @@ Three instruments, summarized (full rules in [`SPEC_TOKEN.md`](./SPEC_TOKEN.md))
 | --- | --- | --- |
 | **MAX** | Fixed 1B supply, fully minted on Ethereum at genesis into purpose-specific custodian wallets; LayerZero routes among Ethereum, Base, Arbitrum One, Robinhood Chain. Any transferable MAX can be locked on Ethereum to mint AIT. | Bridging moves existing supply; MAX must return to Ethereum before minting. |
 | **AIT** | 18-decimal token minted against locked MAX on a curve; Genesis outstanding cap 50,000 (proposed). Stake on Ethereum to accrue AIT Earned Credit in a funded term; burn against the controller's merged position to start a 7-day MAX redemption. | Not cash-redeemable, not a stablecoin, not a Treasury claim. Ethereum-only at launch. |
-| **AIT Earned Credit** | Off-chain Gateway Credit bucket granted weekly from finalized staking time during a prefunded term; each grant expires 7 days after issue. | Not an ERC-20. No unfunded or perpetual entitlement. |
+| **AIT Earned Credit** | Off-chain Gateway Credit bucket granted every seven days from finalized eligible staking time during a prefunded term at $12 per AIT-year; each grant expires 7 days after issue. | Not an ERC-20. No unfunded or perpetual entitlement. |
 
 Dollar balance (user-funded USD) and the Credit buckets (AIT Earned Credit, Basic-chat allowance, Premium allowance, Free Credits, Referral Credits) are separate ledgers. Naming rules in §5.
 
@@ -28,7 +28,7 @@ Release names express dependency order, not dates or authorization to deploy. De
 | 2 | Authorize → reserve → dispatch → settle → reverse with Dollar balance and subscription buckets (B2) | Foundation | 1 | [SPEC_BILLING](./SPEC_BILLING.md) |
 | 3 | Provider admission packet and two-offering same-model routing proof (B4) | Foundation | 1, 2 | [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) |
 | 4 | External-agent path: scoped key, discovery, funded call, Usage match | Foundation | 2 | [SPEC_AGENT_INTEGRATION](./SPEC_AGENT_INTEGRATION.md) |
-| 5 | Vault wallet-only exit, account link, Portfolio, old-URL redirects (B3) | Unified app | 1 for Portfolio balances only | [SPEC_ACCOUNT_VAULT](./SPEC_ACCOUNT_VAULT.md) |
+| 5 | Standalone Vault wallet-only exit, account link, AIT Earn entry, old-URL redirects (B3) | Gateway and AIT Earn integration | — | [SPEC_ACCOUNT_VAULT](./SPEC_ACCOUNT_VAULT.md) |
 | 6 | Ethereum contracts: MAX genesis, bridge, merged position, HWM, burn/pending (B5 §1) | MAX/AIT | none; audit gate | [SPEC_TOKEN](./SPEC_TOKEN.md) |
 | 7 | Staking index and wallet attribution (B5 §2) | MAX/AIT | 5, 6 | [SPEC_TOKEN](./SPEC_TOKEN.md) |
 | 8 | AIT Earned Credit grants; AIT bucket added to the B2 spend order (B5 §3) | MAX/AIT | 2, 7, funded-term inputs | [SPEC_TOKEN](./SPEC_TOKEN.md), [SPEC_BILLING](./SPEC_BILLING.md) |
@@ -45,11 +45,11 @@ Read a document as authoritative **for its subject**. Where a later explicit dec
 
 | Subject | Owning document | Notes |
 | --- | --- | --- |
-| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-67, one row each, pointing to the rules that carry the decision. |
+| Decisions, overrides, gap register | [DECISIONS.md](./DECISIONS.md) | TD-01…TD-80, one row each, pointing to the rules that carry the decision. |
 | MAX/AIT contracts, positions, staking, Earned Credit grants, chain scope | [SPEC_TOKEN.md](./SPEC_TOKEN.md) | Includes exact integer mint quote and B5 acceptance. |
 | Request authorization, funding buckets, API keys, settlement, refunds, media jobs | [SPEC_BILLING.md](./SPEC_BILLING.md) | Includes funding eligibility matrix, key policy, request ID and B2 acceptance. |
 | Provider admission, catalog, routing, pricing display | [SPEC_PROVIDERS.md](./SPEC_PROVIDERS.md) | Includes B1 data contract and B4 acceptance. |
-| Account, wallet link, Portfolio, Vaults, Referrals, migration | [SPEC_ACCOUNT_VAULT.md](./SPEC_ACCOUNT_VAULT.md) | Includes B3 acceptance. |
+| Account, wallet link, standalone AIT Earn, Referrals, migration | [SPEC_ACCOUNT_VAULT.md](./SPEC_ACCOUNT_VAULT.md) | Includes B3 acceptance. |
 | External-agent integration guide | [SPEC_AGENT_INTEGRATION.md](./SPEC_AGENT_INTEGRATION.md) | Product-owned; engineering fills verified values. |
 | Admin and operations surfaces | [SPEC_ADMIN.md](./SPEC_ADMIN.md) | Read-only phase 1 plus write actions by release. |
 | Agent risk tiers, security, NFRs, accounting and claims, launch gates | [SPEC_CROSS_CUTTING.md](./SPEC_CROSS_CUTTING.md) | Applies to every spec; launch gates XCT-G01–G08 do not block scoped development. |
@@ -70,7 +70,7 @@ Every rule in the specs has one ID, stated once; other documents cite it rather 
 | `TOK-R` | [SPEC_TOKEN](./SPEC_TOKEN.md) | MAX genesis and bridge, merged position, mint quote, burn and redemption, staking, AIT Earned Credit grants |
 | `BIL-R` | [SPEC_BILLING](./SPEC_BILLING.md) | Ledgers, funding order, API keys, request ID, quote, hold, settlement, media jobs, refunds |
 | `PRV-R` | [SPEC_PROVIDERS](./SPEC_PROVIDERS.md) | Provider admission, catalog contract, routing and fallback, pricing display, measurement |
-| `ACC-R` | [SPEC_ACCOUNT_VAULT](./SPEC_ACCOUNT_VAULT.md) | App boundary, wallet link use, Portfolio, Vaults, referrals, migration |
+| `ACC-R` | [SPEC_ACCOUNT_VAULT](./SPEC_ACCOUNT_VAULT.md) | App boundary, wallet link use, AIT Earn portal, referrals, migration |
 | `ADM-R` | [SPEC_ADMIN](./SPEC_ADMIN.md) | Read-only operations views, audited admin actions and views |
 | `AGT-R` | [SPEC_AGENT_INTEGRATION](./SPEC_AGENT_INTEGRATION.md) | External-agent guide content and acceptance |
 | `SUB-R` | [SUBSCRIPTION](./SUBSCRIPTION.md) | Plans, allowances, lifecycle, plan payments, pricing rule |
@@ -86,7 +86,7 @@ Every rule in the specs has one ID, stated once; other documents cite it rather 
 | API keys and the external-agent path | SPEC_BILLING §3–4; SPEC_AGENT_INTEGRATION |
 | Provider onboarding, catalog, routing | SPEC_PROVIDERS; SPEC_BILLING §4 |
 | Media jobs | SPEC_BILLING §5; SPEC_PROVIDERS §1.2 |
-| Vaults, Portfolio, referrals, redirects | SPEC_ACCOUNT_VAULT; SPEC_TOKEN §4.1 |
+| Vaults, AIT Earn, referrals, redirects | SPEC_ACCOUNT_VAULT; SPEC_TOKEN §4.1 |
 | Subscription plans and renewal | SUBSCRIPTION |
 | Admin and operations | SPEC_ADMIN plus the spec named in each row |
 | Security, NFRs, accounting, public claims, launch gates | SPEC_CROSS_CUTTING |
@@ -97,9 +97,9 @@ Every rule in the specs has one ID, stated once; other documents cite it rather 
 
 | Earlier clause | Current rule |
 | --- | --- |
-| Gateway baseline §6 and Gateway PRD §10: Chat, Dashboard, API, Credits, Referral, Profile navigation; visible Agents/Toolkits | Unified sidebar in §1. API keys in Profile → Developer settings; Usage in Credits. |
-| Gateway baseline §8: tokens, trading, deposits and on-chain accounting excluded | Unified app includes Vaults and a gated MAX/AIT area under SPEC_TOKEN and SPEC_ACCOUNT_VAULT. |
-| Studio PRD §P0.6 and §10: standalone Pricing item | Providers → Models & Pricing owns rate comparison; Credits may link there. |
+| Gateway baseline §6 and Gateway PRD §10: Chat, Dashboard, API, Credits, Referral, Profile navigation; visible Agents/Toolkits | Gateway sidebar in §1 (TD-68). API keys in Profile → Developer settings; Usage in Credits. |
+| Gateway baseline §8: tokens, trading, deposits and on-chain accounting excluded | Gateway includes Tokenomics under SPEC_TOKEN; Vaults remain in standalone AIT Earn under SPEC_ACCOUNT_VAULT. |
+| Studio PRD §P0.6 and §10: standalone Pricing item | Models owns rate comparison; Credits and Providers may link there. |
 | Studio PRD §P0.6: model-level headline price | Compare complete customer rate cards per offering; the server quote and authorized maximum govern a request. |
 | Older Gateway/Studio estimate-only and media-shortfall wording | TD-39 hard maximum rule in SPEC_BILLING. |
 | Source PRD Agent Wallet / one-Agent-per-account | TD-24: external-agent integration path only; managed Agent product deferred. |

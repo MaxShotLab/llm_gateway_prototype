@@ -1,12 +1,12 @@
 # LAUNCH_CONFIG_V0 — launch parameters and placeholders
 
-**Status:** Mixed decided values and placeholders, v0, 16 November 2026 (TD-53). Each row labels its approval status. Placeholder values are for fixtures, acceptance tests and the prototype; they are not approved launch parameters. When a placeholder is approved, bump this file's version and record the decision source.
+**Status:** Mixed decided values and placeholders, v0.2, 18 November 2026 (TD-53/77). Each row labels its approval status. Placeholder values are for fixtures, acceptance tests and the prototype; they are not approved launch parameters. When a placeholder is approved, bump this file's version and record the decision source.
 
 | Parameter | v0 value | Status | Owner of the real value | Used by |
 | --- | --- | --- | --- | --- |
 | Credits per USD | **1,000,000 Credits = $1** (1 Credit = $0.000001), rational `N/D = 1,000,000/1`. A funded AIT term may still lock its own versioned rate. | Decided (TD-53; live Gateway unit) | — | SPEC_BILLING §1, SPEC_TOKEN §4.2, prototype fixtures |
 | Funded AIT Earned Credit term | 90 days | Placeholder | Founder (proposed in source PRD) | SPEC_TOKEN §4.2 |
-| Base accrual | `A_num/A_den = 12/1` USD per staked AIT per year (equivalent to $12/365 per day) | Placeholder | Founder (proposed) | TOK-R23, TOK-R25 |
+| Base accrual | **$12 per eligible staked AIT-year**; exact annual coefficient `A_num/A_den = 12/1` USD per AIT per 365-day year | Decided (TD-77, corrected) | — | TOK-R23, TOK-R25 |
 | AIT Earned Credit catalog set | `catalog_text` only | Placeholder | Product + finance | SPEC_BILLING §2 |
 | Model catalogs at launch | `catalog_text`, `catalog_image`, `catalog_video` (Basic/Premium is a model label, not a catalog) | Decided (TD-23/41) | — | SPEC_PROVIDERS §2, SPEC_BILLING §2 |
 | Minimum usable models per enabled catalog | 5 | Decided (TD-41) | — | PRV-R30 |

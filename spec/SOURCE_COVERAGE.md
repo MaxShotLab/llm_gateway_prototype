@@ -2,7 +2,7 @@
 
 **Status:** Canonical coverage matrix, 16 November 2026. Maps every requirement in the read-only source [`reference/MAXSHOT_Tokens_PRD_v1.0(read only).md`](./reference/MAXSHOT_Tokens_PRD_v1.0%28read%20only%29.md) (unchanged) to where it now binds. **The source PRD is reference-only:** a source requirement binds only through the rule, gate or decision listed here. Anything marked Context, Later or Superseded does not bind the current releases.
 
-**Dispositions:** **Rule** — carried into the named canonical rule(s). **Superseded** — replaced by the named decision; the replacement rule binds. **Gate** — a launch gate in SPEC_CROSS_CUTTING §5 or a release input in DECISIONS §3. **Later** — out of scope for the Foundation, Unified app and MAX/AIT releases. **Engineering** — proposed design that engineering owns within the rules (00_README §3). **Context** — explanation, scenario or illustration; no requirement.
+**Dispositions:** **Rule** — carried into the named canonical rule(s). **Superseded** — replaced by the named decision; the replacement rule binds. **Gate** — a launch gate in SPEC_CROSS_CUTTING §5 or a release input in DECISIONS §3. **Later** — out of scope for the Foundation, Gateway and AIT Earn integration, and MAX/AIT releases. **Engineering** — proposed design that engineering owns within the rules (00_README §3). **Context** — explanation, scenario or illustration; no requirement.
 
 ## 1. Numbered requirements (source §§10, 13, 14.3, 17)
 
@@ -22,9 +22,9 @@
 | FR-TOK-004 | Superseded | TD-03/04 → TOK-R11, R12 |
 | FR-TOK-005 | Rule | TOK-R10, R14 |
 | FR-TOK-006 | Superseded | TD-10 → TOK-R07 (custody controls instead of mint eligibility) |
-| FR-TOK-007 | Rule | TOK-R27, R28 (TD-66: average MAX per AIT replaces implied reference cost) |
+| FR-TOK-007 | Rule | TOK-R27, R28 (TD-66: average MAX per AIT replaces implied reference cost; TD-73: unlock risk in the mint review, transaction history in the History section) |
 | FR-TOK-008 | Rule | TOK-R20–R22 |
-| FR-TOK-009 | Rule | TOK-R29; acceptance gates accrual (TD-67) |
+| FR-TOK-009 | Rule | TOK-R29; acceptance gates accrual, not staking (TD-67/79); funding status is the "Active funded term" label (TD-80) |
 | FR-TOK-010 | Superseded | TD-11 (position non-transferable); transfer is Later |
 | FR-CR-001 | Rule | BIL-R02, R44; TOK-R24, R31 |
 | FR-CR-002 | Rule | TOK-R23, R30 |
@@ -84,8 +84,8 @@
 | DEC-03 | Superseded | TD-10 |
 | DEC-04 | Gate | DECISIONS §3 (P0); XCT-G03, G07 |
 | DEC-05 | Superseded | TD-05 |
-| DEC-06 | Rule + Gate | TOK-R23 (no perpetual term); DECISIONS §3 |
-| DEC-07 | Gate | TOK-R23 proposed rate; LAUNCH_CONFIG_V0 placeholder |
+| DEC-06 | Rule + Gate | TOK-R23 (no perpetual term; funded successor terms are an operating practice, not a user promise, TD-77/78; XCT-R12); DECISIONS §3 |
+| DEC-07 | Rule | TOK-R23, R25 ($12/365 per AIT-day confirmed, TD-77) |
 | DEC-08 | Gate | DECISIONS §3 (catalog set and cost caps) |
 | DEC-09 | Rule + Gate | TOK-R30; DECISIONS §3 |
 | DEC-10 | Gate | XCT-G03, G05 |
@@ -111,13 +111,13 @@
 | §1.3 Non-goals | Rule | XCT-R12 (claims), TOK-R32, XCT-R01 (no agent cash withdrawal); Gateway usable without tokens: 00_README §1, AGT-R10 |
 | §1.4 Positioning | Context | — |
 | §2.1 User groups; §2.3 journeys | Context | Covered by the specs' rules |
-| §2.2 Navigation | Superseded | 00_README §1 (unified sidebar) |
+| §2.2 Navigation | Superseded | 00_README §1 (Gateway sidebar, TD-68) |
 | §3.1 Token roles | Rule | SPEC_TOKEN §7 |
 | §3.2 Genesis table and funding rule | Rule + Gate | TD-08/09; TOK-R07, R35; FDV, 15% and 80% figures are Context (XCT-G03); investor risk XCT-G02 |
 | §3.3 Financial flows | Context | — |
-| §4.1–4.3 Unit, curve, HWM | Rule | TOK-R10, R16 (TD-05 exact refill) |
+| §4.1–4.3 Unit, curve, HWM | Rule | TOK-R10, R16, R17 (TD-05 exact refill); the §4.2 deadline guard is superseded by TD-74 (slippage-derived maximum MAX in, no deadline) |
 | §4.4 Position and debt model | Superseded | TD-01–04 → TOK-R09–R12 |
-| §4.5 Mint controls | Rule | Source TOK-R08 (TD-10); cap TOK-R10; capital sufficiency XCT-G03; mint speed TOK-R34; pause TOK-R05, R34; quote transparency TOK-R28 (implied reference cost superseded by TD-66); restrictions TOK-R07; curve updates TOK-R33 |
+| §4.5 Mint controls | Rule | Source TOK-R08 (TD-10); cap TOK-R10; capital sufficiency XCT-G03; mint speed TOK-R34; pause TOK-R05, R34; quote transparency TOK-R28 (implied reference cost superseded by TD-66; unlock requirement and price risk in the mint review, TD-73); restrictions TOK-R07; curve updates TOK-R33 |
 | §4.6 Market dynamics | Rule + Context | TOK-R35; XCT-R10; remaining text Context |
 | §5.1 User-facing unit | Rule | TOK-R23, R29; warm-up superseded by TD-14 |
 | §5.2 Genesis obligation, 90-day program | Rule | TOK-R23, R29, R31 |

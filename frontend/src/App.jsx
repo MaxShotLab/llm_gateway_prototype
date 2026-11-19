@@ -4,7 +4,6 @@ import {
   Brain,
   CaretDown,
   ChatsCircle,
-  ChartPieSlice,
   Check,
   Code,
   Coins,
@@ -35,8 +34,8 @@ import {
 import { ChatPage } from "./pages/ChatPage";
 import { ApiPage } from "./pages/ApiPage";
 import { FundingPage } from "./pages/FundingPage";
-import { TokenomicsPage, ProviderMarketPage, initialTokenState } from "./pages/TokenomicsPage";
-import { PortfolioPage, VaultsPage, prototypeWallet } from "./pages/UnifiedPortfolioPage";
+import { PricingPage } from "./pages/PricingPage";
+import { TokenomicsPage, ProviderMarketPage, initialTokenState, prototypeWallet } from "./pages/TokenomicsPage";
 import { StudioPage, platformWorks } from "./pages/StudioPage";
 import { SharedWorkPage, StartersPage } from "./pages/GrowthPage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
@@ -44,13 +43,12 @@ import { createBillingScenario, getBillingTotals, getSubscriptionWindows } from 
 import { sampleCreditsPerUsd, sampleOfferingLabel } from "./data/sampleRequest";
 
 const phaseOneNavItems = [
-  { id: "portfolio", label: "Portfolio", Icon: ChartPieSlice },
   { id: "chat", label: "Chat", Icon: ChatsCircle },
   { id: "studio", label: "Studio", Icon: MagicWand },
   { id: "topup", label: "Credits", Icon: Wallet },
-  { id: "tokens", label: "Tokens", Icon: Coins },
+  { id: "tokens", label: "Tokenomics", Icon: Coins },
+  { id: "pricing", label: "Models", Icon: MagnifyingGlass },
   { id: "providers", label: "Providers", Icon: Globe },
-  { id: "vaults", label: "Vaults", Icon: Wallet },
   { id: "referral", label: "Referrals", Icon: ShareNetwork },
 ];
 
@@ -73,12 +71,8 @@ const protectedPageCopy = {
     label: "Credits",
     description: "Top-ups, payment methods, receipts, and credit balances require an account.",
   },
-  portfolio: {
-    label: "Portfolio",
-    description: "Your Vault deposits, token position, and Gateway account require login.",
-  },
   tokens: {
-    label: "Tokens",
+    label: "Tokenomics",
     description: "Wallet positions, staking, and Earned Credit require an account.",
   },
   providers: {
@@ -258,17 +252,6 @@ const referralTopUps = [
     topUpCents: 3_000,
     status: "Needs attention",
   },
-];
-
-const partnerReferrals = [
-  { name: "Hyperliquid", type: "Perps DEX", logo: "/hyperliquid.png", connected: true, discount: "4% fee discount", earned: "12.4 AIT", href: "https://app.hyperliquid.xyz/join/MAXSHOT", eligibility: ["Rewards apply to the first $1B in lifetime volume per referee.", "At least one transaction on Hyperliquid activates the referral."] },
-  { name: "Polymarket", type: "Prediction market", logo: "/polymarket.png", connected: false, discount: "0% fee discount", earned: "—", href: "https://polymarket.com/?r=MaxshotAI", eligibility: ["New Polymarket accounts only.", "Valid for the first 180 days from account creation."] },
-];
-
-const partnerRewardHistory = [
-  { id: "#10", period: "Oct 9 → Oct 23, 2026", distribution: "24.00", earned: "8.2 AIT", status: "Claimable" },
-  { id: "#9", period: "Sep 25 → Oct 9, 2026", distribution: "18.00", earned: "4.2 AIT", status: "Claimed" },
-  { id: "#8", period: "Sep 11 → Sep 25, 2026", distribution: "0.00", earned: "—", status: "No reward" },
 ];
 
 const starterMemories = [
@@ -455,9 +438,9 @@ function AppShell({ active, onNavigate, user, onLogin, onLogout, authHint, theme
             <div className="auth-hint" role="status">
               {visibleAuthHint}
             </div>
-          ) : (
+          ) : active !== "tokens" ? (
             <span className="prototype-label">Prototype</span>
-          )}
+          ) : <span aria-hidden="true" />}
 
           {user ? (
             <div className="topbar-account">
@@ -575,7 +558,7 @@ function NavGroup({ items, active, collapsed, user, onNavigate }) {
 
     return (
       <button
-        className={`nav-item ${active === item.id || (active === "pricing" && item.id === "providers") ? "active" : ""} ${locked ? "locked" : ""}`}
+        className={`nav-item ${active === item.id ? "active" : ""} ${locked ? "locked" : ""}`}
         key={item.id}
         onClick={() => onNavigate(item.id)}
         title={locked ? "Log in required" : collapsed ? item.label : undefined}
@@ -583,7 +566,7 @@ function NavGroup({ items, active, collapsed, user, onNavigate }) {
         aria-disabled={locked}
         disabled={locked}
       >
-        <item.Icon size={19} weight={active === item.id || (active === "pricing" && item.id === "providers") ? "duotone" : "regular"} />
+        <item.Icon size={19} weight={active === item.id ? "duotone" : "regular"} />
         <span>{item.label}</span>
       </button>
     );
@@ -680,7 +663,6 @@ function DeferredNotice({ title }) {
 
 function ReferralPage() {
   const [copied, setCopied] = useState("");
-  const [program, setProgram] = useState("gateway");
   const [rewardStatus, setRewardStatus] = useState("All");
   const [sharePreview, setSharePreview] = useState("");
   const confirmedTopUps = referralTopUps.filter((item) => item.status === "Credited");
@@ -700,15 +682,8 @@ function ReferralPage() {
   return (
     <main className="content-page referral-page">
       <PageHeader
-        title="Referrals"
+        title="Maxshot Referrals Program"
       />
-
-      <div className="billing-scope-tabs" role="tablist" aria-label="Referral program">
-        <button className={program === "gateway" ? "active" : ""} onClick={() => { setProgram("gateway"); setCopied(""); }} role="tab" aria-selected={program === "gateway"}>Maxshot Referrals Program</button>
-        <button className={program === "partner" ? "active" : ""} onClick={() => { setProgram("partner"); setCopied(""); }} role="tab" aria-selected={program === "partner"}>Partner Referral Program</button>
-      </div>
-
-      {program === "gateway" && <>
 
       <section className="referral-hero panel">
         <div>
@@ -773,20 +748,6 @@ function ReferralPage() {
           </table>
         </div>
       </section>
-      </>}
-
-      {program === "partner" && <>
-        <div className="referral-partner-intro"><h2>Partner Referral Program</h2><p>Trade on partner platforms using Maxshot's referral link or by binding your account to earn AIT rewards.</p></div>
-        <section className="panel referral-partner-summary"><div><span>Platforms Active</span><strong>2</strong></div><div><span>Distributing AIT</span><strong>12.4 <small>AIT · example</small></strong></div></section>
-        <h3 className="referral-partner-heading">Active Partners</h3>
-        <section className="referral-partner-grid">{partnerReferrals.map((partner) => <article className="panel" key={partner.name}>
-          <header><img src={partner.logo} alt="" /><div><strong>{partner.name}</strong><small>{partner.type}</small></div><span className="referral-partner-state">{partner.connected ? "Referral Connected" : "Referral Not Connected"}</span></header>
-          <div className="referral-partner-stats"><div><small>Fee Discount</small><strong>{partner.discount}</strong></div><div><small>My earned</small><strong>{partner.earned}</strong></div></div>
-          <div className="referral-partner-action"><a className="secondary-button compact" href={partner.href} target="_blank" rel="noreferrer">Trade on {partner.name} ↗</a></div>
-          <div className="referral-partner-eligibility"><strong>Eligibility:</strong>{partner.eligibility.map((rule) => <p key={rule}>· {rule}</p>)}</div>
-        </article>)}</section>
-        <section className="panel referral-table-panel"><div className="panel-heading"><div><h2>AIT Reward History</h2><p>Illustrative 14-day partner distribution cycles.</p></div></div><div className="table-scroll"><table><thead><tr><th>Id</th><th>Period</th><th>Epoch Distribution</th><th>My Earnings</th><th>Status</th></tr></thead><tbody>{partnerRewardHistory.map((item) => <tr key={item.id}><td>{item.id}</td><td>{item.period}</td><td>{item.distribution}</td><td>{item.earned}</td><td><span className={`status-pill ${item.status === "Claimable" ? "success" : "neutral"}`}><i /> {item.status}</span></td></tr>)}</tbody></table></div></section>
-      </>}
     </main>
   );
 }
@@ -915,7 +876,7 @@ function UsagePage({ billing, sampleUsage, embedded = false }) {
           <div><small>Settled once</small><strong>{sampleUsage.charge.toLocaleString()} Credits final charge</strong><span>Used {sampleUsage.used.earned.toLocaleString()} AIT Earned Credit + {sampleUsage.used.subscription.toLocaleString()} Premium</span></div>
           <div><small>Unused hold released</small><strong>{(sampleUsage.released.earned + sampleUsage.released.subscription).toLocaleString()} Credits</strong><span>{sampleUsage.released.earned.toLocaleString()} to original AIT Earned Credit grant/expiry + {sampleUsage.released.subscription.toLocaleString()} to Premium</span></div>
         </div>
-        <p>Illustrative funded-term scenario. The account above has no active AIT Earned Credit term; this record does not update its balances.</p>
+        <p>Illustrative request under an active AIT Earned Credit term; this record does not update balances.</p>
       </section>}
 
       <section className="panel table-panel">
@@ -1021,7 +982,7 @@ function SettingsPage({ user, onLogout, initialView = "account" }) {
         <div className="profile-method-list">
           <div><span><UserCircle size={20} /><b>Google</b><small>{user || "demo@maxshot.ai"}</small></span><em>Connected</em></div>
           <div><span><GithubLogo size={20} /><b>GitHub</b><small>Not linked</small></span><button className="secondary-button compact">Bind</button></div>
-          <div><span><Wallet size={20} /><b>Linked wallet</b><small>{prototypeWallet} · used for Vaults and AIT staking</small></span><em>One wallet per account</em></div>
+          <div><span><Wallet size={20} /><b>Linked wallet</b><small>{prototypeWallet} · used for AIT staking</small></span><em>One wallet per account</em></div>
         </div>
       </section>
       <section className="panel settings-panel profile-section">
@@ -1536,6 +1497,10 @@ export function App() {
   const [authHint, setAuthHint] = useState("");
   const [billing, setBilling] = useState(() => createBillingScenario("active"));
   const [tokenState, setTokenState] = useState(initialTokenState);
+  const [tokenScenario, setTokenScenario] = useState("active");
+  const [tokenHistory, setTokenHistory] = useState([]);
+  const [acceptedTokenTerms, setAcceptedTokenTerms] = useState(true);
+  const [pricingModel, setPricingModel] = useState(null);
   const [freeRequestsUsed, setFreeRequestsUsed] = useState(0);
   const [sampleUsage, setSampleUsage] = useState(null);
   useEffect(() => { localStorage.setItem("maxshot-demo-public-works", JSON.stringify(publicWorks)); }, [publicWorks]);
@@ -1578,6 +1543,11 @@ export function App() {
     navigate("studio");
   };
 
+  const openModelPricing = (modelId) => {
+    setPricingModel(modelId);
+    navigate("pricing");
+  };
+
   const logout = () => {
     setUser("");
     setAuthHint("");
@@ -1598,7 +1568,7 @@ export function App() {
         />
       );
     }
-    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} initialView="usage" usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
+    if (active === "usage") return <FundingPage billing={billing} setBilling={setBilling} earnedGrants={tokenState.earnedGrants} onModelPricing={() => navigate("pricing")} initialView="usage" usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
     if (active === "studio") return <StudioPage billing={billing} canGenerateAccount={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to generate."); setLoginOpen(true); }} seed={studioSeed} onSeedConsumed={() => setStudioSeed(null)} publicWorks={publicWorks} onPublish={(work) => setPublicWorks((current) => [publicWork(work), ...current.filter((item) => item.id !== work.id)])} onUnshare={(id) => setPublicWorks((current) => current.filter((item) => item.id !== id))} onOpenShare={openShare} />;
     if (active === "starters") return <StartersPage canRun={Boolean(user)} onLoginRequired={() => { setAuthHint("Log in to run this example."); setLoginOpen(true); }} onOpenStudio={openStudio} onPricing={() => navigate("pricing")} onApi={() => navigate("api")} onPlayground={() => navigate("playground")} />;
     if (active === "playground") return <PlaygroundPage onOpenChat={(prompt) => { setChatSeed(prompt); navigate("chat"); }} onOpenStudio={openStudio} onApi={() => navigate("api")} onPricing={() => navigate("pricing")} />;
@@ -1606,13 +1576,11 @@ export function App() {
       const source = `Share: ${work.id}${new URLSearchParams(window.location.search).get("via") === "x" ? " via X" : ""}`;
       openStudio(work.mode === "method" ? { kind: work.kind, path: work.path, model: work.model, prompt: work.prompt, resolution: work.resolution, source } : { kind: work.kind, mode: "result", source });
     }} />;
-    if (active === "pricing") return <ProviderMarketPage initialView="Models & Pricing" />;
+    if (active === "pricing") return <PricingPage initialModelId={pricingModel} />;
     if (active === "api") return <SettingsPage user={user} onLogout={logout} initialView="developer" />;
-    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} onTokens={() => navigate("tokens")} onModelPricing={() => navigate("pricing")} usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
-    if (active === "portfolio") return <PortfolioPage billing={billing} tokenState={tokenState} onNavigate={navigate} />;
-    if (active === "vaults") return <VaultsPage accountSignedIn={Boolean(user)} onPortfolio={() => navigate("portfolio")} />;
-    if (active === "tokens") return <TokenomicsPage state={tokenState} setState={setTokenState} linkedWallet={prototypeWallet} onCredits={() => navigate("topup")} />;
-    if (active === "providers") return <ProviderMarketPage />;
+    if (active === "topup") return <FundingPage billing={billing} setBilling={setBilling} earnedGrants={tokenState.earnedGrants} onModelPricing={() => navigate("pricing")} usageContent={<UsagePage billing={billing} sampleUsage={sampleUsage} embedded />} />;
+    if (active === "tokens") return <TokenomicsPage state={tokenState} setState={setTokenState} scenario={tokenScenario} setScenario={setTokenScenario} history={tokenHistory} setHistory={setTokenHistory} acceptedPreviewTerms={acceptedTokenTerms} setAcceptedPreviewTerms={setAcceptedTokenTerms} onCredits={() => navigate("topup")} />;
+    if (active === "providers") return <ProviderMarketPage onModelPricing={openModelPricing} />;
     if (active === "referral") return <ReferralPage />;
     if (active === "settings") return <SettingsPage user={user} onLogout={logout} />;
     return (
@@ -1631,7 +1599,7 @@ export function App() {
         onUsageRecorded={setSampleUsage}
       />
     );
-  }, [active, billing, tokenState, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed, sampleUsage]);
+  }, [active, billing, tokenState, tokenScenario, tokenHistory, acceptedTokenTerms, pricingModel, chatSeed, freeRequestsUsed, user, publicWorks, shareId, studioSeed, sampleUsage]);
 
   return (
     <div className={`app-theme theme-${theme}`}>
